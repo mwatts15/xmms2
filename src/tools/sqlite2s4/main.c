@@ -135,7 +135,7 @@ int main (int argc, char *argv[])
 	GHashTable **ht;
 
 	if (argc != 4) {
-		fprintf (stderr, "Usage: %s infile outfile\n"
+		fprintf (stderr, "Usage: %s infile outfile colldir\n"
 				"\tinfile  - the sql file to import\n"
 				"\toutfile - the s4 file to write to\n"
 				"\tcolldir - the directory to place the collections\n",
