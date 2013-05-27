@@ -200,6 +200,42 @@ perl_xmmsclient_callback_invoke (PerlXMMSClientCallback *cb, void *retval, ...) 
 }
 
 xmmsv_t *
+perl_xmmsclient_pack_fetchspec (SV *arg) {
+	xmmsv_t *ret;
+	char *key;
+	HV *hv;
+	SV *val;
+	int len;
+
+	if (!SvOK (arg) || !SvROK (arg) || SvTYPE (SvRV (arg)) != SVt_PVHV) {
+		croak ("not a valid fetch specification");
+	}
+
+	ret = xmmsv_new_dict ();
+
+	hv = (HV *) SvRV (arg);
+	hv_iterinit (hv);
+
+	while ((val = hv_iternextsv (hv, &key, &len)) != NULL) {
+		if (SvTYPE (val) == SVt_PV) {
+			xmmsv_dict_set_string (ret, key, SvPV_nolen (val));
+		} else if (SvROK (val) && SvTYPE (SvRV (val)) == SVt_PVAV) {
+			xmmsv_t *entry = perl_xmmsclient_pack_stringlist (val);
+			xmmsv_dict_set (ret, key, entry);
+			xmmsv_unref (entry);
+		} else if (SvROK (val) && SvTYPE (SvRV (val)) == SVt_PVHV) {
+			xmmsv_t *entry = perl_xmmsclient_pack_fetchspec (val);
+			xmmsv_dict_set (ret, key, entry);
+			xmmsv_unref (entry);
+		} else {
+			croak ("expected a string, an array, or a hash.");
+		}
+	}
+
+	return ret;
+}
+
+xmmsv_t *
 perl_xmmsclient_pack_stringlist (SV *arg) {
 	AV *av;
 	SV **ssv;
@@ -218,7 +254,7 @@ perl_xmmsclient_pack_stringlist (SV *arg) {
 
 		for (i = 0; i <= avlen; ++i) {
 			ssv = av_fetch (av, i, 0);
-			xmmsv_list_append (ret, xmmsv_new_string (SvPV_nolen (*ssv)));
+			xmmsv_list_append_string (ret, SvPV_nolen (*ssv));
 		}
 	}
 	else {

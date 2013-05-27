@@ -56,7 +56,7 @@ typedef void (*FuncApplyToColl)(xmms_coll_dag_t *dag, xmmsv_coll_t *coll, xmmsv_
 xmms_coll_dag_t * xmms_collection_init (xmms_medialib_t *medialib);
 
 void xmms_collection_sync (xmms_coll_dag_t *dag);
-xmmsv_t* xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, gint32 lim_start, gint32 lim_len, xmmsv_t *order, xmms_error_t *err);
+xmmsv_t* xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, xmms_error_t *err);
 
 
 void xmms_collection_foreach_in_namespace (xmms_coll_dag_t *dag, guint nsid, GHFunc f, void *udata);
@@ -75,8 +75,8 @@ const gchar *xmms_collection_get_namespace_string (xmms_collection_namespace_id_
 gboolean xmms_collection_get_int_attr (xmmsv_coll_t *coll, const gchar *attrname, gint *val);
 gboolean xmms_collection_set_int_attr (xmmsv_coll_t *coll, const gchar *attrname, gint newval);
 
-GTree *xmms_collection_changed_msg_new (xmms_collection_changed_actions_t type, const gchar *plname, const gchar *namespace);
-void xmms_collection_changed_msg_send (xmms_coll_dag_t *colldag, GTree *dict);
+xmmsv_t *xmms_collection_changed_msg_new (xmms_collection_changed_actions_t type, const gchar *plname, const gchar *namespace);
+void xmms_collection_changed_msg_send (xmms_coll_dag_t *colldag, xmmsv_t *dict);
 
 void bind_all_references (xmms_coll_dag_t *dag, xmmsv_coll_t *coll, xmmsv_coll_t *parent, void *udata);
 

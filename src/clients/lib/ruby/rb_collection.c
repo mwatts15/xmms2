@@ -185,7 +185,7 @@ c_coll_type_get (VALUE self)
 
 	COLL_METHOD_ADD_HANDLER_RET (get_type)
 
-	return UINT2NUM (ret);
+	return INT2NUM (ret);
 }
 
 /* call-seq:
@@ -575,6 +575,7 @@ Init_Collection (VALUE mXmms)
 	rb_define_const (cColl, "NS_PLAYLISTS",
 	                 rb_str_new2 (XMMS_COLLECTION_NS_PLAYLISTS));
 	DEF_CONST (cColl, XMMS_COLLECTION_, TYPE_REFERENCE)
+	DEF_CONST (cColl, XMMS_COLLECTION_, TYPE_UNIVERSE)
 	DEF_CONST (cColl, XMMS_COLLECTION_, TYPE_UNION)
 	DEF_CONST (cColl, XMMS_COLLECTION_, TYPE_INTERSECTION)
 	DEF_CONST (cColl, XMMS_COLLECTION_, TYPE_COMPLEMENT)

@@ -229,10 +229,11 @@ cli_add_setup (command_action_t *action)
 		{ "at", 'a', 0, G_OPTION_ARG_INT, NULL, _("Add media at a given position in the playlist, or at a given offset from the current track."), "pos|offset" },
 		{ "attribute", 'A', 0, G_OPTION_ARG_STRING_ARRAY, NULL, _("Add media with given key=value attribute(s)."), NULL },
 		{ "order", 'o', 0, G_OPTION_ARG_STRING, NULL, _("Order media by specified properties."), NULL },
+		{ "jump", 'j', 0, G_OPTION_ARG_NONE, NULL, _("Jump to and start playing the newly-added media."), NULL },
 		{ NULL }
 	};
 	command_action_fill (action, "add", &cli_add, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
-	                     _("[-t | -f [-N] [-P] [-A key=value]... ] [-p <playlist>] [-n | -a <pos|offset>] [pattern | paths] -o prop[,...]"),
+	                     _("[-t | -f [-N] [-P] [-A key=value]... ] [-p <playlist>] [-n | -a <pos|offset>] [-j] [pattern | paths] -o prop[,...]"),
 	                     _("Add the matching media or files to a playlist."));
 }
 
@@ -689,7 +690,7 @@ cli_jump (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_search (cli_infos_t *infos, command_context_t *ctx)
 {
-	xmmsc_coll_t *query;
+	xmmsc_coll_t *query, *ordered_query;
 	xmmsc_result_t *res;
 	xmmsv_t *fetchval;
 	column_display_t *coldisp;
@@ -716,71 +717,24 @@ cli_search (cli_infos_t *infos, command_context_t *ctx)
 	 * grouping.
 	 */
 	if (!command_flag_stringlist_get (ctx, "order", &order)) {
-		xmmsv_coll_t *compilation, *compilation_sorted;
-		xmmsv_coll_t *regular, *regular_sorted;
-		xmmsv_coll_t *complement, *concatenated;
-		xmmsv_t *compilation_order, *regular_order;
-
-		/* All various artists entries that match the user query. */
-		compilation = xmmsv_coll_new (XMMS_COLLECTION_TYPE_MATCH);
-		xmmsv_coll_add_operand (compilation, query);
-		xmmsv_coll_attribute_set (compilation, "field", "compilation");
-		xmmsv_coll_attribute_set (compilation, "value", "1");
-
-		/* All entries that aren't various artists, or don't match the user query */
-		complement = xmmsv_coll_new (XMMS_COLLECTION_TYPE_COMPLEMENT);
-		xmmsv_coll_add_operand (complement, compilation);
-
-		/* All entries that aren't various artists, and match the user query */
-		regular = xmmsv_coll_new (XMMS_COLLECTION_TYPE_INTERSECTION);
-		xmmsv_coll_add_operand (regular, query);
-		xmmsv_coll_add_operand (regular, complement);
-		xmmsv_coll_unref (complement);
-
-		compilation_order = xmmsv_build_list (
-			XMMSV_LIST_ENTRY_STR ("album"),
-			XMMSV_LIST_ENTRY_STR ("partofset"),
-			XMMSV_LIST_ENTRY_STR ("tracknr"),
-			XMMSV_LIST_END);
-
-		compilation_sorted = xmmsv_coll_add_order_operators (compilation,
-		                                                     compilation_order);
-		xmmsv_coll_unref (compilation);
-		xmmsv_unref (compilation_order);
-
-		regular_order = xmmsv_build_list (
-			XMMSV_LIST_ENTRY_STR ("artist"),
-			XMMSV_LIST_ENTRY_STR ("album"),
-			XMMSV_LIST_ENTRY_STR ("partofset"),
-			XMMSV_LIST_ENTRY_STR ("tracknr"),
-			XMMSV_LIST_END);
-
-		regular_sorted = xmmsv_coll_add_order_operators (regular, regular_order);
-		xmmsv_coll_unref (regular);
-		xmmsv_unref (regular_order);
-
-		concatenated = xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNION);
-		xmmsv_coll_add_operand (concatenated, regular_sorted);
-		xmmsv_coll_unref (regular_sorted);
-		xmmsv_coll_add_operand (concatenated, compilation_sorted);
-		xmmsv_coll_unref (compilation_sorted);
-
-		res = xmmsc_coll_query_infos (infos->sync, concatenated, NULL,
-		                              0, 0, fetchval, NULL);
-		xmmsv_coll_unref (concatenated);
+		ordered_query = coll_apply_default_order (query);
 	} else {
 		xmmsv_t *orderval = xmmsv_make_stringlist ((gchar **) order, -1);
-		res = xmmsc_coll_query_infos (infos->sync, query, orderval,
-		                              0, 0, fetchval, NULL);
+		ordered_query = xmmsv_coll_add_order_operators (query, orderval);
+
 		xmmsv_unref (orderval);
 	}
+
+	res = xmmsc_coll_query_infos (infos->sync, ordered_query, NULL,
+	                              0, 0, fetchval, NULL);
+	xmmsv_coll_unref (ordered_query);
+	xmmsc_coll_unref (query);
 
 	xmmsc_result_wait (res);
 
 	list_print_row (res, NULL, coldisp, TRUE, TRUE);
 
 	xmmsv_unref (fetchval);
-	xmmsc_coll_unref (query);
 
 	g_free (order);
 	g_free (columns);
@@ -990,13 +944,7 @@ cmd_flag_pos_get_playlist (cli_infos_t *infos, command_context_t *ctx,
 		return FALSE;
 	} else if (next) {
 		playlist_currpos_get (infos, playlist, &tmp);
-		if (tmp >= 0) {
-			*pos = tmp + 1;
-		} else {
-			g_printf (_("Error: --next cannot be used if there is no "
-			            "active track!\n"));
-			return FALSE;
-		}
+		*pos = tmp + 1;
 	} else if (at_isset) {
 		/* FIXME: handle relative values ? */
 		/* beware: int vs uint */
@@ -1011,8 +959,8 @@ cmd_flag_pos_get_playlist (cli_infos_t *infos, command_context_t *ctx,
 			*pos = at - 1;  /* playlist ids start at 0 */
 		}
 	} else {
-		/* No flag given, no position found! */
-		return FALSE;
+		/* default to append */
+		playlist_length_get (infos, playlist, pos);
 	}
 
 	return TRUE;
@@ -1123,174 +1071,272 @@ cli_add_parse_attributes (command_context_t *ctx)
 	return result;
 }
 
+/**
+ * Helper function for cli_add.
+ *
+ * Add the contents of a playlist file (specified by a url)
+ * to a playlist at a given position.
+ */
+static void
+cli_add_playlist_file (cli_infos_t *infos, const gchar *url,
+                       const gchar *playlist, gint pos)
+{
+	xmmsc_result_t *res;
+	gchar *decoded = decode_url (url);
+
+	res = xmmsc_coll_idlist_from_playlist_file (infos->sync, decoded);
+	xmmsc_result_wait (res);
+
+	add_pls (res, infos, playlist, pos);
+	g_free (decoded);
+
+	return;
+}
+
+/**
+ * Helper function for cli_add.
+ *
+ * Add a file specified by a url to a playlist at a given id.
+ */
+static void
+cli_add_file (cli_infos_t *infos, const gchar *url,
+              const gchar *playlist, gint pos, xmmsv_t *attrs)
+{
+	xmmsc_result_t *res;
+	gchar *decoded = decode_url (url);
+
+	res = xmmsc_playlist_insert_full (infos->sync, playlist, pos, decoded, attrs);
+	xmmsc_result_wait (res);
+	xmmsc_result_unref (res);
+
+	g_free (decoded);
+
+	return;
+}
+
+/**
+ * Helper function for cli_add.
+ *
+ * Add a directory to a playlist recursively at a given position.
+ */
+static void
+cli_add_dir (cli_infos_t *infos, const gchar *url,
+             const gchar *playlist, gint pos)
+{
+	xmmsc_result_t *res;
+
+	res = xmmsc_playlist_rinsert_encoded (infos->sync, playlist, pos, url);
+	xmmsc_result_wait (res);
+	xmmsc_result_unref (res);
+
+	return;
+}
+
+/**
+ * Helper function for cli_add.
+ *
+ * Process and add file arguments to a playlist at a given position.
+ * The files may be regular or playlist files.
+ *
+ * @return whether media has been added to the playlist.
+ */
+static gboolean
+cli_add_fileargs (cli_infos_t *infos, command_context_t *ctx,
+                  const gchar *playlist, gint pos)
+{
+	gint i;
+	gboolean plsfile, norecurs, ret = FALSE;
+	xmmsv_t *attributes;
+
+	command_flag_boolean_get (ctx, "pls", &plsfile);
+	command_flag_boolean_get (ctx, "non-recursive", &norecurs);
+	attributes = cli_add_parse_attributes (ctx);
+
+	for (i = 0; i < command_arg_count (ctx); i++) {
+		GList *files, *it;
+		const gchar *path;
+		gchar *formatted, *encoded;
+
+		command_arg_string_get (ctx, i, &path);
+		formatted = format_url (path, G_FILE_TEST_IS_REGULAR | G_FILE_TEST_IS_DIR);
+		if (formatted == NULL) {
+			g_printf (_("Warning: Skipping invalid url '%s'.\n"), path);
+			continue;
+		}
+
+		encoded = encode_url (formatted);
+		files = matching_browse (infos->sync, encoded);
+
+		for (it = g_list_first (files); it != NULL; it = g_list_next (it)) {
+			const gchar *url;
+			gboolean is_directory;
+			browse_entry_t *entry = it->data;
+
+			browse_entry_get (entry, &url, &is_directory);
+
+			if (plsfile || guesspls (infos, url)) {
+				if (xmmsv_dict_get_size (attributes) > 0) {
+					g_printf (_("Warning: Skipping attributes together with playlist.\n"));
+				}
+
+				cli_add_playlist_file (infos, url, playlist, pos);
+			} else if (norecurs || !is_directory) {
+				cli_add_file (infos, url, playlist, pos, attributes);
+			} else {
+				if (xmmsv_dict_get_size (attributes) > 0) {
+					g_printf (_("Warning: Skipping attributes together with directory.\n"));
+				}
+
+				cli_add_dir (infos, url, playlist, pos);
+			}
+
+			pos++; /* next insert at next pos, to keep order */
+			browse_entry_free (entry);
+
+			ret = TRUE;
+		}
+
+		g_free (encoded);
+		g_free (formatted);
+		g_list_free (files);
+	}
+
+	xmmsv_unref (attributes);
+	return ret;
+}
+
+/**
+ * Helper function for cli_add.
+ *
+ * Process and add pattern arguments to a playlist at a given position.
+ *
+ * @return Whether any media has been added to the playlist.
+ */
+static gboolean
+cli_add_pattern (cli_infos_t *infos, command_context_t *ctx,
+                 const gchar *playlist, gint pos)
+{
+	gchar **sortby;
+	gchar *pattern = NULL;
+	xmmsv_t *order = NULL;
+	xmmsv_coll_t *query;
+	gboolean ret = FALSE;;
+
+	command_arg_longstring_get_escaped (ctx, 0, &pattern);
+
+	if (!pattern) {
+		g_printf (_("Error: you must provide a pattern to add!\n"));
+	} else if (!xmmsc_coll_parse (pattern, &query)) {
+		g_printf (_("Error: failed to parse the pattern!\n"));
+	} else {
+		xmmsv_t *idlist;
+		xmmsc_result_t *res;
+
+		if (command_flag_stringlist_get (ctx, "order", &sortby)) {
+			order = xmmsv_make_stringlist (sortby, -1);
+			g_strfreev (sortby);
+		}
+
+		res = xmmsc_coll_query_ids (infos->sync, query, order, 0, 0);
+		xmmsc_result_wait (res);
+		idlist = xmmsc_result_get_value (res);
+
+		if (!xmmsv_is_type (idlist, XMMSV_TYPE_LIST)) {
+			g_printf (_("Error retrieving the media matching the pattern!\n"));
+		} else if (!xmmsv_list_get_size (idlist)) {
+			g_printf (_("Warning: pattern didn't resolve to any media.\n"));
+		} else {
+			add_list (idlist, infos, playlist, pos);
+			ret = TRUE;
+		}
+
+		xmmsc_coll_unref (query);
+		xmmsc_result_unref (res);
+	}
+
+	g_free (pattern);
+	if (order) xmmsv_unref (order);
+
+	return ret;
+}
+
 gboolean
 cli_add (cli_infos_t *infos, command_context_t *ctx)
 {
-	gchar *pattern = NULL;
-	const gchar *sortby = NULL;
-	gchar **properties;
+	gint pos, i;
 	const gchar *playlist;
-	xmmsc_coll_t *query;
-	xmmsc_result_t *res;
-	xmmsv_t *attributes;
-	xmmsv_t *order = NULL;
-	gint pos;
-	const gchar *path;
-	gboolean fileargs;
-	gboolean norecurs;
-	gboolean plsfile;
-	gboolean forceptrn;
-	gint i, count;
+	gboolean forceptrn, plsfile, fileargs, jump, added;
 
-/*
---file  Add a path from the local filesystem
---non-recursive  Do not add directories recursively.
---playlist  Add to the given playlist.
---next  Add after the current track.
---at  Add media at a given position in the playlist, or at a given offset from the current track.
---order Order media matched by pattern.
-*/
-	attributes = cli_add_parse_attributes (ctx);
+	/*
+	--file  Add a path from the local filesystem
+	--non-recursive  Do not add directories recursively.
+	--playlist  Add to the given playlist.
+	--next  Add after the current track.
+	--at  Add media at a given position in the playlist, or at a given offset from the current track.
+	--order Order media matched by pattern.
+	*/
 
 	/* FIXME: offsets not supported (need to identify positive offsets) :-( */
-	if (command_flag_string_get (ctx, "playlist", &playlist)) {
-		if (!cmd_flag_pos_get_playlist (infos, ctx, &pos, playlist)) {
-			/* append by default */
-			playlist_length_get (infos, playlist, &pos);
-		}
-	} else {
-		if (!cmd_flag_pos_get (infos, ctx, &pos)) {
-			playlist_length_get (infos, NULL, &pos);
-		}
+	if (!command_flag_string_get (ctx, "playlist", &playlist)) {
 		playlist = XMMS_ACTIVE_PLAYLIST;
+	}
+
+	if (!cmd_flag_pos_get_playlist (infos, ctx, &pos, playlist)) {
+		return FALSE;
 	}
 
 	command_flag_boolean_get (ctx, "pattern", &forceptrn);
 	command_flag_boolean_get (ctx, "pls", &plsfile);
 	command_flag_boolean_get (ctx, "file", &fileargs);
-	command_flag_boolean_get (ctx, "non-recursive", &norecurs);
-	command_arg_longstring_get_escaped (ctx, 0, &pattern);
-
-	command_flag_string_get (ctx, "order", &sortby);
-	if (sortby) {
-		properties = g_strsplit (sortby, ",", MAX_STRINGLIST_TOKENS);
-		order = xmmsv_make_stringlist (properties, -1);
-
-		g_strfreev (properties);
-	}
-
-	if (forceptrn && (plsfile || fileargs)) {
-		g_printf (_("Error: --pattern is mutually exclusive with "
-		            "--file and --pls!\n"));
-		goto finish;
-	}
-
-	/* We need either a file or a pattern! */
-	if (!pattern) {
-		g_printf (_("Error: you must provide a pattern or files to add!\n"));
-		goto finish;
-	}
+	command_flag_boolean_get (ctx, "jump", &jump);
 
 	fileargs = fileargs || plsfile;
+	if (forceptrn && fileargs) {
+		g_printf (_("Error: --pattern is mutually exclusive with "
+		            "--file and --pls!\n"));
+		return FALSE;
+	}
 
 	if (!forceptrn) {
 		/* if any of the arguments is a valid path, we treat them all as files */
-		for (i = 0, count = command_arg_count (ctx); !fileargs && i < count; ++i) {
+		for (i = 0; !fileargs && i < command_arg_count (ctx); i++) {
+			const gchar *path;
+
 			command_arg_string_get (ctx, i, &path);
 			fileargs = fileargs || guessfile (path);
 		}
 	}
 
 	if (fileargs) {
-		for (i = 0, count = command_arg_count (ctx); i < count; ++i) {
-			GList *files = NULL, *it;
-			gchar *vpath, *enc;
-
-			command_arg_string_get (ctx, i, &path);
-			vpath = format_url (path, G_FILE_TEST_IS_REGULAR | G_FILE_TEST_IS_DIR);
-			if (vpath == NULL) {
-				g_printf (_("Warning: Skipping invalid url '%s'.\n"), path);
-				continue;
-			}
-
-			enc = encode_url (vpath);
-			files = matching_browse (infos->sync, enc);
-
-			for (it = g_list_first (files); it != NULL; it = g_list_next (it)) {
-				browse_entry_t *entry = it->data;
-				const gchar *url;
-				gboolean is_directory;
-
-				browse_entry_get (entry, &url, &is_directory);
-
-				if (plsfile || guesspls (infos, url)) {
-					if (xmmsv_dict_get_size (attributes) > 0) {
-						g_printf (_("Warning: Skipping attributes together with playlist."));
-					}
-					xmmsc_result_t *plsres;
-					gchar *decoded = decode_url (url);
-
-					plsres = xmmsc_coll_idlist_from_playlist_file (infos->sync,
-					                                               decoded);
-					xmmsc_result_wait (plsres);
-					add_pls (plsres, infos, playlist, pos);
-					g_free (decoded);
-				} else if (norecurs || !is_directory) {
-					gchar *decoded = decode_url (url);
-					res = xmmsc_playlist_insert_full (infos->sync, playlist,
-					                                  pos, decoded, attributes);
-					xmmsc_result_wait (res);
-					xmmsc_result_unref (res);
-					g_free (decoded);
-				} else {
-					if (xmmsv_dict_get_size (attributes) > 0) {
-						g_printf (_("Warning: Skipping attributes together with playlist."));
-					}
-					res = xmmsc_playlist_rinsert_encoded (infos->sync, playlist,
-					                                      pos, url);
-					xmmsc_result_wait (res);
-					xmmsc_result_unref (res);
-				}
-				pos++; /* next insert at next pos, to keep order */
-
-				browse_entry_free (entry);
-			}
-
-			g_free (enc);
-			g_free (vpath);
-			g_list_free (files);
-		}
+		added = cli_add_fileargs (infos, ctx, playlist, pos);
 	} else {
-		if (xmmsv_dict_get_size (attributes) > 0) {
-			g_printf (_("Warning: Skipping attributes together with pattern."));
-			goto finish;
-		}
+		gboolean norecurs;
+		xmmsv_t *attributes;
 
+		command_flag_boolean_get (ctx, "non-recursive", &norecurs);
 		if (norecurs) {
 			g_printf (_("Error:"
 			            "--non-recursive only applies when passing --file!\n"));
-			goto finish;
+			return FALSE;
 		}
 
-		if (!xmmsc_coll_parse (pattern, &query)) {
-			g_printf (_("Error: failed to parse the pattern!\n"));
-			goto finish;
-		} else {
-			res = xmmsc_coll_query_ids (infos->sync, query, order, 0, 0);
-			xmmsc_result_wait (res);
-			add_list (res, infos, playlist, pos);
-			xmmsc_coll_unref (query);
+		attributes = cli_add_parse_attributes (ctx);
+		if (xmmsv_dict_get_size (attributes) > 0) {
+			g_printf (_("Warning: Skipping attributes together with pattern.\n"));
 		}
+
+		xmmsv_unref (attributes);
+
+		added = cli_add_pattern (infos, ctx, playlist, pos);
 	}
 
-	finish:
+	if (added && jump) {
+		xmmsc_result_t *res;
 
-	if (order) {
-		xmmsv_unref (order);
+		res = xmmsc_playlist_set_next (infos->sync, pos);
+		xmmsc_result_wait (res);
+		tickle (res, infos);
 	}
-
-	xmmsv_unref (attributes);
-	g_free (pattern);
 
 	return FALSE;
 }
@@ -1895,7 +1941,7 @@ cli_coll_config (cli_infos_t *infos, command_context_t *ctx)
 gboolean
 cli_server_import (cli_infos_t *infos, command_context_t *ctx)
 {
-	xmmsc_result_t *res;
+	xmmsc_result_t *res = NULL;
 
 	gint i, count;
 	const gchar *path;
@@ -1926,14 +1972,15 @@ cli_server_import (cli_infos_t *infos, command_context_t *ctx)
 
 			browse_entry_get (entry, &url, &is_directory);
 
+			if (res != NULL) {
+				/* Clean up any result from the last iteration */
+				xmmsc_result_unref (res);
+			}
+
 			if (norecurs || !is_directory) {
-				res = xmmsc_medialib_add_entry_encoded (infos->sync,
-				                                        url);
-				xmmsc_result_unref (res);
+				res = xmmsc_medialib_add_entry_encoded (infos->sync, url);
 			} else {
-				res = xmmsc_medialib_import_path_encoded (infos->sync,
-				                                          url);
-				xmmsc_result_unref (res);
+				res = xmmsc_medialib_import_path_encoded (infos->sync, url);
 			}
 
 			browse_entry_free (entry);
@@ -1942,6 +1989,12 @@ cli_server_import (cli_infos_t *infos, command_context_t *ctx)
 		g_free (enc);
 		g_free (vpath);
 		g_list_free (files);
+	}
+
+	if (res != NULL) {
+		/* Wait for the last result to execute until we're done. */
+		xmmsc_result_wait (res);
+		xmmsc_result_unref (res);
 	}
 
 	if (count == 0) {

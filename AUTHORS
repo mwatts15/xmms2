@@ -37,6 +37,10 @@ E: xkr47@outerspace.dyndns.org
 W: http://xkr47.outerspace.dyndns.org/
 D: curl_http updated to xforms, icymetaint plugin (extracted from curl)
 
+N: Diego Biurrun
+E: diego@biurrun.de
+D: Support for libav 9 in avcodec plugin
+
 N: Magnus Bjernstad
 E: bjernstad@gmail.com
 D: PythonAPI fixes.
@@ -58,6 +62,10 @@ D: *BSD support. Manpages. Various fixes.
 N: Nicolas Botti
 E: r2d@musepack.net
 D: Updates to the musepack plugin to support new APIs.
+
+N: Kyle Brantley
+E: scytheblade1@brantleyonline.com
+D: smb fixes
 
 N: Jan Braun
 E: janbraun@gmx.net
@@ -340,6 +348,7 @@ D: Neuros OSD support and related fixes.
 
 N: David Richards
 E: rawdod@gmail.com
+E: kradradio@gmail.com
 D: jack fixes, output
 
 N: Alexander Rigbo
@@ -348,6 +357,7 @@ D: Various fixes. Sorting on integers.
 
 N: Christopher Rosell
 E: chrippa@evangelion.se
+E: chrippa@tanuki.se
 D: FreeBSD support in cdae plugin.
 
 N: Fabian Roth

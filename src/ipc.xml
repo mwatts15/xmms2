@@ -134,8 +134,8 @@ vim:expandtab
         -->
 
         <method>
-            <name>shuffle</name>
-            <documentation>Shuffles the current playlist.</documentation>
+            <name>replace</name>
+            <documentation>Queries a collection and replaces the playlist with the result.</documentation>
 
             <argument>
                 <name>playlist</name>
@@ -144,6 +144,28 @@ vim:expandtab
                 <type>
                     <string />
                 </type>
+            </argument>
+
+            <argument>
+              <name>replacement</name>
+              <documentation>The collection to replace the playlist with.</documentation>
+
+              <type>
+                <collection />
+              </type>
+            </argument>
+
+            <argument>
+              <name>action</name>
+              <documentation>
+                How to handle the current position after replacing the entries of the playlist.
+                * XMMS_PLAYLIST_CURRENT_ID_FORGET resets the position to -1.
+                * XMMS_PLAYLIST_CURRENT_ID_KEEP sets the current position to the last occurrence of the id of current position, or resets to -1 if id is not found.
+                * XMMS_PLAYLIST_CURRENT_ID_MOVE_TO_FRONT moves the id of the current position to the beginning of the new playlist, or resets position to -1 if the id is not found.
+              </documentation>
+              <type>
+                <int />
+              </type>
             </argument>
         </method>
 
@@ -215,52 +237,6 @@ vim:expandtab
         </method>
 
         <method>
-            <name>add_id</name>
-            <documentation>Adds a song to the given playlist.</documentation>
-
-            <argument>
-                <name>playlist</name>
-                <documentation>The playlist to which to add the song.</documentation>
-
-                <type>
-                    <string />
-                </type>
-            </argument>
-
-            <argument>
-                <name>id</name>
-                <documentation>The ID of the song to add to the playlist.</documentation>
-
-                <type>
-                    <int />
-                </type>
-            </argument>
-        </method>
-
-        <method>
-            <name>add_idlist</name>
-            <documentation>Adds songs to the given playlist.</documentation>
-
-            <argument>
-                <name>name</name>
-                <documentation>The name of the playlist to which to add ids.</documentation>
-
-                <type>
-                    <string />
-                </type>
-            </argument>
-
-            <argument>
-                <name>collection</name>
-                <documentation>The idlist collection to be added to the playlist.</documentation>
-
-                <type>
-                    <collection />
-                </type>
-            </argument>
-        </method>
-
-        <method>
             <name>add_collection</name>
             <documentation>Adds the contents of a collection to the given playlist.</documentation>
 
@@ -282,16 +258,6 @@ vim:expandtab
                 </type>
             </argument>
 
-            <argument>
-                <name>order</name>
-                <documentation>A list of medialib properties by which to sort the collection.</documentation>
-
-                <type>
-                    <list>
-                        <string />
-                    </list>
-                </type>
-            </argument>
         </method>
 
         <method>
@@ -345,45 +311,6 @@ vim:expandtab
 
                 <type>
                     <int />
-                </type>
-            </argument>
-        </method>
-
-        <method>
-            <name>clear</name>
-            <documentation>Removes all songs from the given playlist.</documentation>
-
-            <argument>
-                <name>playlist</name>
-                <documentation>The playlist to clear.</documentation>
-
-                <type>
-                    <string />
-                </type>
-            </argument>
-        </method>
-
-        <method>
-            <name>sort</name>
-            <documentation>Sorts the given playlist by the given properties.</documentation>
-
-            <argument>
-                <name>playlist</name>
-                <documentation>The playlist to sort.</documentation>
-
-                <type>
-                    <string />
-                </type>
-            </argument>
-
-            <argument>
-                <name>properties</name>
-                <documentation>The properties to sort on.</documentation>
-
-                <type>
-                    <list>
-                        <string />
-                    </list>
                 </type>
             </argument>
         </method>
@@ -482,38 +409,6 @@ vim:expandtab
         </method>
 
         <method>
-            <name>insert_id</name>
-            <documentation>Inserts a song into the given playlist.</documentation>
-
-            <argument>
-                <name>name</name>
-                <documentation>The name of the playlist into which the song is to be inserted.</documentation>
-
-                <type>
-                    <string />
-                </type>
-            </argument>
-
-            <argument>
-                <name>position</name>
-                <documentation>The playlist position to insert the song.</documentation>
-
-                <type>
-                    <int />
-                </type>
-            </argument>
-
-            <argument>
-                <name>entry</name>
-                <documentation>The medialib id of the song.</documentation>
-
-                <type>
-                    <int />
-                </type>
-            </argument>
-        </method>
-
-        <method>
             <name>insert_collection</name>
             <documentation>Inserts the contents of a collection into the given playlist.</documentation>
 
@@ -541,17 +436,6 @@ vim:expandtab
 
                 <type>
                     <collection />
-                </type>
-            </argument>
-
-            <argument>
-                <name>order</name>
-                <documentation>A list of medialib properties on which to sort the collection.</documentation>
-
-                <type>
-                    <list>
-                        <string />
-                    </list>
                 </type>
             </argument>
         </method>
@@ -1555,17 +1439,6 @@ vim:expandtab
 
                 <type>
                     <int />
-                </type>
-            </argument>
-
-            <argument>
-                <name>order</name>
-                <documentation>The list of properties to order by.</documentation>
-
-                <type>
-                    <list>
-                        <string />
-                    </list>
                 </type>
             </argument>
 

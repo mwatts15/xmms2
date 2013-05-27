@@ -76,6 +76,8 @@
 	                    RSTRING_LEN (arg1)); \
 	METHOD_HANDLER_FOOTER
 
+#define rb_check_hash_type(x) rb_check_convert_type(x, T_HASH, "Hash", "to_hash")
+
 static VALUE cPlaylist;
 static VALUE eClientError, eDisconnectedError;
 static ID id_lt, id_gt;
@@ -606,7 +608,7 @@ c_playback_volume_set (VALUE self, VALUE channel, VALUE volume)
 
 	res = xmmsc_playback_volume_set (xmms->real,
 	                                 rb_id2name (SYM2ID (channel)),
-	                                 NUM2UINT (volume));
+	                                 NUM2INT (volume));
 
 	return TO_XMMS_CLIENT_RESULT (self, res);
 }
@@ -802,8 +804,7 @@ c_medialib_entry_property_set (int argc, VALUE *argv, VALUE self)
 	xmmsc_result_t *res;
 	const char *ckey;
 	bool is_str = false;
-	uint32_t id;
-	int32_t ivalue;
+	int32_t id, ivalue;
 
 	Data_Get_Struct (self, RbXmmsClient, xmms);
 
@@ -860,7 +861,7 @@ c_medialib_entry_property_remove (int argc, VALUE *argv, VALUE self)
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
 	const char *ckey;
-	uint32_t id;
+	int32_t id;
 
 	Data_Get_Struct (self, RbXmmsClient, xmms);
 
@@ -1282,6 +1283,92 @@ c_coll_rename (int argc, VALUE *argv, VALUE self)
 	METHOD_HANDLER_FOOTER
 }
 
+static int
+parse_fetch_spec_foreach (VALUE key, VALUE value, VALUE udata)
+{
+	const char *val_error = "Value must be hash, string, or array of strings.";
+	const char *key_error = "Key must be string";
+	xmmsv_t *spec = (xmmsv_t *) udata;
+	xmmsv_t *elem;
+	int i;
+
+	if (NIL_P (rb_check_string_type (key))) {
+		rb_raise (rb_eArgError, key_error);
+	}
+
+	if (!NIL_P (rb_check_string_type (value))) {
+		xmmsv_dict_set_string (spec,
+		                       StringValuePtr (key),
+		                       StringValuePtr (value));
+	} else if (!NIL_P (rb_check_hash_type (value))) {
+		elem = xmmsv_new_dict ();
+		xmmsv_dict_set (spec, StringValuePtr (key), elem);
+		xmmsv_unref (elem);
+		rb_hash_foreach (value, parse_fetch_spec_foreach, (VALUE) elem);
+	} else if (!NIL_P (rb_check_array_type (value))) {
+		elem = xmmsv_new_list ();
+		xmmsv_dict_set (spec, StringValuePtr (key), elem);
+		xmmsv_unref (elem);
+
+		for (i = 0; i < RARRAY_LEN (value); i++) {
+			VALUE entry = RARRAY_PTR (value)[i];
+			if (NIL_P (rb_check_string_type (entry)))
+				rb_raise (rb_eArgError, val_error);
+			xmmsv_list_append_string (elem, StringValuePtr (entry));
+		}
+	} else {
+		rb_raise (rb_eArgError, val_error);
+	}
+
+	return 0;
+}
+
+static VALUE
+c_coll_query_fragile (VALUE args)
+{
+	VALUE xmms, coll, spec, cspec;
+
+	Check_Type(args, T_ARRAY);
+	rb_scan_args(RARRAY_LEN (args), RARRAY_PTR (args), "4",
+	             &xmms, &coll, &spec, &cspec);
+
+	rb_hash_foreach (spec, parse_fetch_spec_foreach, cspec);
+
+	return (VALUE) xmmsc_coll_query (((RbXmmsClient *) xmms)->real,
+	                                 FROM_XMMS_CLIENT_COLLECTION (coll),
+	                                 (xmmsv_t *) cspec);
+}
+
+static VALUE
+c_coll_query_cleanup (VALUE args)
+{
+	xmmsv_unref ((xmmsv_t *) args);
+}
+
+/*
+ * call-seq:
+ * xc.coll_query(coll, spec) -> result
+ *
+ */
+static VALUE
+c_coll_query (int argc, VALUE *argv, VALUE self)
+{
+	VALUE coll, spec;
+	xmmsv_t *cspec;
+	METHOD_HANDLER_HEADER
+
+	rb_scan_args (argc, argv, "2", &coll, &spec);
+
+	cspec = xmmsv_new_dict ();
+
+	VALUE args = rb_ary_new3(4, xmms, coll, spec, (VALUE) cspec);
+
+	res = (xmmsc_result_t *) rb_ensure (c_coll_query_fragile, args,
+	                                    c_coll_query_cleanup, (VALUE) cspec);
+
+	METHOD_HANDLER_FOOTER
+}
+
 /*
  * call-seq:
  * xc.coll_query_ids(coll, [order], [start], [len]) -> result
@@ -1306,8 +1393,8 @@ c_coll_query_ids (int argc, VALUE *argv, VALUE self)
 	res = xmmsc_coll_query_ids (xmms->real,
 	                            FROM_XMMS_CLIENT_COLLECTION (coll),
 	                            corder,
-	                            NIL_P (start) ? 0 : NUM2UINT (start),
-	                            NIL_P (start) ? 0 : NUM2UINT (len));
+	                            NIL_P (start) ? 0 : NUM2INT (start),
+	                            NIL_P (start) ? 0 : NUM2INT (len));
 
 	if (corder)
 		xmmsv_unref (corder);
@@ -1347,8 +1434,8 @@ c_coll_query_info (int argc, VALUE *argv, VALUE self)
 	res = xmmsc_coll_query_infos (xmms->real,
 	                            FROM_XMMS_CLIENT_COLLECTION (coll),
 	                            corder,
-	                            NIL_P (start) ? 0 : NUM2UINT (start),
-	                            NIL_P (start) ? 0 : NUM2UINT (len),
+	                            NIL_P (start) ? 0 : NUM2INT (start),
+	                            NIL_P (start) ? 0 : NUM2INT (len),
 	                            cfetch,
 	                            cgroup);
 	xmmsv_unref (cfetch);
@@ -1540,6 +1627,7 @@ Init_Client (VALUE mXmms)
 	rb_define_method (c, "coll_remove", c_coll_remove, -1);
 	rb_define_method (c, "coll_find", c_coll_find, 2);
 	rb_define_method (c, "coll_rename", c_coll_rename, -1);
+	rb_define_method (c, "coll_query", c_coll_query, -1);
 	rb_define_method (c, "coll_query_ids", c_coll_query_ids, -1);
 	rb_define_method (c, "coll_query_info", c_coll_query_info, -1);
 	rb_define_method (c, "coll_idlist_from_playlist_file",

@@ -13,8 +13,8 @@
 #include "utils/jsonism.h"
 #include "utils/value_utils.h"
 #include "utils/coll_utils.h"
-#include "utils/ipc_call.h"
-#include "utils/mlib_utils.h"
+#include "server-utils/ipc_call.h"
+#include "server-utils/mlib_utils.h"
 
 static xmms_medialib_t *medialib;
 static xmms_coll_dag_t *colldag;
@@ -35,7 +35,7 @@ setup_default_playlist (void)
 	                             XMMS_ACTIVE_PLAYLIST, coll);
 }
 
-SETUP (mlib) {
+SETUP (playlist) {
 	g_thread_init (0);
 
 	setlocale (LC_COLLATE, "");
@@ -240,7 +240,7 @@ CASE(test_medialib_remove)
 
 CASE(test_client_add_collection)
 {
-	xmmsv_coll_t *universe;
+	xmmsv_coll_t *universe, *ordered;
 	xmmsv_t *result, *order;
 
 	xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
@@ -253,10 +253,13 @@ CASE(test_client_add_collection)
 	                          XMMSV_LIST_ENTRY_STR ("tracknr"),
 	                          XMMSV_LIST_END);
 
+	ordered = xmmsv_coll_add_order_operators (universe, order);
+	xmmsv_unref (order);
+	xmmsv_coll_unref (universe);
+
 	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_ADD_COLL,
 	                        xmmsv_new_string ("Default"),
-	                        xmmsv_new_coll (universe),
-	                        order);
+	                        xmmsv_new_coll (universe));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
 
@@ -266,55 +269,7 @@ CASE(test_client_add_collection)
 	CU_ASSERT_EQUAL (2, xmmsv_list_get_size (result));
 	xmmsv_unref (result);
 
-	xmmsv_coll_unref (universe);
-}
-
-CASE(test_client_add_idlist)
-{
-	xmms_medialib_entry_t first, second;
-	xmmsv_coll_t *list;
-	xmmsv_t *result;
-
-	first = xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
-	second = xmms_mock_entry (medialib, 2, "Red Fang", "Red Fang", "Reverse Thunder");
-
-	list = xmmsv_coll_new (XMMS_COLLECTION_TYPE_IDLIST);
-	xmmsv_coll_idlist_append (list, first);
-	xmmsv_coll_idlist_append (list, second);
-
-	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_ADD_IDLIST,
-	                        xmmsv_new_string ("Default"),
-	                        xmmsv_new_coll (list));
-	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
-	xmmsv_unref (result);
-
-	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_LIST,
-	                        xmmsv_new_string ("Default"));
-	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_LIST));
-	CU_ASSERT_EQUAL (2, xmmsv_list_get_size (result));
-	xmmsv_unref (result);
-
-	xmmsv_coll_unref (list);
-}
-
-CASE(test_client_add_id)
-{
-	xmms_medialib_entry_t first;
-	xmmsv_t *result;
-
-	first = xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
-
-	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_ADD_ID,
-	                        xmmsv_new_string ("Default"),
-	                        xmmsv_new_int (first));
-	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
-	xmmsv_unref (result);
-
-	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_LIST,
-	                        xmmsv_new_string ("Default"));
-	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_LIST));
-	CU_ASSERT_EQUAL (1, xmmsv_list_get_size (result));
-	xmmsv_unref (result);
+	xmmsv_coll_unref (ordered);
 }
 
 CASE(test_client_add_url)
@@ -334,10 +289,13 @@ CASE(test_client_add_url)
 	xmmsv_unref (result);
 }
 
-CASE(test_client_clear)
+CASE(test_client_replace)
 {
 	xmms_medialib_entry_t first;
+	xmmsv_coll_t *coll, *empty;
 	xmmsv_t *result;
+
+	empty = xmmsv_coll_new (XMMS_COLLECTION_TYPE_IDLIST);
 
 	first = xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
 
@@ -347,14 +305,19 @@ CASE(test_client_clear)
 	CU_ASSERT_EQUAL (0, xmmsv_list_get_size (result));
 	xmmsv_unref (result);
 
-	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_ADD_ID,
+	coll = xmmsv_coll_new (XMMS_COLLECTION_TYPE_IDLIST);
+	xmmsv_coll_idlist_append (coll, first);
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_ADD_COLL,
 	                        xmmsv_new_string ("Default"),
-	                        xmmsv_new_int (first));
+	                        xmmsv_new_coll (coll));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
 
-	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_CLEAR,
-	                        xmmsv_new_string ("Default"));
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_REPLACE,
+	                        xmmsv_new_string ("Default"),
+	                        xmmsv_new_coll (empty),
+	                        xmmsv_new_int (XMMS_PLAYLIST_CURRENT_ID_FORGET));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
 
@@ -364,9 +327,9 @@ CASE(test_client_clear)
 	CU_ASSERT_EQUAL (0, xmmsv_list_get_size (result));
 	xmmsv_unref (result);
 
-	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_ADD_ID,
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_ADD_COLL,
 	                        xmmsv_new_string ("Default"),
-	                        xmmsv_new_int (first));
+	                        xmmsv_new_coll (coll));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
 
@@ -375,6 +338,9 @@ CASE(test_client_clear)
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_LIST));
 	CU_ASSERT_EQUAL (1, xmmsv_list_get_size (result));
 	xmmsv_unref (result);
+
+	xmmsv_coll_unref (coll);
+	xmmsv_coll_unref (empty);
 }
 
 CASE(test_client_current_active)
@@ -392,7 +358,7 @@ CASE(test_client_insert_collection)
 {
 	xmms_medialib_entry_t first, second, third;
 	xmmsv_t *result, *order, *expected;
-	xmmsv_coll_t *coll;
+	xmmsv_coll_t *coll, *ordered;
 	xmms_error_t err;
 
 	first = xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
@@ -412,15 +378,18 @@ CASE(test_client_insert_collection)
 	                          XMMSV_LIST_ENTRY_STR ("tracknr"),
 	                          XMMSV_LIST_END);
 
+	ordered = xmmsv_coll_add_order_operators (coll, order);
+	xmmsv_unref (order);
+	xmmsv_coll_unref (coll);
+
 	/* the list should now go from [1, 3] -> [1, 1, 2, 3, 3] */
 	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_INSERT_COLL,
 	                        xmmsv_new_string (XMMS_ACTIVE_PLAYLIST),
 	                        xmmsv_new_int (1),
-	                        xmmsv_new_coll (coll),
-	                        order);
+	                        xmmsv_new_coll (coll));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
-	xmmsv_coll_unref (coll);
+	xmmsv_coll_unref (ordered);
 
 	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_LIST,
 	                        xmmsv_new_string ("Default"));
@@ -428,10 +397,6 @@ CASE(test_client_insert_collection)
 	CU_ASSERT (xmmsv_compare (expected, result));
 	xmmsv_unref (result);
 	xmmsv_unref (expected);
-}
-
-CASE(test_client_insert_id)
-{
 }
 
 CASE(test_client_insert_url)
@@ -526,15 +491,20 @@ CASE(test_client_move_entry)
 CASE(test_client_remove_entry)
 {
 	xmms_medialib_entry_t first;
+	xmmsv_coll_t *coll;
 	xmmsv_t *result;
 
 	first = xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
 
-	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_ADD_ID,
+	coll = xmmsv_coll_new (XMMS_COLLECTION_TYPE_IDLIST);
+	xmmsv_coll_idlist_append (coll, first);
+
+	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_ADD_COLL,
 	                        xmmsv_new_string ("Default"),
-	                        xmmsv_new_int (first));
+	                        xmmsv_new_coll (coll));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
 	xmmsv_unref (result);
+	xmmsv_coll_unref (coll);
 
 	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_LIST,
 	                        xmmsv_new_string ("Default"));
@@ -612,113 +582,6 @@ CASE(test_client_set_next)
 
 	property = xmms_config_lookup ("playlist.repeat_all");
 	xmms_config_property_set_data (property, "0");
-}
-
-CASE(test_client_shuffle)
-{
-	xmms_medialib_entry_t first, second;
-	xmms_future_t *future1, *future2;
-	xmmsv_t *result, *signals, *expected;
-	xmms_error_t err;
-
-	first = xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
-	second = xmms_mock_entry (medialib, 2, "Red Fang", "Red Fang", "Reverse Thunder");
-
-	xmms_playlist_add_entry (playlist, XMMS_ACTIVE_PLAYLIST, first, &err);
-	xmms_playlist_add_entry (playlist, XMMS_ACTIVE_PLAYLIST, second, &err);
-
-	/* advance position from -1 to 0, and from 0 to 1 */
-	xmms_playlist_advance (playlist);
-	xmms_playlist_advance (playlist);
-	CU_ASSERT_EQUAL (second, xmms_playlist_current_entry (playlist));
-
-	future1 = XMMS_IPC_CHECK_SIGNAL (playlist, XMMS_IPC_SIGNAL_PLAYLIST_CHANGED);
-	future2 = XMMS_IPC_CHECK_SIGNAL (playlist, XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS);
-
-	/* emits CHANGED_UPDATE, CHANGED_SHUFFLE, and CURRENT_POS */
-	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_SHUFFLE,
-	                        xmmsv_new_string ("Default"));
-	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
-	xmmsv_unref (result);
-
-	signals = xmms_future_await (future1, 2);
-
-	/* XMMS_PLAYLIST_CHANGED_UPDATE = 7, XMMS_PLAYLIST_CHANGED_SHUFFLE = 2 */
-	expected = xmmsv_from_xson ("[{ 'type': 7, 'name': 'Default' },"
-	                            " { 'type': 2, 'name': 'Default' }]");
-	CU_ASSERT (xmmsv_compare (expected, signals));
-	xmmsv_unref (signals);
-	xmmsv_unref (expected);
-
-	xmms_future_free (future1);
-
-	signals = xmms_future_await (future2, 1);
-
-	/* current entry is moved to position 0 of the playlist */
-	expected = xmmsv_from_xson ("[{ 'position': 0, 'name': 'Default' }]");
-	CU_ASSERT (xmmsv_compare (expected, signals));
-	xmmsv_unref (signals);
-	xmmsv_unref (expected);
-
-	xmms_future_free (future2);
-
-	/* verify that the current entry is still the same */
-	CU_ASSERT_EQUAL (second, xmms_playlist_current_entry (playlist));
-}
-
-CASE(test_client_sort)
-{
-	xmms_medialib_entry_t first, second, third, fourth, entry;
-	xmmsv_t *order, *result;
-	xmms_error_t err;
-
-	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_SORT,
-	                        xmmsv_new_string ("Default"),
-	                        xmmsv_new_list ());
-	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
-	xmmsv_unref (result);
-
-	first  = xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
-	second = xmms_mock_entry (medialib, 2, "Red Fang", "Red Fang", "Reverse Thunder");
-	third  = xmms_mock_entry (medialib, 1, "Vibrasphere", "Lungs for Life", "Decade");
-	fourth = xmms_mock_entry (medialib, 2, "Vibrasphere", "Lungs for Life", "Breathing Place");
-
-	xmms_playlist_add_entry (playlist, XMMS_ACTIVE_PLAYLIST, fourth, &err); // Vibrasphere Track 2
-	xmms_playlist_add_entry (playlist, XMMS_ACTIVE_PLAYLIST, second, &err); // Red Fang Track 2
-	xmms_playlist_add_entry (playlist, XMMS_ACTIVE_PLAYLIST, third, &err);  // Vibrasphere Track 1
-	xmms_playlist_add_entry (playlist, XMMS_ACTIVE_PLAYLIST, first, &err);  // Red Fang Track 1
-	xmms_playlist_add_entry (playlist, XMMS_ACTIVE_PLAYLIST, second, &err); // Red Fang Track 2
-
-	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_LIST,
-	                        xmmsv_new_string ("Default"));
-	CU_ASSERT_EQUAL (5, xmmsv_list_get_size (result));
-	xmmsv_unref (result);
-
-	order = xmmsv_build_list (XMMSV_LIST_ENTRY_STR ("artist"),
-	                          XMMSV_LIST_ENTRY_STR ("album"),
-	                          XMMSV_LIST_ENTRY_STR ("tracknr"),
-	                          XMMSV_LIST_END);
-
-	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_SORT,
-	                        xmmsv_new_string ("Default"),
-	                        order);
-	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_NONE));
-	xmmsv_unref (result);
-
-	result = XMMS_IPC_CALL (playlist, XMMS_IPC_CMD_LIST,
-	                        xmmsv_new_string ("Default"));
-	CU_ASSERT_EQUAL (5, xmmsv_list_get_size (result));
-	CU_ASSERT_TRUE (xmmsv_list_get_int (result, 0, &entry));
-	CU_ASSERT_EQUAL (first, entry);
-	CU_ASSERT_TRUE (xmmsv_list_get_int (result, 1, &entry));
-	CU_ASSERT_EQUAL (second, entry);
-	CU_ASSERT_TRUE (xmmsv_list_get_int (result, 2, &entry));
-	CU_ASSERT_EQUAL (second, entry);
-	CU_ASSERT_TRUE (xmmsv_list_get_int (result, 3, &entry));
-	CU_ASSERT_EQUAL (third, entry);
-	CU_ASSERT_TRUE (xmmsv_list_get_int (result, 4, &entry));
-	CU_ASSERT_EQUAL (fourth, entry);
-	xmmsv_unref (result);
 }
 
 /**

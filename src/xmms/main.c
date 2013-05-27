@@ -60,8 +60,8 @@
  * Forward declarations of the methods in the main object
  */
 static void xmms_main_client_quit (xmms_object_t *object, xmms_error_t *error);
-static GTree *xmms_main_client_stats (xmms_object_t *object, xmms_error_t *error);
-static GList *xmms_main_client_list_plugins (xmms_object_t *main, gint32 type, xmms_error_t *err);
+static xmmsv_t *xmms_main_client_stats (xmms_object_t *object, xmms_error_t *error);
+static xmmsv_t *xmms_main_client_list_plugins (xmms_object_t *main, gint32 type, xmms_error_t *err);
 static void xmms_main_client_hello (xmms_object_t *object, gint protocolver, const gchar *client, xmms_error_t *error);
 static void install_scripts (const gchar *into_dir);
 static void spawn_script_setup (gpointer data);
@@ -111,30 +111,23 @@ static gchar *conffile = NULL;
 /**
  * This returns the main stats for the server
  */
-static GTree *
+static xmmsv_t *
 xmms_main_client_stats (xmms_object_t *object, xmms_error_t *error)
 {
-	GTree *ret;
-	gint starttime;
+	xmms_main_t *mainobj = (xmms_main_t *) object;
+	gint uptime = time (NULL) - mainobj->starttime;
 
-	ret = g_tree_new_full ((GCompareDataFunc) strcmp, NULL,
-	                       NULL, (GDestroyNotify) xmmsv_unref);
-
-	starttime = ((xmms_main_t*)object)->starttime;
-
-	g_tree_insert (ret, (gpointer) "version",
-	               xmmsv_new_string (XMMS_VERSION));
-	g_tree_insert (ret, (gpointer) "uptime",
-	               xmmsv_new_int (time (NULL) - starttime));
-
-	return ret;
+	return xmmsv_build_dict (XMMSV_DICT_ENTRY_STR ("version", XMMS_VERSION),
+	                         XMMSV_DICT_ENTRY_INT ("uptime", uptime),
+	                         XMMSV_DICT_END);
 }
 
 static gboolean
 xmms_main_client_list_foreach (xmms_plugin_t *plugin, gpointer data)
 {
-	xmmsv_t *dict;
-	GList **list = data;
+	xmmsv_t *list, *dict;
+
+	list = (xmmsv_t *) data;
 
 	dict = xmmsv_build_dict (
 	        XMMSV_DICT_ENTRY_STR ("name", xmms_plugin_name_get (plugin)),
@@ -144,16 +137,17 @@ xmms_main_client_list_foreach (xmms_plugin_t *plugin, gpointer data)
 	        XMMSV_DICT_ENTRY_INT ("type", xmms_plugin_type_get (plugin)),
 	        XMMSV_DICT_END);
 
-	*list = g_list_prepend (*list, dict);
+	xmmsv_list_append (list, dict);
+	xmmsv_unref (dict);
 
 	return TRUE;
 }
 
-static GList *
+static xmmsv_t *
 xmms_main_client_list_plugins (xmms_object_t *main, gint32 type, xmms_error_t *err)
 {
-	GList *list = NULL;
-	xmms_plugin_foreach (type, xmms_main_client_list_foreach, &list);
+	xmmsv_t *list = xmmsv_new_list ();
+	xmms_plugin_foreach (type, xmms_main_client_list_foreach, list);
 	return list;
 }
 
@@ -276,28 +270,21 @@ static void
 xmms_main_destroy (xmms_object_t *object)
 {
 	xmms_main_t *mainobj = (xmms_main_t *) object;
-	xmms_object_cmd_arg_t arg;
 	xmms_config_property_t *cv;
 
 	cv = xmms_config_lookup ("core.shutdownpath");
 	do_scriptdir (xmms_config_property_get_string (cv), "stop");
 
-	/* stop output */
-	xmms_object_cmd_arg_init (&arg);
-	arg.args = xmmsv_new_list ();
-	xmms_object_cmd_call (XMMS_OBJECT (mainobj->output_object),
-	                      XMMS_IPC_CMD_STOP, &arg);
-	xmmsv_unref (arg.args);
-
-	g_usleep (G_USEC_PER_SEC); /* wait for the output thread to end */
-
+	xmms_object_unref (mainobj->xform_object);
+	xmms_object_unref (mainobj->visualization_object);
 	xmms_object_unref (mainobj->output_object);
 	xmms_object_unref (mainobj->bindata_object);
-	xmms_object_unref (mainobj->medialib_object);
 	xmms_object_unref (mainobj->playlist_object);
-	xmms_object_unref (mainobj->xform_object);
+	xmms_object_unref (mainobj->colldag_object);
+	xmms_object_unref (mainobj->medialib_object);
 	xmms_object_unref (mainobj->mediainfo_object);
-	xmms_object_unref (mainobj->visualization_object);
+	xmms_object_unref (mainobj->plsupdater_object);
+	xmms_object_unref (mainobj->collsync_object);
 
 	xmms_config_save ();
 
@@ -328,10 +315,12 @@ xmms_main_client_hello (xmms_object_t *object, gint protocolver, const gchar *cl
 
 static gboolean
 kill_server (gpointer object) {
-	xmms_object_emit_f (XMMS_OBJECT (object),
-	                    XMMS_IPC_SIGNAL_QUIT,
-	                    XMMSV_TYPE_INT32,
-	                    time (NULL)-((xmms_main_t*)object)->starttime);
+	xmms_main_t *mainobj = (xmms_main_t *) object;
+	gint uptime = time (NULL) - mainobj->starttime;
+
+	xmms_object_emit (XMMS_OBJECT (object),
+	                  XMMS_IPC_SIGNAL_QUIT,
+	                  xmmsv_new_int (uptime));
 
 	xmms_object_unref (object);
 
