@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -33,86 +33,85 @@ CLEANUP () {
 
 CASE (test_coll_simple_types)
 {
-	xmmsv_coll_t *c;
+	xmmsv_t *c;
 
-	c = xmmsv_coll_new (XMMS_COLLECTION_TYPE_REFERENCE);
+	c = xmmsv_new_coll (XMMS_COLLECTION_TYPE_REFERENCE);
 	CU_ASSERT_PTR_NOT_NULL (c);
 	CU_ASSERT_EQUAL (xmmsv_coll_get_type (c), XMMS_COLLECTION_TYPE_REFERENCE);
-	xmmsv_coll_unref (c);
+	xmmsv_unref (c);
 
-	c = xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNION);
+	c = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNION);
 	CU_ASSERT_PTR_NOT_NULL (c);
 	CU_ASSERT_EQUAL (xmmsv_coll_get_type (c), XMMS_COLLECTION_TYPE_UNION);
-	xmmsv_coll_unref (c);
+	xmmsv_unref (c);
 
-	c = xmmsv_coll_new (XMMS_COLLECTION_TYPE_INTERSECTION);
+	c = xmmsv_new_coll (XMMS_COLLECTION_TYPE_INTERSECTION);
 	CU_ASSERT_PTR_NOT_NULL (c);
 	CU_ASSERT_EQUAL (xmmsv_coll_get_type (c), XMMS_COLLECTION_TYPE_INTERSECTION);
-	xmmsv_coll_unref (c);
+	xmmsv_unref (c);
 
-	c = xmmsv_coll_new (XMMS_COLLECTION_TYPE_COMPLEMENT);
+	c = xmmsv_new_coll (XMMS_COLLECTION_TYPE_COMPLEMENT);
 	CU_ASSERT_PTR_NOT_NULL (c);
 	CU_ASSERT_EQUAL (xmmsv_coll_get_type (c), XMMS_COLLECTION_TYPE_COMPLEMENT);
-	xmmsv_coll_unref (c);
+	xmmsv_unref (c);
 
-	c = xmmsv_coll_new (XMMS_COLLECTION_TYPE_EQUALS);
+	c = xmmsv_new_coll (XMMS_COLLECTION_TYPE_EQUALS);
 	CU_ASSERT_PTR_NOT_NULL (c);
 	CU_ASSERT_EQUAL (xmmsv_coll_get_type (c), XMMS_COLLECTION_TYPE_EQUALS);
-	xmmsv_coll_unref (c);
+	xmmsv_unref (c);
 
-	c = xmmsv_coll_new (XMMS_COLLECTION_TYPE_IDLIST);
+	c = xmmsv_new_coll (XMMS_COLLECTION_TYPE_IDLIST);
 	CU_ASSERT_PTR_NOT_NULL (c);
 	CU_ASSERT_EQUAL (xmmsv_coll_get_type (c), XMMS_COLLECTION_TYPE_IDLIST);
-	xmmsv_coll_unref (c);
+	xmmsv_unref (c);
 
-	c = xmmsv_coll_new (1000);
+	c = xmmsv_new_coll (1000);
 	CU_ASSERT_PTR_NULL (c);
 	if (c)
-		xmmsv_coll_unref (c);
+		xmmsv_unref (c);
 
-	c = xmmsv_coll_new (-1);
+	c = xmmsv_new_coll (-1);
 	CU_ASSERT_PTR_NULL (c);
 	if (c)
-		xmmsv_coll_unref (c);
+		xmmsv_unref (c);
 }
 
 CASE (test_coll_universe)
 {
-	xmmsv_coll_t *c;
+	xmmsv_t *c;
 
 	c = xmmsv_coll_universe ();
 	CU_ASSERT_PTR_NOT_NULL (c);
 
 	CU_ASSERT_EQUAL (xmmsv_coll_get_type (c), XMMS_COLLECTION_TYPE_UNIVERSE);
 
-	xmmsv_coll_unref (c);
+	xmmsv_unref (c);
 }
-
 
 /* #2109 */
 CASE (test_coll_operands_list_clear)
 {
-	xmmsv_coll_t *u;
+	xmmsv_t *u;
 
-	u = xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNION);
+	u = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNION);
 	CU_ASSERT_PTR_NOT_NULL (u);
 
 	xmmsv_list_clear (xmmsv_coll_operands_get (u));
 
-	xmmsv_coll_unref (u);
+	xmmsv_unref (u);
 }
 
 CASE (test_coll_operands)
 {
-	xmmsv_coll_t *u;
-	xmmsv_coll_t *ops[10];
+	xmmsv_t *u;
+	xmmsv_t *ops[10];
 	int i;
 
-	u = xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNION);
+	u = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNION);
 	CU_ASSERT_PTR_NOT_NULL (u);
 
 	for (i = 0; i < 10; i++) {
-		ops[i] = xmmsv_coll_universe ();
+		ops[i] = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
 		CU_ASSERT_PTR_NOT_NULL (ops[i]);
 	}
 
@@ -123,22 +122,22 @@ CASE (test_coll_operands)
 	CU_ASSERT_EQUAL (xmmsv_list_get_size (xmmsv_coll_operands_get (u)), 10);
 
 	for (i = 0; i < 10; i++) {
-		xmmsv_coll_unref (ops[i]);
+		xmmsv_unref (ops[i]);
 	}
 
 	xmmsv_list_clear (xmmsv_coll_operands_get (u));
 
-	xmmsv_coll_unref (u);
+	xmmsv_unref (u);
 }
 
 CASE (test_coll_operands_list)
 {
 	xmmsv_t *opl;
-	xmmsv_coll_t *u;
+	xmmsv_t *u;
 	xmmsv_t *t;
 	int i;
 
-	u = xmmsv_coll_new (XMMS_COLLECTION_TYPE_UNION);
+	u = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNION);
 	CU_ASSERT_PTR_NOT_NULL (u);
 
 	opl = xmmsv_coll_operands_get (u);
@@ -149,21 +148,18 @@ CASE (test_coll_operands_list)
 	CU_ASSERT_FALSE (xmmsv_list_append (opl, t));
 
 	for (i = 0; i < 10; i++) {
-		xmmsv_coll_t *o;
-		xmmsv_t *ov;
-		o = xmmsv_coll_universe ();
+		xmmsv_t *o;
+		o = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
 		CU_ASSERT_PTR_NOT_NULL (o);
-		ov = xmmsv_new_coll (o);
-		xmmsv_coll_unref (o);
-		CU_ASSERT_TRUE (xmmsv_list_append (opl, ov));
-		xmmsv_unref (ov);
+		CU_ASSERT_TRUE (xmmsv_list_append (opl, o));
+		xmmsv_unref (o);
 	}
 
 	CU_ASSERT_EQUAL (xmmsv_list_get_size (xmmsv_coll_operands_get (u)), 10);
 
 	xmmsv_list_clear (xmmsv_coll_operands_get (u));
 
-	xmmsv_coll_unref (u);
+	xmmsv_unref (u);
 
 	xmmsv_unref (t);
 }
@@ -171,27 +167,27 @@ CASE (test_coll_operands_list)
 CASE (test_coll_attributes)
 {
 	const char *v;
-	xmmsv_coll_t *c;
+	xmmsv_t *c;
 	int cnt;
 	int sum;
 	xmmsv_dict_iter_t *it;
 
-	c = xmmsv_coll_new (XMMS_COLLECTION_TYPE_REFERENCE);
+	c = xmmsv_new_coll (XMMS_COLLECTION_TYPE_REFERENCE);
 	CU_ASSERT_PTR_NOT_NULL (c);
 
-	xmmsv_coll_attribute_set (c, "k1", "v1");
-	xmmsv_coll_attribute_set (c, "k2", "v2");
-	xmmsv_coll_attribute_set (c, "k3", "v3");
+	xmmsv_coll_attribute_set_string (c, "k1", "v1");
+	xmmsv_coll_attribute_set_string (c, "k2", "v2");
+	xmmsv_coll_attribute_set_string (c, "k3", "v3");
 
-	CU_ASSERT_TRUE (xmmsv_coll_attribute_get (c, "k1", &v));
+	CU_ASSERT_TRUE (xmmsv_coll_attribute_get_string (c, "k1", &v));
 	CU_ASSERT_STRING_EQUAL (v, "v1");
-	CU_ASSERT_TRUE (xmmsv_coll_attribute_get (c, "k2", &v));
+	CU_ASSERT_TRUE (xmmsv_coll_attribute_get_string (c, "k2", &v));
 	CU_ASSERT_STRING_EQUAL (v, "v2");
-	CU_ASSERT_TRUE (xmmsv_coll_attribute_get (c, "k3", &v));
+	CU_ASSERT_TRUE (xmmsv_coll_attribute_get_string (c, "k3", &v));
 	CU_ASSERT_STRING_EQUAL (v, "v3");
 
 	/* non existent key */
-	CU_ASSERT_FALSE (xmmsv_coll_attribute_get (c, "k4", &v));
+	CU_ASSERT_FALSE (xmmsv_coll_attribute_get_string (c, "k4", &v));
 
 	cnt = 0;
 	sum = 0;
@@ -213,20 +209,20 @@ CASE (test_coll_attributes)
 	CU_ASSERT_EQUAL (xmmsv_dict_get_size (xmmsv_coll_attributes_get (c)), 3);
 
 	/* replace */
-	xmmsv_coll_attribute_set (c, "k2", "v2new");
-	CU_ASSERT_TRUE (xmmsv_coll_attribute_get (c, "k2", &v));
+	xmmsv_coll_attribute_set_string (c, "k2", "v2new");
+	CU_ASSERT_TRUE (xmmsv_coll_attribute_get_string (c, "k2", &v));
 	CU_ASSERT_STRING_EQUAL (v, "v2new");
 
-	xmmsv_coll_unref (c);
+	xmmsv_unref (c);
 }
 
 CASE (test_coll_idlist)
 {
-	xmmsv_coll_t *c;
+	xmmsv_t *c;
 	int32_t v;
 	int i;
 
-	c = xmmsv_coll_new (XMMS_COLLECTION_TYPE_IDLIST);
+	c = xmmsv_new_coll (XMMS_COLLECTION_TYPE_IDLIST);
 
 	for (i = 0; i < 100; i++) {
 		xmmsv_coll_idlist_append (c, i);
@@ -255,5 +251,5 @@ CASE (test_coll_idlist)
 	CU_ASSERT_TRUE (xmmsv_coll_idlist_clear (c));
 	CU_ASSERT_FALSE (xmmsv_coll_idlist_get_index (c, 0, &v));
 
-	xmmsv_coll_unref (c);
+	xmmsv_unref (c);
 }

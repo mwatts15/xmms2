@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -16,6 +16,11 @@
 
 #ifndef __RB_XMMSCLIENT_H
 #define __RB_XMMSCLIENT_H
+
+#include <xmmsc/xmmsc_util.h>
+
+#define RB_XMMS_DEPRECATED(func1,func2) \
+	rb_warning (XMMS_STRINGIFY (func1) " is deprecated use " XMMS_STRINGIFY (func2) " instead") \
 
 #define CHECK_DELETED(xmms) \
 	if (xmms->deleted) \

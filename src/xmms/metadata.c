@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -17,14 +17,15 @@
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include <glib.h>
 
-#include "xmmspriv/xmms_metadata_mapper.h"
-#include "xmmspriv/xmms_utils.h"
+#include <xmmspriv/xmms_metadata_mapper.h>
+#include <xmmspriv/xmms_utils.h>
 
-#include "xmms/xmms_log.h"
-#include "xmms/xmms_xformplugin.h"
+#include <xmms/xmms_log.h>
+#include <xmms/xmms_xformplugin.h>
 
 static gboolean xmms_xform_metadata_parse_string (xmms_xform_t *xform, const gchar *key, const gchar *value, gsize length);
 static gboolean xmms_xform_metadata_parse_tracknumber (xmms_xform_t *xform, const gchar *key, const gchar *value, gsize length);
@@ -68,6 +69,7 @@ static const xmms_xform_metadata_mapping_t defaults[] = {
 	{ XMMS_MEDIALIB_ENTRY_PROPERTY_DJMIXER,           xmms_xform_metadata_parse_string      },
 	{ XMMS_MEDIALIB_ENTRY_PROPERTY_MIXER,             xmms_xform_metadata_parse_string      },
 	{ XMMS_MEDIALIB_ENTRY_PROPERTY_ARRANGER,          xmms_xform_metadata_parse_string      },
+	{ XMMS_MEDIALIB_ENTRY_PROPERTY_PRODUCER,          xmms_xform_metadata_parse_string      },
 	{ XMMS_MEDIALIB_ENTRY_PROPERTY_PUBLISHER,         xmms_xform_metadata_parse_string      },
 	{ XMMS_MEDIALIB_ENTRY_PROPERTY_COMPOSER,          xmms_xform_metadata_parse_string      },
 	{ XMMS_MEDIALIB_ENTRY_PROPERTY_LYRICIST,          xmms_xform_metadata_parse_string      },

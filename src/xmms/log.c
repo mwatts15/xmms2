@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -24,8 +24,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <glib.h>
-#include "xmmspriv/xmms_log.h"
-#include "xmmspriv/xmms_localtime.h"
+#include <xmmspriv/xmms_log.h>
+#include <xmmspriv/xmms_localtime.h>
 
 static gchar *logts_format = NULL;
 static void xmms_log_handler (const gchar *log_domain, GLogLevelFlags log_level, const gchar *message, gpointer user_data);

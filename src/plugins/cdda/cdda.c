@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -14,9 +14,9 @@
  *  Lesser General Public License for more details.
  */
 
-#include "xmms/xmms_xformplugin.h"
-#include "xmms/xmms_log.h"
-#include "xmms/xmms_util.h"
+#include <xmms/xmms_xformplugin.h>
+#include <xmms/xmms_log.h>
+#include <xmms/xmms_util.h>
 
 #include <cdio/cdda.h>
 #include <cdio/cdio.h>
@@ -26,6 +26,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+
+#ifndef DISCID_HAVE_SPARSE_READ
+#define discid_read_sparse(disc, dev, i) discid_read(disc, dev)
+#endif
 
 typedef struct {
 	CdIo_t *cdio;
@@ -424,7 +428,7 @@ get_disc_ids (const gchar *device, gchar **disc_id,
 	DiscId *disc = discid_new ();
 	g_return_val_if_fail (disc, FALSE);
 
-	if (discid_read (disc, device) == 0) {
+	if (discid_read_sparse (disc, device, 0) == 0) {
 		xmms_log_error ("Could not read disc: %s", discid_get_error_msg (disc));
 		discid_free (disc);
 		return FALSE;

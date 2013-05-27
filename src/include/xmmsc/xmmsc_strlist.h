@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -18,7 +18,7 @@
 #define __XMMS_STRLIST_H__
 
 #include <stdarg.h>
-#include "xmmsc/xmmsc_compiler.h"
+#include <xmmsc/xmmsc_compiler.h>
 
 char **xmms_valist_to_strlist (const char *first, va_list ap);
 char **xmms_vargs_to_strlist (const char *first, ...) XMMS_SENTINEL(0);

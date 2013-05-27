@@ -1,7 +1,7 @@
 /** @file vocoder.c
  *  Vocoder effect plugin
  *
- *  Copyright (C) 2006-2012 XMMS2 Team
+ *  Copyright (C) 2006-2013 XMMS2 Team
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -14,9 +14,9 @@
  *  GNU General Public License for more details.
  */
 
-#include "xmms/xmms_xformplugin.h"
-#include "xmms/xmms_sample.h"
-#include "xmms/xmms_log.h"
+#include <xmms/xmms_xformplugin.h>
+#include <xmms/xmms_sample.h>
+#include <xmms/xmms_log.h>
 
 #include <stdlib.h>
 #include <string.h>

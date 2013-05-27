@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -32,8 +32,8 @@ extern "C" {
 
 #include <sys/time.h>
 
-#include "xmmsc/xmmsc_stdint.h"
-#include "xmmsc/xmmsc_sockets.h"
+#include <xmmsc/xmmsc_stdint.h>
+#include <xmmsc/xmmsc_sockets.h>
 
 double tv2ts (struct timeval *t);
 double net2ts (int32_t* s);

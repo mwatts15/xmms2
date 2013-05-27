@@ -7,11 +7,11 @@ from indenter import Indenter
 c_type_map = {
 	'string': 'const char *',
 	'int': 'gint32',
-	'collection':'xmmsv_coll_t *',
+	'collection':'xmmsv_t *',
 	'binary':'GString *',
 	'list':'xmmsv_t *',
 	'dictionary':'xmmsv_t *',
-	'xmmsv' : 'xmmsv_t *',
+	'unknown' : 'xmmsv_t *',
 }
 
 c_getter_map = {
@@ -19,9 +19,9 @@ c_getter_map = {
 	'string': 'xmmsv_get_string',
 	'list': None,
 	'dictionary': None,
-	'collection': 'xmmsv_get_coll',
+	'collection': None,
 	'binary': 'xmms_bin_to_gstring',
-	'xmmsv' : None,
+	'unknown' : None,
 }
 
 c_creator_map = {
@@ -29,9 +29,9 @@ c_creator_map = {
 	'string': 'xmms_convert_and_kill_string',
 	'list': None,
 	'dictionary': None,
-	'collection': 'xmmsv_new_coll',
+	'collection': None,
 	'binary': None,
-	'xmmsv' : None,
+	'unknown' : None,
 }
 
 c_nullable_type_map = {
@@ -39,9 +39,18 @@ c_nullable_type_map = {
 	'string': "gchar *",
 	'list': "xmmsv_t *",
 	'dictionary': "xmmsv_t *",
-	'collection': "xmmsv_coll_t *",
+	'collection': "xmmsv_t *",
 	'binary': "GString *",
-	'xmmsv' : "xmmsv_t *",
+	'unknown' : "xmmsv_t *",
+}
+
+c_xmmsv_type_t_map = {
+    'int': 'XMMSV_TYPE_INT32',
+    'string': 'XMMSV_TYPE_STRING',
+    'list': 'XMMSV_TYPE_LIST',
+    'dictionary': 'XMMSV_TYPE_DICT',
+    'collection': 'XMMSV_TYPE_COLL',
+    'binary': 'XMMSV_TYPE_BINDATA'
 }
 
 def build(object_name, c_type):
@@ -130,6 +139,12 @@ def emit_method_define_code(object, method, c_type):
 		Indenter.printline('xmms_error_set (&arg->error, XMMS_ERROR_INVAL, "Missing arg %d in %s");' % (i, method.name))
 		Indenter.printline('return;')
 		Indenter.leave("}")
+
+		if a.type[0] == 'list' and len(a.type) > 1 and a.type[1] in c_xmmsv_type_t_map:
+			Indenter.enter('if (!xmmsv_list_restrict_type (t, %s)) {' % (c_xmmsv_type_t_map[a.type[1]]))
+			Indenter.printline('XMMS_DBG("Wrong list content (not %s) for arg %d in %s.");' % (a.type[1], i, method.name))
+			Indenter.printline('xmms_error_set (&arg->error, XMMS_ERROR_INVAL, "Wrong list content (not %s) for arg %d in %s.");' % (a.type[1], i, method.name))
+			Indenter.leave('}')
 
 		if c_getter_map[a.type[0]] is None:
 			Indenter.printline("argval%d = t;" % i)

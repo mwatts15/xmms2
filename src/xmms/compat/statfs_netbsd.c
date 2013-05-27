@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -30,8 +30,8 @@
 #include <sys/param.h>
 #include <sys/mount.h>
 
-#include "xmms/xmms_log.h"
-#include "xmmspriv/xmms_statfs.h"
+#include <xmms/xmms_log.h>
+#include <xmmspriv/xmms_statfs.h>
 
 /**
  * This function uses the statvfs() call to

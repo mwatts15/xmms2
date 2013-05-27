@@ -1,7 +1,7 @@
 # encoding: utf-8
 #
 # WAF build scripts for XMMS2
-# Copyright (C) 2006-2012 XMMS2 Team
+# Copyright (C) 2006-2013 XMMS2 Team
 #
 
 import sys
@@ -90,6 +90,7 @@ src/clients/lib/perl
 src/clients/lib/ruby
 src/lib/s4/src/tools/s4
 src/tools/sqlite2s4
+src/tools/migrate-collections
 tests
 pixmaps
 """.split()
@@ -343,6 +344,8 @@ def configure(conf):
     conf.check_tool('gcc')
     conf.check_tool('g++')
 
+    conf.check_tool('visibility', tooldir = os.path.abspath('waftools'))
+
     if conf.options.target_platform:
         Options.platform = conf.options.target_platform
 
@@ -355,8 +358,16 @@ def configure(conf):
         conf.msg("uncommited changed", changed and "yes" or "no")
         conf.env.VERSION = "%s (git commit: %s%s)" % (BASEVERSION, nam, dirty)
 
-    conf.env.append_unique('CFLAGS', ['-g', '-O0'])
-    conf.env.append_unique('CXXFLAGS', ['-g', '-O0'])
+    for env in ('CFLAGS', 'CXXFLAGS'):
+        # Makes sure the env variable exists and is a list
+        conf.env.append_unique(env, [])
+        hasoptim=False
+        for f in conf.env[env]:
+            if f.startswith('-O'):
+                hasoptim=True
+                break
+        if not hasoptim:
+            conf.env.append_unique(env, ['-g', '-O0'])
 
     if conf.options.enable_gcov:
         conf.env.enable_gcov = True
@@ -401,8 +412,10 @@ def configure(conf):
             conf.env.prepend_value('INCLUDES', os.path.join(d, 'include'))
 
     if Options.platform != 'win32':
-        conf.env.append_unique('CFLAGS_cstlib', ['-fPIC', '-DPIC'])
-        conf.env.append_unique('CPPFLAGS_cxxshlib', ['-fPIC', '-DPIC'])
+        conf.env.CFLAGS_cshlib = ['-fPIC', '-DPIC']
+        conf.env.CFLAGS_cstlib = ['-fPIC', '-DPIC']
+        conf.env.CPPFLAGS_cxxshlib = ['-fPIC', '-DPIC']
+        conf.env.CPPFLAGS_cxxstlib = ['-fPIC', '-DPIC']
     else:
         # As we have to change target platform after the tools
         # have been loaded there are a few variables that needs
@@ -488,8 +501,8 @@ int main() { return 0; }
     # TODO: Add --no-mac-bundle in options ?
     conf.env.mac_bundle_enabled = Options.platform == 'darwin'
 
-    conf.check_cfg(package='glib-2.0', atleat_version='2.8.0',
-            uselib_store='glib2', args='--cflags --libs')
+    conf.check_cfg(package='glib-2.0', atleast_version='2.32.0',
+                   uselib_store='glib2', args='--cflags --libs')
 
     # Valgrind can be used for debugging here and there, so lets check
     # it at top-level so each consumer don't have to bother.

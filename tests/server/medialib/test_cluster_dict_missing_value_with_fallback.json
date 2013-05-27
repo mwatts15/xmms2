@@ -1,0 +1,26 @@
+{
+    "medialib": [
+        { "album": "Lungs for Life", "title": "Decade" },
+        { "album": "Lungs for Life", "title": "Breathing Place" },
+        { "title": "Prehistoric Dog" }
+    ],
+    "collection": { "type": "universe" },
+    "specification": {
+        "type": "cluster-dict",
+        "cluster-by": "value",
+        "cluster-field": "album",
+        "cluster-fallback": "<Unknown Album>",
+        "data": {
+            "type": "metadata",
+            "fields": ["title"],
+            "get": ["value"],
+            "aggregate": "list"
+        }
+    },
+    "expected": {
+        "result": {
+            "Lungs for Life": ["Decade", "Breathing Place"],
+            "<Unknown Album>": ["Prehistoric Dog"]
+        }
+    }
+}

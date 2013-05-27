@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -19,9 +19,9 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "xmmsclient/xmmsclient.h"
-#include "xmmsclientpriv/xmmsclient.h"
-#include "xmmsc/xmmsc_idnumbers.h"
+#include <xmmsclient/xmmsclient.h>
+#include <xmmsclientpriv/xmmsclient.h>
+#include <xmmsc/xmmsc_idnumbers.h>
 
 
 /** @defgroup Collections Collections
@@ -70,8 +70,8 @@ xmmsc_coll_sync (xmmsc_connection_t *conn)
 {
 	x_check_conn (conn, NULL);
 
-	return xmmsc_send_cmd (conn, XMMS_IPC_OBJECT_COLLECTION,
-	                       XMMS_IPC_CMD_COLLECTION_SYNC,
+	return xmmsc_send_cmd (conn, XMMS_IPC_OBJECT_COLL_SYNC,
+	                       XMMS_IPC_CMD_COLL_SYNC_SYNC,
 	                       XMMSV_LIST_END);
 }
 
@@ -102,7 +102,7 @@ xmmsc_coll_list (xmmsc_connection_t *conn, xmmsv_coll_namespace_t ns)
  * @param ns  The namespace in which to save the collection.
  */
 xmmsc_result_t*
-xmmsc_coll_save (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
+xmmsc_coll_save (xmmsc_connection_t *conn, xmmsv_t *coll,
                  const char* name, xmmsv_coll_namespace_t ns)
 {
 	x_check_conn (conn, NULL);
@@ -113,7 +113,7 @@ xmmsc_coll_save (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
 	                       XMMS_IPC_CMD_COLLECTION_SAVE,
 	                       XMMSV_LIST_ENTRY_STR (name),
 	                       XMMSV_LIST_ENTRY_STR (ns),
-	                       XMMSV_LIST_ENTRY_COLL (coll),
+	                       XMMSV_LIST_ENTRY (xmmsv_ref (coll)),
 	                       XMMSV_LIST_END);
 }
 
@@ -197,11 +197,10 @@ xmmsc_result_t* xmmsc_coll_rename (xmmsc_connection_t *conn,
  * @param limit_len  The maximum number of entries to retrieve (0 to disable).
  */
 xmmsc_result_t*
-xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
+xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsv_t *coll,
                       xmmsv_t *order, int limit_start, int limit_len)
 {
-	xmmsv_t *spec, *metadata, *get;
-	xmmsv_coll_t *ordered, *limited;
+	xmmsv_t *spec, *metadata, *get, *ordered, *limited;
 	xmmsc_result_t *ret;
 
 	/* Creates the fetchspec to use */
@@ -222,8 +221,8 @@ xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
 	limited = xmmsv_coll_add_limit_operator (ordered, limit_start, limit_len);
 
 	ret = xmmsc_coll_query (conn, limited, spec);
-	xmmsv_coll_unref (ordered);
-	xmmsv_coll_unref (limited);
+	xmmsv_unref (ordered);
+	xmmsv_unref (limited);
 	xmmsv_unref (spec);
 
 	return ret;
@@ -248,12 +247,12 @@ xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
  *               #xmmsv_t list of strings.
  */
 xmmsc_result_t*
-xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
+xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsv_t *coll,
                         xmmsv_t *order, int limit_start,
                         int limit_len, xmmsv_t *fetch,
                         xmmsv_t *group)
 {
-	xmmsv_coll_t *ordered;
+	xmmsv_t *ordered;
 
 	x_check_conn (conn, NULL);
 	x_api_error_if (!coll, "with a NULL collection", NULL);
@@ -270,7 +269,7 @@ xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
 
 	return xmmsc_send_cmd (conn, XMMS_IPC_OBJECT_COLLECTION,
 	                       XMMS_IPC_CMD_QUERY_INFOS,
-	                       XMMSV_LIST_ENTRY_COLL (ordered),
+	                       XMMSV_LIST_ENTRY (ordered),
 	                       XMMSV_LIST_ENTRY_INT (limit_start),
 	                       XMMSV_LIST_ENTRY_INT (limit_len),
 	                       XMMSV_LIST_ENTRY (xmmsv_ref (fetch)),
@@ -290,7 +289,7 @@ xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsv_coll_t *coll,
  * @return An xmmsv_t with the structure specified in fetch.
  */
 xmmsc_result_t*
-xmmsc_coll_query (xmmsc_connection_t *conn, xmmsv_coll_t *coll, xmmsv_t *fetch)
+xmmsc_coll_query (xmmsc_connection_t *conn, xmmsv_t *coll, xmmsv_t *fetch)
 {
 	x_check_conn (conn, NULL);
 	x_api_error_if (!coll, "with a NULL collection", NULL);
@@ -298,7 +297,7 @@ xmmsc_coll_query (xmmsc_connection_t *conn, xmmsv_coll_t *coll, xmmsv_t *fetch)
 
 	return xmmsc_send_cmd (conn, XMMS_IPC_OBJECT_COLLECTION,
 	                       XMMS_IPC_CMD_QUERY,
-	                       XMMSV_LIST_ENTRY_COLL (coll),
+	                       XMMSV_LIST_ENTRY (xmmsv_ref (coll)),
 	                       XMMSV_LIST_ENTRY (xmmsv_ref (fetch)),
 	                       XMMSV_LIST_END);
 }

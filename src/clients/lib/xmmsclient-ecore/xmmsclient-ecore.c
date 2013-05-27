@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -18,10 +18,10 @@
 
 #include <stdio.h>
 
-#include "xmmsclient/xmmsclient.h"
-#include "xmmsclient/xmmsclient-ecore.h"
+#include <xmmsclient/xmmsclient.h>
+#include <xmmsclient/xmmsclient-ecore.h>
 
-static int
+static Eina_Bool
 on_fd_data (void *udata, Ecore_Fd_Handler *handler)
 {
 	xmmsc_connection_t *c = udata;

@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -17,14 +17,15 @@
 #ifndef __XMMSV_H__
 #define __XMMSV_H__
 
-#include "xmmsc/xmmsv_general.h"
+#include <xmmsc/xmmsv_general.h>
 
-#include "xmmsc/xmmsv_list.h"
-#include "xmmsc/xmmsv_dict.h"
-#include "xmmsc/xmmsv_bitbuffer.h"
+#include <xmmsc/xmmsv_list.h>
+#include <xmmsc/xmmsv_dict.h>
+#include <xmmsc/xmmsv_coll.h>
+#include <xmmsc/xmmsv_bitbuffer.h>
 
-#include "xmmsc/xmmsv_util.h"
-#include "xmmsc/xmmsv_build.h"
-#include "xmmsc/xmmsv_deprecated.h"
+#include <xmmsc/xmmsv_util.h>
+#include <xmmsc/xmmsv_build.h>
+#include <xmmsc/xmmsv_deprecated.h>
 
 #endif

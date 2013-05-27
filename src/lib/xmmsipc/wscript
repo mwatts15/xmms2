@@ -1,7 +1,7 @@
 # encoding: utf-8
 #
 # WAF build scripts for XMMS2
-# Copyright (C) 2006-2012 XMMS2 Team
+# Copyright (C) 2006-2013 XMMS2 Team
 #
 
 def build(bld):
@@ -17,7 +17,9 @@ def build(bld):
     else:
         source.extend('socket_unix.c transport_unix.c'.split())
 
-    bld(features = 'c cstlib',
+    bld.objects(
+        features = 'visibilityhidden',
+        cflags=bld.env.CFLAGS_cshlib,
         target = 'xmmsipc',
         source = source,
         includes = '. ../../.. ../../include ../../includepriv',

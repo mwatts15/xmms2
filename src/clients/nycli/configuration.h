@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -17,13 +17,9 @@
 #ifndef __CONFIGURATION_H__
 #define __CONFIGURATION_H__
 
-#include <xmmsclient/xmmsclient.h>
-#include <string.h>
-
 #include <glib.h>
-#include <glib/gprintf.h>
 
-#include "main.h"
+typedef struct configuration_St configuration_t;
 
 gchar *configuration_get_filename (void);
 configuration_t* configuration_init (const gchar *path);

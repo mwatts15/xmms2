@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -693,7 +693,20 @@ c_broadcast_playlist_loaded (VALUE self)
 static VALUE
 c_broadcast_medialib_entry_changed (VALUE self)
 {
-	METHOD_ADD_HANDLER (broadcast_medialib_entry_changed);
+	RB_XMMS_DEPRECATED (broadcast_medialib_entry_changed, broadcast_medialib_entry_updated);
+	METHOD_ADD_HANDLER (broadcast_medialib_entry_updated);
+}
+
+/*
+ * call-seq:
+ *  xc.broadcast_medialib_entry_changed -> result
+ *
+ * Retrieves the id of a changed medialib entry as a broadcast.
+ */
+static VALUE
+c_broadcast_medialib_entry_updated (VALUE self)
+{
+	METHOD_ADD_HANDLER (broadcast_medialib_entry_updated);
 }
 
 /*
@@ -706,6 +719,18 @@ static VALUE
 c_broadcast_medialib_entry_added (VALUE self)
 {
 	METHOD_ADD_HANDLER (broadcast_medialib_entry_added);
+}
+
+/*
+ * call-seq:
+ *  xc.broadcast_medialib_entry_removed -> result
+ *
+ * Retrieves the id of an removed medialib entry as a broadcast.
+ */
+static VALUE
+c_broadcast_medialib_entry_removed (VALUE self)
+{
+	METHOD_ADD_HANDLER (broadcast_medialib_entry_removed);
 }
 
 /*
@@ -1286,14 +1311,12 @@ c_coll_rename (int argc, VALUE *argv, VALUE self)
 static int
 parse_fetch_spec_foreach (VALUE key, VALUE value, VALUE udata)
 {
-	const char *val_error = "Value must be hash, string, or array of strings.";
-	const char *key_error = "Key must be string";
 	xmmsv_t *spec = (xmmsv_t *) udata;
 	xmmsv_t *elem;
 	int i;
 
 	if (NIL_P (rb_check_string_type (key))) {
-		rb_raise (rb_eArgError, key_error);
+		rb_raise (rb_eArgError, "Key must be string");
 	}
 
 	if (!NIL_P (rb_check_string_type (value))) {
@@ -1313,11 +1336,11 @@ parse_fetch_spec_foreach (VALUE key, VALUE value, VALUE udata)
 		for (i = 0; i < RARRAY_LEN (value); i++) {
 			VALUE entry = RARRAY_PTR (value)[i];
 			if (NIL_P (rb_check_string_type (entry)))
-				rb_raise (rb_eArgError, val_error);
+				rb_raise (rb_eArgError, "Value must be hash, string, or array of strings.");
 			xmmsv_list_append_string (elem, StringValuePtr (entry));
 		}
 	} else {
-		rb_raise (rb_eArgError, val_error);
+		rb_raise (rb_eArgError, "Value must be hash, string, or array of strings.");
 	}
 
 	return 0;
@@ -1343,6 +1366,7 @@ static VALUE
 c_coll_query_cleanup (VALUE args)
 {
 	xmmsv_unref ((xmmsv_t *) args);
+	return Qnil;
 }
 
 /*
@@ -1611,8 +1635,12 @@ Init_Client (VALUE mXmms)
 	                  c_broadcast_playlist_loaded, 0);
 	rb_define_method (c, "broadcast_medialib_entry_changed",
 	                  c_broadcast_medialib_entry_changed, 0);
+	rb_define_method (c, "broadcast_medialib_entry_updated",
+	                  c_broadcast_medialib_entry_updated, 0);
 	rb_define_method (c, "broadcast_medialib_entry_added",
 	                  c_broadcast_medialib_entry_added, 0);
+	rb_define_method (c, "broadcast_medialib_entry_removed",
+	                  c_broadcast_medialib_entry_removed, 0);
 
 	rb_define_method (c, "playlist", c_playlist, -1);
 	rb_define_method (c, "playlist_list", c_playlist_list, 0);

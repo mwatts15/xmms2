@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -14,23 +14,27 @@
  *  General Public License for more details.
  */
 
-#include "readline.h"
+#include <stdlib.h>
+
+#include <glib.h>
+#include <glib/gi18n.h>
+#include <glib/gprintf.h>
+
+#include <xmmsclient/xmmsclient.h>
+
+#include "cli_context.h"
 #include "configuration.h"
-
-#include "utils.h"
+#include "readline.h"
 #include "status.h"
-#include "cli_infos.h"
-#include "cmdnames.h"
-
-#include "command_trie.h"
+#include "xmmscall.h"
 
 static gchar *readline_keymap;
-static cli_infos_t *readline_cli_infos;
+static cli_context_t *readline_cli_ctx;
 
 static void
 readline_callback (gchar *input)
 {
-	command_run (readline_cli_infos, input);
+	cli_context_execute_command (readline_cli_ctx, input);
 }
 
 static void
@@ -49,21 +53,32 @@ readline_status_quit (gint count, gint key)
 static gint
 readline_next_song (gint count, gint key)
 {
-	set_next_rel (readline_cli_infos, 1);
+	xmmsc_connection_t *conn = cli_context_xmms_sync (readline_cli_ctx);
+	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_playlist_set_next_rel, conn, 1),
+	                 XMMS_CALL_P (xmmsc_playback_tickle, conn));
 	return 0;
 }
 
 static gint
 readline_previous_song (gint count, gint key)
 {
-	set_next_rel (readline_cli_infos, -1);
+	xmmsc_connection_t *conn = cli_context_xmms_sync (readline_cli_ctx);
+	XMMS_CALL_CHAIN (XMMS_CALL_P (xmmsc_playlist_set_next_rel, conn, -1),
+	                 XMMS_CALL_P (xmmsc_playback_tickle, conn));
 	return 0;
 }
 
 static gint
 readline_toggle_playback (gint count, gint key)
 {
-	playback_toggle (readline_cli_infos);
+	xmmsc_connection_t *conn = cli_context_xmms_sync (readline_cli_ctx);
+	guint status = cli_context_playback_status (readline_cli_ctx);
+
+	if (status == XMMS_PLAYBACK_STATUS_PLAY) {
+		XMMS_CALL (xmmsc_playback_pause, conn);
+	} else {
+		XMMS_CALL (xmmsc_playback_start, conn);
+	}
 	return 0;
 }
 
@@ -71,8 +86,7 @@ readline_toggle_playback (gint count, gint key)
 static gint \
 readline_status_callback##i (gint count, gint key) \
 { \
-	return status_call_callback (readline_cli_infos->status_entry, i, \
-	                             readline_cli_infos); \
+	return status_call_callback (cli_context_status_entry (readline_cli_ctx), i); \
 }
 
 create_callback(0)
@@ -141,17 +155,14 @@ command_tab_completion (const gchar *text, gint state)
 	if (!state) {
 		command_action_t *action;
 		gchar **args, **tokens;
-		gboolean auto_complete;
 		gchar *buffer = rl_line_buffer;
 
-		auto_complete = configuration_get_boolean (readline_cli_infos->config,
-		                                           "AUTO_UNIQUE_COMPLETE");
 		suffixes = NULL;
 		while (*buffer == ' ' && *buffer != '\0') ++buffer; /* skip initial spaces */
 		args = tokens = g_strsplit (buffer, " ", 0);
 		count = g_strv_length (tokens);
-		match = command_trie_find (readline_cli_infos->commands, &args, &count,
-		                           auto_complete, &action, &suffixes);
+		match = cli_context_complete_command (readline_cli_ctx, &args, &count,
+		                                    &action, &suffixes);
 		g_strfreev (tokens);
 	}
 
@@ -180,9 +191,9 @@ command_tab_completion (const gchar *text, gint state)
 }
 
 void
-readline_init (cli_infos_t *infos)
+readline_init (cli_context_t *ctx)
 {
-	readline_cli_infos = infos;
+	readline_cli_ctx = ctx;
 
 	/* correctly quote filenames with double-quotes */
 	rl_filename_quote_characters = " ";
@@ -204,26 +215,26 @@ readline_init (cli_infos_t *infos)
 }
 
 void
-readline_suspend (cli_infos_t *infos)
+readline_suspend (cli_context_t *ctx)
 {
 	rl_callback_handler_remove ();
 }
 
 void
-readline_resume (cli_infos_t *infos)
+readline_resume (cli_context_t *ctx)
 {
-	rl_callback_handler_install (configuration_get_string (infos->config,
-	                                                       "PROMPT"),
+	configuration_t *config = cli_context_config (ctx);
+	rl_callback_handler_install (configuration_get_string (config, "PROMPT"),
 	                             &readline_callback);
 }
 
 void
-readline_status_mode (cli_infos_t *infos, const keymap_entry_t map[])
+readline_status_mode (cli_context_t *ctx, const keymap_entry_t map[])
 {
 	int i;
 	Keymap stkmap;
 
-	readline_cli_infos = infos;
+	readline_cli_ctx = ctx;
 	rl_callback_handler_install (NULL, &readline_status_callback);
 
 	/* Backup current keymap-name */
@@ -254,7 +265,7 @@ readline_status_mode_exit (void)
 {
 	Keymap active;
 
-	g_assert (readline_cli_infos->status == CLI_ACTION_STATUS_REFRESH);
+	g_assert (cli_context_in_status (readline_cli_ctx, CLI_ACTION_STATUS_REFRESH));
 
 	active = rl_get_keymap ();
 
@@ -263,8 +274,8 @@ readline_status_mode_exit (void)
 
 	rl_callback_handler_remove ();
 	g_free (readline_keymap);
-	status_free (readline_cli_infos->status_entry);
-	cli_infos_status_mode_exit (readline_cli_infos);
+	status_free (cli_context_status_entry (readline_cli_ctx)); // TODO: handle via cli_context_free or somesuch?
+	cli_context_status_mode_exit (readline_cli_ctx);
 }
 
 void

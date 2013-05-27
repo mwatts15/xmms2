@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -20,7 +20,7 @@
 #ifndef __XMMS_PRIV_LOG_H__
 #define __XMMS_PRIV_LOG_H__
 
-#include "xmms/xmms_log.h"
+#include <xmms/xmms_log.h>
 
 void xmms_log_set_format (const gchar *format);
 void xmms_log_init (gint verbosity);

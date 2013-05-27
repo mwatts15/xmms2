@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -80,6 +80,26 @@ CASE (test_xmmsv_type_int32)
 	xmmsv_unref (value);
 }
 
+CASE (test_xmmsv_type_float)
+{
+	float b, a = -3.14159;
+	xmmsv_t *value;
+
+	value = xmmsv_new_float (a);
+	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_FLOAT));
+
+	CU_ASSERT_EQUAL (XMMSV_TYPE_FLOAT, xmmsv_get_type (value));
+	CU_ASSERT_FALSE (xmmsv_is_error (value));
+	CU_ASSERT_TRUE (xmmsv_get_float (value, &b));
+	CU_ASSERT_EQUAL (a, b);
+
+	xmmsv_unref (value);
+
+	value = xmmsv_new_error ("oh noes");
+	CU_ASSERT_FALSE (xmmsv_get_float (value, &b));
+	xmmsv_unref (value);
+}
+
 CASE (test_xmmsv_type_string)
 {
 	const char *b, *a = "look behind you! a three headed monkey!";
@@ -102,16 +122,16 @@ CASE (test_xmmsv_type_string)
 
 CASE (test_xmmsv_type_coll)
 {
-	xmmsv_coll_t *b, *a = xmmsv_coll_universe ();
+	xmmsv_t *b;
 	xmmsv_t *value;
 
-	value = xmmsv_new_coll (a);
+	value = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
 	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_COLL));
-	xmmsv_coll_unref (a);
 
 	CU_ASSERT_EQUAL (XMMSV_TYPE_COLL, xmmsv_get_type (value));
 	CU_ASSERT_FALSE (xmmsv_is_error (value));
 	CU_ASSERT_TRUE (xmmsv_get_coll (value, &b));
+	CU_ASSERT_TRUE (value == b);
 
 	xmmsv_unref (value);
 }
@@ -119,8 +139,7 @@ CASE (test_xmmsv_type_coll)
 
 CASE (test_xmmsv_type_coll_wrong_type)
 {
-	xmmsv_coll_t *b;
-	xmmsv_t *value;
+	xmmsv_t *value, *b;
 
 	value = xmmsv_new_error ("oh noes");
 	CU_ASSERT_FALSE (xmmsv_get_coll (value, &b));
@@ -651,19 +670,20 @@ CASE (test_xmmsv_dict_format) {
 	val = xmmsv_build_dict (XMMSV_DICT_ENTRY_STR ("a", "aaaaaaa"),
 	                        XMMSV_DICT_ENTRY_STR ("b", "bbbbbbb"),
 	                        XMMSV_DICT_ENTRY_INT ("c",  1234567),
+							XMMSV_DICT_ENTRY_FLOAT ("d",  0.05),
 	                        XMMSV_DICT_END);
 
-	r = xmmsv_dict_format (buf, 255, "A: ${a} B: ${b} C: ${c}", val);
-	CU_ASSERT_STRING_EQUAL (buf, "A: aaaaaaa B: bbbbbbb C: 1234567");
-	/* strlen(buf) == 32 */
-	CU_ASSERT_EQUAL (32, r);
+	r = xmmsv_dict_format (buf, 255, "A: ${a} B: ${b} C: ${c} D: ${d}", val);
+	CU_ASSERT_STRING_EQUAL (buf, "A: aaaaaaa B: bbbbbbb C: 1234567 D: 0.050000");
+	/* strlen(buf) == 44 */
+	CU_ASSERT_EQUAL (44, r);
 
 
 	memset (buf, 0xff, 255);
-	r = xmmsv_dict_format (buf, 27, "A: ${a} B: ${b} C: ${c}", val);
-	CU_ASSERT_STRING_EQUAL (buf, "A: aaaaaaa B: bbbbbbb C: 1");
-	CU_ASSERT_EQUAL (26, r);
-	CU_ASSERT_EQUAL (0xff, (unsigned char)buf[27]);
+	r = xmmsv_dict_format (buf, 43, "A: ${a} B: ${b} C: ${c} D: ${d}", val);
+	CU_ASSERT_STRING_EQUAL (buf, "A: aaaaaaa B: bbbbbbb C: 1234567 D: 0.0500");
+	CU_ASSERT_EQUAL (42, r);
+	CU_ASSERT_EQUAL (0xff, (unsigned char)buf[43]);
 
 	xmmsv_unref (val);
 	free (buf);
@@ -767,7 +787,7 @@ CASE (test_xmmsv_list_move) {
 CASE (test_xmmsv_type_bitbuffer_one_bit)
 {
 	xmmsv_t *value;
-	int r;
+	int64_t r;
 
 	value = xmmsv_new_bitbuffer ();
 	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_BITBUFFER));
@@ -816,7 +836,7 @@ CASE (test_xmmsv_type_bitbuffer_one_bit)
 CASE (test_xmmsv_type_bitbuffer_8_bits)
 {
 	xmmsv_t *value;
-	int r;
+	int64_t r;
 
 	value = xmmsv_new_bitbuffer ();
 	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_BITBUFFER));
@@ -882,7 +902,7 @@ CASE (test_xmmsv_type_bitbuffer)
 CASE (test_xmmsv_type_bitbuffer2)
 {
 	xmmsv_t *value;
-	int r;
+	int64_t r;
 
 	value = xmmsv_new_bitbuffer ();
 	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_BITBUFFER));
@@ -905,7 +925,7 @@ CASE (test_xmmsv_type_bitbuffer_ro)
 	xmmsv_t *value;
 	const unsigned char data[4] = {0x12, 0x23, 0x34, 0x45};
 	unsigned char b[4];
-	int r;
+	int64_t r;
 
 	value = xmmsv_new_bitbuffer_ro (data, 4);
 	CU_ASSERT_TRUE (xmmsv_is_type (value, XMMSV_TYPE_BITBUFFER));
@@ -998,9 +1018,14 @@ CASE (test_xmmsv_deep_copy)
 	xmmsv_t *value, *val2, *val_cpy;
 	const char *s;
 	int i;
+	float f, exp_f;
 
 	val2 = xmmsv_new_list ();
+
 	value = xmmsv_new_int (7654321);
+	xmmsv_list_append (val2, value);
+	xmmsv_unref (value);
+	value = xmmsv_new_float (3.14159);
 	xmmsv_list_append (val2, value);
 	xmmsv_unref (value);
 	value = xmmsv_new_string ("hiya");
@@ -1008,9 +1033,10 @@ CASE (test_xmmsv_deep_copy)
 	xmmsv_unref (value);
 
 	value = xmmsv_build_dict (XMMSV_DICT_ENTRY_STR ("a", "aaaaaaa"),
-	                        XMMSV_DICT_ENTRY_STR ("b", ""),
-	                        XMMSV_DICT_ENTRY_INT ("c",  1234567),
-	                        XMMSV_DICT_END);
+	                          XMMSV_DICT_ENTRY_STR ("b", ""),
+	                          XMMSV_DICT_ENTRY_INT ("c",  1234567),
+	                          XMMSV_DICT_ENTRY_FLOAT ("d",  0.05),
+	                          XMMSV_DICT_END);
 
 	xmmsv_dict_set (value, "list", val2);
 
@@ -1031,10 +1057,18 @@ CASE (test_xmmsv_deep_copy)
 	CU_ASSERT_TRUE (xmmsv_get_int (value, &i));
 	CU_ASSERT_EQUAL (i, 1234567);
 
+	CU_ASSERT_TRUE (xmmsv_dict_get (val_cpy, "d", &value));
+	CU_ASSERT_TRUE (xmmsv_get_float (value, &f));
+	exp_f = 0.05;
+	CU_ASSERT_EQUAL (f, exp_f);
+
 	CU_ASSERT_TRUE (xmmsv_dict_get (val_cpy, "list", &value));
 	CU_ASSERT_TRUE (xmmsv_list_get_int (value, 0, &i));
 	CU_ASSERT_EQUAL (i, 7654321);
-	CU_ASSERT_TRUE (xmmsv_list_get_string (value, 1, &s));
+	CU_ASSERT_TRUE (xmmsv_list_get_float (value, 1, &f));
+	exp_f = 3.14159;
+	CU_ASSERT_EQUAL (f, exp_f);
+	CU_ASSERT_TRUE (xmmsv_list_get_string (value, 2, &s));
 	CU_ASSERT_EQUAL (strcmp (s, "hiya"), 0);
 	xmmsv_unref (val_cpy);
 }
@@ -1079,4 +1113,25 @@ CASE (test_xmmsv_deep_copy_bitbuffer)
 	CU_ASSERT_EQUAL ('t', b[3]);
 
 	xmmsv_unref (val_cpy);
+}
+
+CASE (test_xmmsv_deep_copy_collection)
+{
+	xmmsv_t *u, *a, *b, *copy;
+
+	a = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
+	b = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
+
+	u = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNION);
+	xmmsv_coll_add_operand (u, a);
+	xmmsv_unref (a);
+	xmmsv_coll_add_operand (u, b);
+	xmmsv_unref (b);
+
+	copy = xmmsv_copy (u);
+
+	CU_ASSERT_EQUAL (XMMS_COLLECTION_TYPE_UNION, xmmsv_coll_get_type (copy));
+
+	xmmsv_unref (u);
+	xmmsv_unref (copy);
 }

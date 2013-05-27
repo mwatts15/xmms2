@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -18,8 +18,8 @@
 /** @file CoreAudio for MacOSX */
 
 
-#include "xmms/xmms_outputplugin.h"
-#include "xmms/xmms_log.h"
+#include <xmms/xmms_outputplugin.h>
+#include <xmms/xmms_log.h>
 
 #undef DEBUG
 #include <CoreServices/CoreServices.h>

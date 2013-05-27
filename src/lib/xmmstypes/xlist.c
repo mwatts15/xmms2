@@ -1,5 +1,5 @@
 /* GLIB - Library of useful routines for C programming
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -26,7 +26,7 @@
 
 #include <assert.h>
 
-#include "xmmspriv/xmms_list.h"
+#include <xmmscpriv/xmms_list.h>
 
 #include <stdlib.h>
 

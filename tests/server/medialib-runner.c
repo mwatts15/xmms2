@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -18,21 +18,25 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "xmmspriv/xmms_log.h"
-#include "xmmspriv/xmms_ipc.h"
-#include "xmmspriv/xmms_config.h"
-#include "xmmspriv/xmms_medialib.h"
+#include <xmmspriv/xmms_log.h>
+#include <xmmspriv/xmms_ipc.h>
+#include <xmmspriv/xmms_config.h>
+#include <xmmspriv/xmms_medialib.h>
 
-#include "utils/jsonism.h"
-#include "utils/value_utils.h"
-#include "utils/coll_utils.h"
+#include <utils/jsonism.h>
+#include <utils/value_utils.h>
+#include <utils/coll_utils.h>
+
+#include <server-utils/ipc_call.h>
+
+#include <memory_status.h>
 
 typedef void (*xmms_path_predicate)(const gchar *filename, xmmsv_t *list);
 
-typedef void (*xmms_test_predicate)(xmms_medialib_t *medialib, const gchar *name,
-                                    xmmsv_t *content, xmmsv_coll_t *coll,
-                                    xmmsv_t *specification, xmmsv_t *expected,
-                                    gint format, const gchar *datasetname);
+typedef gboolean (*xmms_test_predicate)(xmms_medialib_t *medialib, const gchar *name,
+                                        xmmsv_t *content, xmmsv_t *coll,
+                                        xmmsv_t *specification, xmmsv_t *expected,
+                                        gint format, const gchar *datasetname);
 
 typedef struct xmms_test_args_St {
 	enum {
@@ -125,8 +129,7 @@ static void
 filter_testcase (const gchar *path, xmmsv_t *list)
 {
 	gchar *content, *filename;
-	xmmsv_t *dict, *data, *holder;
-	xmmsv_coll_t *coll;
+	xmmsv_t *dict, *data, *coll;
 
 	g_assert (g_file_get_contents (path, &content, NULL, NULL));
 	dict = xmmsv_from_json (content);
@@ -145,11 +148,9 @@ filter_testcase (const gchar *path, xmmsv_t *list)
 	g_assert (xmmsv_is_type (data, XMMSV_TYPE_DICT));
 
 	coll = xmmsv_coll_from_dict (data);
-	holder = xmmsv_new_coll (coll);
-	xmmsv_coll_unref (coll);
 
-	xmmsv_dict_set (dict, "collection", holder);
-	xmmsv_unref (holder);
+	xmmsv_dict_set (dict, "collection", coll);
+	xmmsv_unref (coll);
 
 	filename = g_path_get_basename (path);
 	xmmsv_dict_set_string (dict, "name", filename);
@@ -169,18 +170,18 @@ populate_medialib (xmms_medialib_t *medialib, xmmsv_t *content)
 	xmms_medialib_session_t *session;
 	xmms_medialib_entry_t entry = 0;
 	xmmsv_list_iter_t *lit;
+	xmmsv_t *dict;
 
 	session = xmms_medialib_session_begin (medialib);
 
 	xmmsv_get_list_iter (content, &lit);
-	while (xmmsv_list_iter_valid (lit)) {
+	while (xmmsv_list_iter_entry (lit, &dict)) {
 		xmmsv_dict_iter_t *dit;
 		xmms_error_t err;
-		xmmsv_t *dict;
+		xmmsv_t *container;
+		const gchar *key;
 
 		xmms_error_reset (&err);
-
-		xmmsv_list_iter_entry (lit, &dict);
 
 		if (xmmsv_dict_has_key (dict, "url")) {
 			const gchar *url;
@@ -195,12 +196,9 @@ populate_medialib (xmms_medialib_t *medialib, xmmsv_t *content)
 
 		xmmsv_get_dict_iter (dict, &dit);
 
-		while (xmmsv_dict_iter_valid (dit)) {
-			const gchar *key, *source;
+		while (xmmsv_dict_iter_pair (dit, &key, &container)) {
+			const gchar *source;
 			gchar **parts;
-			xmmsv_t *container;
-
-			xmmsv_dict_iter_pair (dit, &key, &container);
 
 			parts = g_strsplit (key, "/", 2);
 
@@ -244,16 +242,16 @@ populate_medialib (xmms_medialib_t *medialib, xmmsv_t *content)
 /**
  * Unit test predicate
  */
-static void
+static gboolean
 run_unit_test (xmms_medialib_t *mlib, const gchar *name, xmmsv_t *content,
-               xmmsv_coll_t *coll, xmmsv_t *specification, xmmsv_t *expected,
+               xmmsv_t *coll, xmmsv_t *specification, xmmsv_t *expected,
                gint format, const gchar *datasetname)
 {
 	gboolean matches, ordered = FALSE;
 	xmmsv_t *ret, *value;
-	xmms_error_t err;
 	xmms_medialib_t *medialib;
-	xmms_medialib_session_t *session;
+	xmms_coll_dag_t *dag;
+	gint status;
 
 	g_debug ("Running test: %s", name);
 
@@ -262,17 +260,22 @@ run_unit_test (xmms_medialib_t *mlib, const gchar *name, xmmsv_t *content,
 	xmms_config_property_register ("medialib.path", "memory://", NULL, NULL);
 
 	medialib = xmms_medialib_init ();
+	dag = xmms_collection_init (medialib);
 
 	populate_medialib (medialib, content);
 
-	session = xmms_medialib_session_begin (medialib);
-	ret = xmms_medialib_query (session, coll, specification, &err);
-	xmms_medialib_session_commit (session);
+	memory_status_calibrate (name);
+
+	ret = XMMS_IPC_CALL (dag, XMMS_IPC_CMD_QUERY,
+	                     xmmsv_ref (coll),
+	                     xmmsv_ref (specification));
+
+	status = memory_status_verify (name);
 
 	xmmsv_dict_get (expected, "result", &value);
 	xmmsv_dict_entry_get_int (expected, "ordered", &ordered);
 
-	if (xmms_error_isok (&err)) {
+	if (!xmmsv_is_type (ret, XMMSV_TYPE_ERROR)) {
 		if (ordered) {
 			matches = xmmsv_compare (ret, value);
 		} else {
@@ -282,7 +285,7 @@ run_unit_test (xmms_medialib_t *mlib, const gchar *name, xmmsv_t *content,
 		matches = FALSE;
 	}
 
-	if (matches) {
+	if (matches && status == MEMORY_OK) {
 		if (format == FORMAT_CSV) {
 			g_print ("\"%s\", 1\n", name);
 		} else {
@@ -295,32 +298,41 @@ run_unit_test (xmms_medialib_t *mlib, const gchar *name, xmmsv_t *content,
 			g_print ("\"%s\", 0\n", name);
 		} else {
 			g_print ("............................................................ Failure!");
-			g_print ("\r%s \n", name);
-			if (xmms_error_iserror (&err)) {
-				g_printerr ("ERROR: %s\n", xmms_error_message_get (&err));
+			if (status & MEMORY_LEAK) {
+				g_print (" Memory Leaks!");
 			}
+			if (status & MEMORY_ERROR) {
+				g_print (" Memory errors!");
+			}
+
+			g_print ("\r%s \n", name);
 		}
 
-		g_printerr ("The result: ");
-		xmmsv_dump (ret);
-		g_printerr ("Does not equal: ");
-		xmmsv_dump (value);
+		if (!matches) {
+			g_printerr ("The result:\n");
+			xmmsv_dump (ret);
+			g_printerr ("Does not equal:\n");
+			xmmsv_dump (value);
+		}
 	}
 
 	xmmsv_unref (ret);
 
 	xmms_object_unref (medialib);
+	xmms_object_unref (dag);
 	xmms_config_shutdown ();
 	xmms_ipc_shutdown ();
+
+	return matches && status == MEMORY_OK;
 }
 
 
 /**
  * Performance test predicate
  */
-static void
+static gboolean
 run_performance_test (xmms_medialib_t *medialib, const gchar *name, xmmsv_t *content,
-                      xmmsv_coll_t *coll, xmmsv_t *specification, xmmsv_t *expected,
+                      xmmsv_t *coll, xmmsv_t *specification, xmmsv_t *expected,
                       gint format, const gchar *datasetname)
 {
 	xmms_medialib_session_t *session;
@@ -357,52 +369,50 @@ run_performance_test (xmms_medialib_t *medialib, const gchar *name, xmmsv_t *con
 	}
 
 	xmmsv_unref (ret);
+
+	return TRUE;
 }
 
 
-static void
+static gboolean
 run_tests (xmms_medialib_t *medialib, xmmsv_t *testcases, xmms_test_predicate predicate,
            gint format, const gchar *datasetname)
 {
 	xmmsv_list_iter_t *it;
+	xmmsv_t *dict;
+	gboolean result = TRUE;
 
 	xmmsv_get_list_iter (testcases, &it);
-	while (xmmsv_list_iter_valid (it)) {
-		xmmsv_t *dict, *content, *specification, *holder, *expected;
-		xmmsv_coll_t *coll;
+	while (xmmsv_list_iter_entry (it, &dict)) {
+		xmmsv_t *content, *specification, *expected, *coll;
 		const gchar *name;
-		dict = NULL;
-
-		g_assert (xmmsv_list_iter_entry (it, &dict));
 
 		xmmsv_dict_entry_get_string (dict, "name", &name);
 
 		xmmsv_dict_get (dict, "medialib", &content);
 		xmmsv_dict_get (dict, "specification", &specification);
-		xmmsv_dict_get (dict, "collection", &holder);
+		xmmsv_dict_get (dict, "collection", &coll);
 		xmmsv_dict_get (dict, "expected", &expected);
 
-		xmmsv_get_coll (holder, &coll);
-
-		predicate (medialib, name, content, coll, specification,
-		           expected, format, datasetname);
+		result &= predicate (medialib, name, content, coll, specification,
+		                     expected, format, datasetname);
 
 		xmmsv_list_iter_next (it);
 	}
+
+	return result;
 }
 
 
-static void
+static gboolean
 run_performance_tests (xmmsv_t *databases, xmmsv_t *testcases, gint format)
 {
 	xmmsv_list_iter_t *it;
+	const gchar *filename;
 
 	xmmsv_get_list_iter (databases, &it);
-	while (xmmsv_list_iter_valid (it)) {
+	while (xmmsv_list_iter_entry_string (it, &filename)) {
 		xmms_medialib_t *medialib;
-		const gchar *filename;
-
-		xmmsv_list_iter_entry_string (it, &filename);
 
 		if (format == FORMAT_PRETTY)
 			g_print ("Running suite with: %s\n", filename);
@@ -425,6 +435,8 @@ run_performance_tests (xmmsv_t *databases, xmmsv_t *testcases, gint format)
 
 		xmmsv_list_iter_next (it);
 	}
+
+	return TRUE;
 }
 
 
@@ -507,8 +519,7 @@ main (gint argc, gchar **argv)
 {
 	xmmsv_t *testcases, *databases;
 	xmms_test_args_t args = { 0 };
-
-	g_thread_init (0);
+	gint exit_code = EXIT_SUCCESS;
 
 	xmms_log_init (0);
 
@@ -537,10 +548,11 @@ main (gint argc, gchar **argv)
 			g_print ("\"test\",\"success\"\n");
 		else
 			g_print (" - Running Unit Test -\n");
-		run_tests (NULL, testcases, run_unit_test, args.format, NULL);
+		if (!run_tests (NULL, testcases, run_unit_test, args.format, NULL))
+			exit_code = EXIT_FAILURE;
 	}
 
 	xmmsv_unref (testcases);
 
-	return EXIT_SUCCESS;
+	return exit_code;
 }

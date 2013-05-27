@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -26,27 +26,27 @@
 #include <locale.h>
 #include <glib.h>
 
-#include "xmms_configuration.h"
-#include "xmmsc/xmmsc_util.h"
-#include "xmmspriv/xmms_plugin.h"
-#include "xmmspriv/xmms_config.h"
-#include "xmmspriv/xmms_playlist.h"
-#include "xmmspriv/xmms_playlist_updater.h"
-#include "xmmspriv/xmms_collsync.h"
-#include "xmmspriv/xmms_collection.h"
-#include "xmmspriv/xmms_signal.h"
-#include "xmmspriv/xmms_symlink.h"
-#include "xmmspriv/xmms_checkroot.h"
-#include "xmmspriv/xmms_thread_name.h"
-#include "xmmspriv/xmms_medialib.h"
-#include "xmmspriv/xmms_mediainfo.h"
-#include "xmmspriv/xmms_output.h"
-#include "xmmspriv/xmms_ipc.h"
-#include "xmmspriv/xmms_log.h"
-#include "xmmspriv/xmms_xform.h"
-#include "xmmspriv/xmms_bindata.h"
-#include "xmmspriv/xmms_utils.h"
-#include "xmmspriv/xmms_visualization.h"
+#include <xmms_configuration.h>
+#include <xmmsc/xmmsc_util.h>
+#include <xmmspriv/xmms_plugin.h>
+#include <xmmspriv/xmms_config.h>
+#include <xmmspriv/xmms_playlist.h>
+#include <xmmspriv/xmms_playlist_updater.h>
+#include <xmmspriv/xmms_collsync.h>
+#include <xmmspriv/xmms_collection.h>
+#include <xmmspriv/xmms_signal.h>
+#include <xmmspriv/xmms_symlink.h>
+#include <xmmspriv/xmms_checkroot.h>
+#include <xmmspriv/xmms_thread_name.h>
+#include <xmmspriv/xmms_medialib.h>
+#include <xmmspriv/xmms_mediainfo.h>
+#include <xmmspriv/xmms_output.h>
+#include <xmmspriv/xmms_ipc.h>
+#include <xmmspriv/xmms_log.h>
+#include <xmmspriv/xmms_xform.h>
+#include <xmmspriv/xmms_bindata.h>
+#include <xmmspriv/xmms_utils.h>
+#include <xmmspriv/xmms_visualization.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -387,7 +387,7 @@ static void
 print_version (void)
 {
 	printf ("XMMS2 version " XMMS_VERSION "\n");
-	printf ("Copyright (C) 2003-2012 XMMS2 Team\n");
+	printf ("Copyright (C) 2003-2013 XMMS2 Team\n");
 	printf ("This is free software; see the source for copying conditions.\n");
 	printf ("There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A\n");
 	printf ("PARTICULAR PURPOSE.\n");
@@ -500,8 +500,6 @@ main (int argc, char **argv)
 	if (version) {
 		print_version ();
 	}
-
-	g_thread_init (NULL);
 
 	g_random_set_seed (time (NULL));
 

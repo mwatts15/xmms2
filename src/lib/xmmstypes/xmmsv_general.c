@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -17,11 +17,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "xmmspriv/xmmsv.h"
-#include "xmmsclientpriv/xmmsclient_util.h"
+#include <xmmscpriv/xmmsv.h>
+#include <xmmscpriv/xmmsc_util.h>
 
-#include "xmmsc/xmmsv.h"
-#include "xmmsc/xmmsc_util.h"
+#include <xmmsc/xmmsv.h>
+#include <xmmsc/xmmsc_util.h>
 
 /** @file */
 
@@ -37,6 +37,11 @@ const char *xmmsv_default_source_pref[] = {
 	NULL
 };
 
+
+/**
+ * Allocates new #xmmsv_t and references it.
+ * @internal
+ */
 xmmsv_t *
 _xmmsv_new (xmmsv_type_t type)
 {
@@ -53,6 +58,10 @@ _xmmsv_new (xmmsv_type_t type)
 	return xmmsv_ref (val);
 }
 
+/**
+ * Free a #xmmsv_t along with its internal data.
+ * @internal
+ */
 static void
 _xmmsv_free (xmmsv_t *val)
 {
@@ -61,7 +70,8 @@ _xmmsv_free (xmmsv_t *val)
 	switch (val->type) {
 		case XMMSV_TYPE_NONE :
 		case XMMSV_TYPE_END :
-		case XMMSV_TYPE_INT32 :
+		case XMMSV_TYPE_INT64 :
+		case XMMSV_TYPE_FLOAT :
 			break;
 		case XMMSV_TYPE_ERROR :
 			free (val->value.error);
@@ -72,7 +82,7 @@ _xmmsv_free (xmmsv_t *val)
 			val->value.string = NULL;
 			break;
 		case XMMSV_TYPE_COLL:
-			xmmsv_coll_unref (val->value.coll);
+			_xmmsv_coll_free (val->value.coll);
 			val->value.coll = NULL;
 			break;
 		case XMMSV_TYPE_BIN :
@@ -137,12 +147,30 @@ xmmsv_new_error (const char *errstr)
  * #xmmsv_unref.
  */
 xmmsv_t *
-xmmsv_new_int (int32_t i)
+xmmsv_new_int (int64_t i)
 {
-	xmmsv_t *val = _xmmsv_new (XMMSV_TYPE_INT32);
+	xmmsv_t *val = _xmmsv_new (XMMSV_TYPE_INT64);
 
 	if (val) {
-		val->value.int32 = i;
+		val->value.int64 = i;
+	}
+
+	return val;
+}
+
+/**
+ * Allocates a new float #xmmsv_t.
+ * @param i The value to store in the #xmmsv_t.
+ * @return The new #xmmsv_t. Must be unreferenced with
+ * #xmmsv_unref.
+ */
+xmmsv_t *
+xmmsv_new_float (float i)
+{
+	xmmsv_t *val = _xmmsv_new (XMMSV_TYPE_FLOAT);
+
+	if (val) {
+		val->value.flt32 = i;
 	}
 
 	return val;
@@ -166,28 +194,6 @@ xmmsv_new_string (const char *s)
 	val = _xmmsv_new (XMMSV_TYPE_STRING);
 	if (val) {
 		val->value.string = strdup (s);
-	}
-
-	return val;
-}
-
-/**
- * Allocates a new collection #xmmsv_t.
- * @param s The value to store in the #xmmsv_t.
- * @return The new #xmmsv_t. Must be unreferenced with
- * #xmmsv_unref.
- */
-xmmsv_t *
-xmmsv_new_coll (xmmsv_coll_t *c)
-{
-	xmmsv_t *val;
-
-	x_return_val_if_fail (c, NULL);
-
-	val = _xmmsv_new (XMMSV_TYPE_COLL);
-	if (val) {
-		val->value.coll = c;
-		xmmsv_coll_ref (c);
 	}
 
 	return val;
@@ -253,15 +259,6 @@ xmmsv_unref (xmmsv_t *val)
 	}
 }
 
-
-/**
- * Allocates new #xmmsv_t and references it.
- * @internal
- */
-/**
- * Free a #xmmsv_t along with its internal data.
- * @internal
- */
 /**
  * Get the type of the value.
  *
@@ -334,13 +331,57 @@ xmmsv_get_error (const xmmsv_t *val, const char **r)
  * @return 1 upon success otherwise 0
  */
 int
-xmmsv_get_int (const xmmsv_t *val, int32_t *r)
+xmmsv_get_int32 (const xmmsv_t *val, int32_t *r)
 {
-	if (!val || val->type != XMMSV_TYPE_INT32) {
+	if (!val) {
 		return 0;
 	}
 
-	*r = val->value.int32;
+	if (val->type == XMMSV_TYPE_INT64) {
+		*r = INT64_TO_INT32 (val->value.int64);
+		return 1;
+	}
+
+	return 0;
+}
+
+/**
+ * Retrieves a signed integer from the value.
+ *
+ * @param val a #xmmsv_t containing an integer.
+ * @param r the return integer.
+ * @return 1 upon success otherwise 0
+ */
+int
+xmmsv_get_int64 (const xmmsv_t *val, int64_t *r)
+{
+	if (!val) {
+		return 0;
+	}
+
+	if (val->type == XMMSV_TYPE_INT64) {
+		*r = val->value.int64;
+		return 1;
+	}
+
+	return 0;
+}
+
+/**
+ * Retrieves a float from the value.
+ *
+ * @param val a #xmmsv_t containing a float value.
+ * @param r the return float.
+ * @return 1 upon success otherwise 0
+ */
+int
+xmmsv_get_float (const xmmsv_t *val, float *r)
+{
+	if (!val || val->type != XMMSV_TYPE_FLOAT) {
+		return 0;
+	}
+
+	*r = val->value.flt32;
 
 	return 1;
 }
@@ -374,13 +415,13 @@ xmmsv_get_string (const xmmsv_t *val, const char **r)
  * @return 1 upon success otherwise 0
  */
 int
-xmmsv_get_coll (const xmmsv_t *val, xmmsv_coll_t **c)
+xmmsv_get_coll (const xmmsv_t *val, xmmsv_t **c)
 {
 	if (!val || val->type != XMMSV_TYPE_COLL) {
 		return 0;
 	}
 
-	*c = val->value.coll;
+	*c = (xmmsv_t *) val;
 
 	return 1;
 }

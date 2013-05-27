@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -18,7 +18,7 @@
 #define __XMMS_PRIV_STREAMTYPE_H__
 
 #include <stdarg.h>
-#include "xmms/xmms_streamtype.h"
+#include <xmms/xmms_streamtype.h>
 
 xmms_stream_type_t *xmms_stream_type_parse (va_list ap);
 gboolean xmms_stream_type_match (const xmms_stream_type_t *in_type, const xmms_stream_type_t *out_type);

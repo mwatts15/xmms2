@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -20,12 +20,12 @@
 
 #include <locale.h>
 
-#include "xmmspriv/xmms_plugin.h"
-#include "xmmspriv/xmms_xform.h"
-#include "xmmspriv/xmms_config.h"
-#include "xmmspriv/xmms_log.h"
-#include "xmmspriv/xmms_ipc.h"
-#include "xmmspriv/xmms_medialib.h"
+#include <xmmspriv/xmms_plugin.h>
+#include <xmmspriv/xmms_xform.h>
+#include <xmmspriv/xmms_config.h>
+#include <xmmspriv/xmms_log.h>
+#include <xmmspriv/xmms_ipc.h>
+#include <xmmspriv/xmms_medialib.h>
 
 #include "server-utils/ipc_call.h"
 #include "utils/value_utils.h"
@@ -35,8 +35,6 @@ static xmms_xform_object_t *xform_object;
 
 SETUP (xform)
 {
-	g_thread_init (0);
-
 	setlocale (LC_COLLATE, "");
 
 	xmms_ipc_init ();
@@ -53,8 +51,8 @@ SETUP (xform)
 
 CLEANUP ()
 {
-	xmms_object_unref (medialib);
-	xmms_object_unref (xform_object);
+	xmms_object_unref (medialib); medialib = NULL;
+	xmms_object_unref (xform_object); xform_object = NULL;
 	xmms_config_shutdown ();
 	xmms_ipc_shutdown ();
 

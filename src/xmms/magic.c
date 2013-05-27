@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -20,8 +20,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "xmms/xmms_log.h"
-#include "xmmspriv/xmms_xform.h"
+#include <xmms/xmms_log.h>
+#include <xmmspriv/xmms_xform.h>
 
 static GList *magic_list, *ext_list;
 
@@ -556,13 +556,15 @@ xmms_magic_add (const gchar *desc, const gchar *mime, ...)
 
 		s = g_strdup (s); /* we need our own copy */
 		node = xmms_magic_add_node (tree, s, node);
-		g_free (s);
 
 		if (!node) {
 			xmms_log_error ("invalid magic spec: '%s'", s);
 			ret = FALSE;
+
+			g_free (s);
 			break;
 		}
+		g_free (s);
 	} while ((s = va_arg (ap, gchar *)));
 
 	va_end (ap);

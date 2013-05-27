@@ -1,7 +1,7 @@
 /** @file xmmsclient-cf.c
  *  Mac OS X CoreFoundation run loop integration
  *
- *  Copyright (C) 2005-2012 XMMS2 Team
+ *  Copyright (C) 2005-2013 XMMS2 Team
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -15,8 +15,8 @@
  */
 
 #include <CoreFoundation/CoreFoundation.h>
-#include "xmmsclient/xmmsclient.h"
-#include "xmmsclient/xmmsclient-cf.h"
+#include <xmmsclient/xmmsclient.h>
+#include <xmmsclient/xmmsclient-cf.h>
 
 #define	XMMSC_CF_SOURCE_PRIORITY 4
 

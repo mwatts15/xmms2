@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -13,6 +13,9 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  General Public License for more details.
  */
+
+#include <glib.h>
+#include <glib/gi18n.h>
 
 #include "command_trie.h"
 
@@ -132,15 +135,15 @@ command_trie_action_set (command_trie_t* node, command_action_t *action)
 }
 
 static void
-argument_copy (const argument_t src[], argument_t **dest)
+argument_copy (const GOptionEntry src[], GOptionEntry **dest)
 {
-	argument_t *arg;
+	GOptionEntry *arg;
 	int i;
 
 	/* Count elements and allocate size + 2 (incl. help, NULL) */
 	for (i = 0; src && src[i].long_name; ++i);
 
-	*dest = g_new0 (argument_t, i + 2);
+	*dest = g_new0 (GOptionEntry, i + 2);
 
 	/* Copy array, last element is all NULL */
 	for (i = 0, arg = *dest; src && src[i].long_name; ++i, ++arg) {
@@ -202,7 +205,7 @@ command_trie_insert (command_trie_t* trie, command_action_t *action)
 void
 command_action_fill (command_action_t *action, const gchar *name,
                      command_exec_func cmd, command_req_t req,
-                     const argument_t flags[], const gchar *usage,
+                     const GOptionEntry flags[], const gchar *usage,
                      const gchar *description)
 {
 	action->name = g_strdup (name);
@@ -391,7 +394,7 @@ command_trie_find_completions_recurse (command_trie_t *trie, gchar *buf,
 	GList *l;
 
 	/* add valid match to the list */
-	if (trie->match.type != COMMAND_TRIE_MATCH_NONE) {
+	if (trie->match.type != COMMAND_TRIE_MATCH_NONE && offset > 0) {
 		buf[offset] = '\0';
 		res = g_list_prepend (res, g_strdup (buf));
 	}

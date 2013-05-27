@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -19,6 +19,8 @@
 
 #ifndef __XMMS_STREAMTYPE_H__
 #define __XMMS_STREAMTYPE_H__
+
+#include <xmmsc/xmmsc_compiler.h>
 
 #include <glib.h>
 #include <string.h>
@@ -44,8 +46,8 @@ typedef struct xmms_stream_type_St xmms_stream_type_t;
 #define XMMS_STREAM_TYPE_PRIORITY_FALLBACK 40
 #define XMMS_STREAM_TYPE_PRIORITY_DEFAULT 50
 
-const char *xmms_stream_type_get_str (const xmms_stream_type_t *st, xmms_stream_type_key_t key);
-gint xmms_stream_type_get_int (const xmms_stream_type_t *st, xmms_stream_type_key_t key);
+const char *xmms_stream_type_get_str (const xmms_stream_type_t *st, xmms_stream_type_key_t key) XMMS_PUBLIC;
+gint xmms_stream_type_get_int (const xmms_stream_type_t *st, xmms_stream_type_key_t key) XMMS_PUBLIC;
 
 G_END_DECLS
 

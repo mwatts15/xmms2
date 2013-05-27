@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -19,7 +19,7 @@
 
 #include <glib.h>
 
-#include "xmmspriv/xmms_medialib.h"
+#include <xmmspriv/xmms_medialib.h>
 
 xmms_medialib_entry_t xmms_mock_entry (xmms_medialib_t *medialib, gint tracknr, const gchar *artist, const gchar *album, const gchar *title);
 

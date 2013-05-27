@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -38,6 +38,12 @@
 #	define XMMS_SENTINEL(x) __attribute__((sentinel(x)))
 #else
 #	define XMMS_SENTINEL(x)
+#endif
+
+#if defined (__GNUC__) && __GNUC__ >= 4
+#	define XMMS_PUBLIC __attribute__((visibility ("default")))
+#else
+#	define XMMS_PUBLIC
 #endif
 
 #endif

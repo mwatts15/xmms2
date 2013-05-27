@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -30,8 +30,8 @@
 #include <string.h>
 #include <errno.h>
 
-#include "xmms_configuration.h"
-#include "xmmsc/xmmsc_util.h"
+#include <xmms_configuration.h>
+#include <xmmsc/xmmsc_util.h>
 
 #include <glib.h>
 #include <glib/gstdio.h>

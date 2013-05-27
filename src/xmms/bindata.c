@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -22,20 +22,20 @@
 #include <sys/time.h>
 #include <errno.h>
 
-#include "xmmsc/xmmsc_idnumbers.h"
-#include "xmmsc/xmmsc_ipc_transport.h"
-#include "xmmsc/xmmsc_ipc_msg.h"
+#include <xmmsc/xmmsc_idnumbers.h>
+#include <xmmsc/xmmsc_ipc_transport.h>
+#include <xmmsc/xmmsc_ipc_msg.h>
 
-#include "xmms/xmms_log.h"
+#include <xmms/xmms_log.h>
 
-#include "xmms/xmms_bindata.h"
+#include <xmms/xmms_bindata.h>
 
-#include "xmmspriv/xmms_ringbuf.h"
-#include "xmmspriv/xmms_ipc.h"
-#include "xmmspriv/xmms_playlist.h"
-#include "xmmspriv/xmms_config.h"
-#include "xmmspriv/xmms_bindata.h"
-#include "xmmspriv/xmms_utils.h"
+#include <xmmspriv/xmms_ringbuf.h>
+#include <xmmspriv/xmms_ipc.h>
+#include <xmmspriv/xmms_playlist.h>
+#include <xmmspriv/xmms_config.h>
+#include <xmmspriv/xmms_bindata.h>
+#include <xmmspriv/xmms_utils.h>
 
 struct xmms_bindata_St {
 	xmms_object_t obj;

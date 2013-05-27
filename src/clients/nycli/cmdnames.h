@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -20,7 +20,6 @@
 #include <string.h>
 
 #include <glib.h>
-#include <glib/gprintf.h>
 
 typedef struct command_name_St command_name_t;
 struct command_name_St {

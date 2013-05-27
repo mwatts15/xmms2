@@ -1,5 +1,5 @@
 /*  XMMS2 plugin for decoding MPEG audio using libmpg123
- *  Copyright (C) 2007-2012 XMMS2 Team
+ *  Copyright (C) 2007-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -35,11 +35,11 @@
  *  for retrieval here, or just keep the id3 tags there...
  */
 
-#include "xmms/xmms_xformplugin.h"
-#include "xmms/xmms_log.h"
-#include "xmms/xmms_medialib.h"
+#include <xmms/xmms_xformplugin.h>
+#include <xmms/xmms_log.h>
+#include <xmms/xmms_medialib.h>
 
-#include <stdlib.h>
+#include <stdio.h>
 #include <glib.h>
 #include <mpg123.h>
 
@@ -249,7 +249,10 @@ xmms_mpg123_init (xmms_xform_t *xform)
 
 	/* Get duration in samples, convert to ms and save to xmms2 */
 	length = mpg123_length (data->decoder);
-	if (length > 0) {
+	if (length > 0 &&
+	    !xmms_xform_metadata_get_int (xform,
+		                              XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
+		                              &i)) {
 		length = (off_t) ((gfloat) length / data->samplerate * 1000);
 		xmms_xform_metadata_set_int (xform,
 		                             XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,

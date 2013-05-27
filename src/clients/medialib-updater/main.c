@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -38,35 +38,6 @@ static gboolean updater_add_watcher (updater_t *updater, GFile *root);
 static void on_directory_event (GFileMonitor *monitor, GFile *dir,
                                 GFile *other, GFileMonitorEvent event,
                                 gpointer udata);
-
-/* TODO: Remove once we depend on GLib >= 2.18 */
-#ifndef HAVE_G_FILE_QUERY_FILE_TYPE
-static GFileType
-g_file_query_file_type (GFile *file, GFileQueryInfoFlags flags,
-                        GCancellable *cancellable);
-
-GFileType
-g_file_query_file_type (GFile *file,
-                        GFileQueryInfoFlags   flags,
-                        GCancellable *cancellable)
-{
-  GFileInfo *info;
-  GFileType file_type;
-
-  g_return_val_if_fail (G_IS_FILE(file), G_FILE_TYPE_UNKNOWN);
-  info = g_file_query_info (file, G_FILE_ATTRIBUTE_STANDARD_TYPE, flags,
-			    cancellable, NULL);
-  if (info != NULL)
-    {
-      file_type = g_file_info_get_file_type (info);
-      g_object_unref (info);
-    }
-  else
-    file_type = G_FILE_TYPE_UNKNOWN;
-
-  return file_type;
-}
-#endif
 
 static void
 unregister_monitor (gpointer ptr)
@@ -475,15 +446,11 @@ static int
 updater_remove_directory_by_id (xmmsv_t *value, void *udata)
 {
 	xmmsv_list_iter_t *it;
+	xmmsv_t *item;
 
 	xmmsv_get_list_iter (value, &it);
-	while (xmmsv_list_iter_valid (it)) {
-		xmmsv_t *item;
-
-		if (xmmsv_list_iter_entry (it, &item)) {
-			updater_remove_file_by_id (item, udata);
-		}
-
+	while (xmmsv_list_iter_entry (it, &item)) {
+		updater_remove_file_by_id (item, udata);
 		xmmsv_list_iter_next (it);
 	}
 	return TRUE;
@@ -493,7 +460,7 @@ static void
 updater_remove_directory (updater_t *updater, GFile *file)
 {
 	xmmsc_result_t *res;
-	xmmsv_coll_t *univ, *coll;
+	xmmsv_t *univ, *coll;
 	gchar *path, *pattern, *encoded;
 
 	path = g_file_get_path (file);
@@ -503,13 +470,13 @@ updater_remove_directory (updater_t *updater, GFile *file)
 	pattern = g_strdup_printf ("file://%s/*", encoded);
 	g_free (encoded);
 
-	univ = xmmsv_coll_universe ();
-	coll = xmmsv_coll_new (XMMS_COLLECTION_TYPE_MATCH);
+	univ = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
+	coll = xmmsv_new_coll (XMMS_COLLECTION_TYPE_MATCH);
 
 	xmmsv_coll_add_operand (coll, univ);
-	xmmsv_coll_attribute_set (coll, "field", "url");
-	xmmsv_coll_attribute_set (coll, "value", pattern);
-	xmmsv_coll_attribute_set (coll, "case-sensitive", "true");
+	xmmsv_coll_attribute_set_string (coll, "field", "url");
+	xmmsv_coll_attribute_set_string (coll, "value", pattern);
+	xmmsv_coll_attribute_set_string (coll, "case-sensitive", "true");
 
 	g_debug ("remove '%s' from mlib", pattern);
 
@@ -517,8 +484,8 @@ updater_remove_directory (updater_t *updater, GFile *file)
 	xmmsc_result_notifier_set (res, updater_remove_directory_by_id, updater);
 	xmmsc_result_unref (res);
 
-	xmmsv_coll_unref (coll);
-	xmmsv_coll_unref (univ);
+	xmmsv_unref (coll);
+	xmmsv_unref (univ);
 
 	g_free (pattern);
 }
@@ -664,7 +631,6 @@ main (int argc, char **argv)
 	GMainLoop *ml;
 
 	g_type_init ();
-	g_thread_init (NULL);
 
 	ml = g_main_loop_new (NULL, FALSE);
 

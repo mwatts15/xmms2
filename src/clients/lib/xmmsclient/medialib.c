@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -19,11 +19,11 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "xmmsclient/xmmsclient.h"
-#include "xmmsclientpriv/xmmsclient.h"
-#include "xmmsclientpriv/xmmsclient_ipc.h"
-#include "xmmsc/xmmsc_idnumbers.h"
-#include "xmmsc/xmmsc_stringport.h"
+#include <xmmsclient/xmmsclient.h>
+#include <xmmsclientpriv/xmmsclient.h>
+#include <xmmsclientpriv/xmmsclient_ipc.h>
+#include <xmmsc/xmmsc_idnumbers.h>
+#include <xmmsc/xmmsc_stringport.h>
 
 /**
  * @defgroup MedialibControl MedialibControl
@@ -328,7 +328,7 @@ xmmsc_broadcast_medialib_entry_added (xmmsc_connection_t *c)
 }
 
 /**
- * Request the medialib_entry_changed broadcast. This will be called
+ * Request the medialib_entry_updated broadcast. This will be called
  * if a entry changes on the serverside. The argument will be an medialib
  * id.
  */
@@ -338,6 +338,32 @@ xmmsc_broadcast_medialib_entry_changed (xmmsc_connection_t *c)
 	x_check_conn (c, NULL);
 
 	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_UPDATE);
+}
+
+/**
+ * Request the medialib_entry_updated broadcast. This will be called
+ * if a entry changes on the serverside. The argument will be an medialib
+ * id.
+ */
+xmmsc_result_t *
+xmmsc_broadcast_medialib_entry_updated (xmmsc_connection_t *c)
+{
+	x_check_conn (c, NULL);
+
+	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_UPDATE);
+}
+
+/**
+ * Request the medialib_entry_removed broadcast. This will be called
+ * if a entry is removed on the serverside. The argument will be an medialib
+ * id.
+ */
+xmmsc_result_t *
+xmmsc_broadcast_medialib_entry_removed (xmmsc_connection_t *c)
+{
+	x_check_conn (c, NULL);
+
+	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_REMOVED);
 }
 
 /**

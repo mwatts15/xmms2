@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -17,7 +17,7 @@
 #ifndef __XMMS_COLLSYNC_H__
 #define __XMMS_COLLSYNC_H__
 
-#include "xmmspriv/xmms_collection.h"
+#include <xmmspriv/xmms_collection.h>
 
 typedef struct xmms_coll_sync_St xmms_coll_sync_t;
 

@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -20,7 +20,7 @@
  */
 
 
-#include "xmmspriv/xmms_checkroot.h"
+#include <xmmspriv/xmms_checkroot.h>
 
 #include <unistd.h>
 #include <sys/types.h>

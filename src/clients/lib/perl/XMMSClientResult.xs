@@ -16,15 +16,31 @@ notifyer_cb (xmmsv_t *val, void *user_data)
 STATIC SV *
 sv_from_value_int (xmmsv_t *val)
 {
-	int ret, num;
+	int64_t num;
+	int ret;
 
-	ret = xmmsv_get_int (val, &num);
+	ret = xmmsv_get_int64 (val, &num);
 
 	if (ret == 0) {
 		croak("could not fetch int value");
 	}
 
 	return newSViv (num);
+}
+
+STATIC SV *
+sv_from_value_float (xmmsv_t *val)
+{
+	float num;
+	int ret;
+
+	ret = xmmsv_get_float (val, &num);
+
+	if (ret == 0) {
+		croak("could not fetch int value");
+	}
+
+	return newSVnv ((double) num);
 }
 
 STATIC SV *
@@ -45,16 +61,7 @@ sv_from_value_string (xmmsv_t *val)
 STATIC SV *
 sv_from_value_coll (xmmsv_t *val)
 {
-	int ret;
-	xmmsv_coll_t *coll = NULL;
-
-	ret = xmmsv_get_coll (val, &coll);
-
-	if (ret == 0) {
-		croak("could not fetch collection value");
-	}
-
-	return perl_xmmsclient_new_sv_from_ptr ((void *)coll, "Audio::XMMSClient::Collection");
+	return perl_xmmsclient_new_sv_from_ptr ((void *) xmmsv_ref (val), "Audio::XMMSClient::Collection");
 }
 
 STATIC SV *
@@ -148,8 +155,11 @@ value_to_sv (xmmsv_t *value) {
 		case XMMSV_TYPE_ERROR:
 			croak_value_error (value);
 			break;
-		case XMMSV_TYPE_INT32:
+		case XMMSV_TYPE_INT64:
 			ret = sv_from_value_int (value);
+			break;
+		case XMMSV_TYPE_FLOAT:
+			ret = sv_from_value_float (value);
 			break;
 		case XMMSV_TYPE_STRING:
 			ret = sv_from_value_string (value);

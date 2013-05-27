@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2006-2012 XMMS2 Team
+ *  Copyright (C) 2006-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -19,9 +19,9 @@
   * @url http://wavpack.com
   */
 
-#include "xmms/xmms_xformplugin.h"
-#include "xmms/xmms_log.h"
-#include "xmms/xmms_medialib.h"
+#include <xmms/xmms_xformplugin.h>
+#include <xmms/xmms_log.h>
+#include <xmms/xmms_medialib.h>
 
 #include <glib.h>
 #include <math.h>

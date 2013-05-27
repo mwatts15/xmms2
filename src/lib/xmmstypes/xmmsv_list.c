@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -17,10 +17,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "xmmspriv/xmmsv.h"
-#include "xmmspriv/xmms_list.h"
+#include <xmmscpriv/xmmsv.h>
+#include <xmmscpriv/xmms_list.h>
 
-#include "xmmsc/xmmsv.h"
+#include <xmmsc/xmmsv.h>
 
 struct xmmsv_list_iter_St {
 	xmmsv_list_internal_t *parent;
@@ -509,8 +509,7 @@ xmmsv_list_foreach (xmmsv_t *listv, xmmsv_list_foreach_func func,
 	x_return_val_if_fail (xmmsv_is_type (listv, XMMSV_TYPE_LIST), 0);
 	x_return_val_if_fail (xmmsv_get_list_iter (listv, &it), 0);
 
-	while (xmmsv_list_iter_valid (it)) {
-		xmmsv_list_iter_entry (it, &v);
+	while (xmmsv_list_iter_entry (it, &v)) {
 		func (v, user_data);
 		xmmsv_list_iter_next (it);
 	}
@@ -540,12 +539,32 @@ int
 xmmsv_list_restrict_type (xmmsv_t *listv, xmmsv_type_t type)
 {
 	x_return_val_if_fail (xmmsv_list_has_type (listv, type), 0);
-	x_return_val_if_fail (!listv->value.list->restricted, 0);
+	x_return_val_if_fail (!listv->value.list->restricted ||
+	                      listv->value.list->restricttype == type, 0);
 
 	listv->value.list->restricted = true;
 	listv->value.list->restricttype = type;
 
 	return 1;
+}
+
+/**
+ * Gets the current type restriction of a list.
+ *
+ * @param listv The list to Check
+ * @return the xmmsv_type_t of the restricted type, or XMMSV_TYPE_NONE if no restriction.
+ */
+int
+xmmsv_list_get_type (xmmsv_t *listv, xmmsv_type_t *type)
+{
+	x_return_val_if_fail (listv, false);
+	x_return_val_if_fail (xmmsv_is_type (listv, XMMSV_TYPE_LIST), false);
+	if (listv->value.list->restricted) {
+		*type = listv->value.list->restricttype;
+	} else {
+		*type = XMMSV_TYPE_NONE;
+	}
+	return true;
 }
 
 /**
@@ -568,8 +587,7 @@ xmmsv_list_has_type (xmmsv_t *listv, xmmsv_type_t type)
 		return listv->value.list->restricttype == type;
 
 	x_return_val_if_fail (xmmsv_get_list_iter (listv, &it), 0);
-	while (xmmsv_list_iter_valid (it)) {
-		xmmsv_list_iter_entry (it, &v);
+	while (xmmsv_list_iter_entry (it, &v)) {
 		if (!xmmsv_is_type (v, type)) {
 			_xmmsv_list_iter_free (it);
 			return 0;
@@ -580,6 +598,41 @@ xmmsv_list_has_type (xmmsv_t *listv, xmmsv_type_t type)
 	_xmmsv_list_iter_free (it);
 
 	return 1;
+}
+
+/**
+ * Get the index of an element in the list. This function compares the
+ * pointers and not the actual values contained in the elements.
+ *
+ * @param listv The #xmmsv_t containing the list
+ * @param val The element to find
+ * @return The index of the element if found, -1 otherwise
+ */
+int
+xmmsv_list_index_of (xmmsv_t *listv, xmmsv_t *val)
+{
+	xmmsv_list_iter_t *it;
+	xmmsv_t *v;
+	int i = 0, ret = -1;
+
+	x_return_val_if_fail (listv, -1);
+	x_return_val_if_fail (xmmsv_is_type (listv, XMMSV_TYPE_LIST), -1);
+
+	if (!xmmsv_get_list_iter (listv, &it))
+		return -1;
+
+	while (xmmsv_list_iter_entry (it, &v)) {
+		if (v == val) {
+			ret = i;
+			break;
+		}
+		xmmsv_list_iter_next (it);
+		i++;
+	}
+
+	xmmsv_list_iter_explicit_destroy (it);
+
+	return ret;
 }
 
 static xmmsv_list_iter_t *
@@ -904,8 +957,15 @@ xmmsv_list_flatten (xmmsv_t *list, int depth)
 	}
 
 GEN_LIST_EXTRACTOR_FUNC (string, const char *)
-GEN_LIST_EXTRACTOR_FUNC (int, int32_t)
-GEN_LIST_EXTRACTOR_FUNC (coll, xmmsv_coll_t *)
+GEN_LIST_EXTRACTOR_FUNC (int32, int32_t)
+GEN_LIST_EXTRACTOR_FUNC (int64, int64_t)
+GEN_LIST_EXTRACTOR_FUNC (float, float)
+
+int
+xmmsv_list_get_coll (xmmsv_t *val, int pos, xmmsv_t **r)
+{
+	return xmmsv_list_get (val, pos, r);
+}
 
 /* macro-magically define list set functions */
 #define GEN_LIST_SET_FUNC(typename, type)	  \
@@ -923,8 +983,14 @@ GEN_LIST_EXTRACTOR_FUNC (coll, xmmsv_coll_t *)
 	}
 
 GEN_LIST_SET_FUNC (string, const char *)
-GEN_LIST_SET_FUNC (int, int32_t)
-GEN_LIST_SET_FUNC (coll, xmmsv_coll_t *)
+GEN_LIST_SET_FUNC (int, int64_t)
+GEN_LIST_SET_FUNC (float, float)
+
+int
+xmmsv_list_set_coll (xmmsv_t *list, int pos, xmmsv_t *elem)
+{
+	return xmmsv_list_set (list, pos, elem);
+}
 
 /* macro-magically define list insert functions */
 #define GEN_LIST_INSERT_FUNC(typename, type)	  \
@@ -942,8 +1008,14 @@ GEN_LIST_SET_FUNC (coll, xmmsv_coll_t *)
 	}
 
 GEN_LIST_INSERT_FUNC (string, const char *)
-GEN_LIST_INSERT_FUNC (int, int32_t)
-GEN_LIST_INSERT_FUNC (coll, xmmsv_coll_t *)
+GEN_LIST_INSERT_FUNC (int, int64_t)
+GEN_LIST_INSERT_FUNC (float, float)
+
+int
+xmmsv_list_insert_coll (xmmsv_t *list, int pos, xmmsv_t *elem)
+{
+	return xmmsv_list_insert (list, pos, elem);
+}
 
 /* macro-magically define list append functions */
 #define GEN_LIST_APPEND_FUNC(typename, type)	  \
@@ -961,8 +1033,14 @@ GEN_LIST_INSERT_FUNC (coll, xmmsv_coll_t *)
 	}
 
 GEN_LIST_APPEND_FUNC (string, const char *)
-GEN_LIST_APPEND_FUNC (int, int32_t)
-GEN_LIST_APPEND_FUNC (coll, xmmsv_coll_t *)
+GEN_LIST_APPEND_FUNC (int, int64_t)
+GEN_LIST_APPEND_FUNC (float, float)
+
+int
+xmmsv_list_append_coll (xmmsv_t *list, xmmsv_t *elem)
+{
+	return xmmsv_list_append (list, elem);
+}
 
 /* macro-magically define list_iter extractors */
 #define GEN_LIST_ITER_EXTRACTOR_FUNC(typename, type)	  \
@@ -977,8 +1055,15 @@ GEN_LIST_APPEND_FUNC (coll, xmmsv_coll_t *)
 	}
 
 GEN_LIST_ITER_EXTRACTOR_FUNC (string, const char *)
-GEN_LIST_ITER_EXTRACTOR_FUNC (int, int32_t)
-GEN_LIST_ITER_EXTRACTOR_FUNC (coll, xmmsv_coll_t *)
+GEN_LIST_ITER_EXTRACTOR_FUNC (int32, int32_t)
+GEN_LIST_ITER_EXTRACTOR_FUNC (int64, int64_t)
+GEN_LIST_ITER_EXTRACTOR_FUNC (float, float)
+
+int
+xmmsv_list_iter_entry_coll (xmmsv_list_iter_t *it, xmmsv_t **r)
+{
+	return xmmsv_list_iter_entry (it, r);
+}
 
 /* macro-magically define list_iter insert functions */
 #define GEN_LIST_ITER_INSERT_FUNC(typename, type)	  \
@@ -996,5 +1081,11 @@ GEN_LIST_ITER_EXTRACTOR_FUNC (coll, xmmsv_coll_t *)
 	}
 
 GEN_LIST_ITER_INSERT_FUNC (string, const char *)
-GEN_LIST_ITER_INSERT_FUNC (int, int32_t)
-GEN_LIST_ITER_INSERT_FUNC (coll, xmmsv_coll_t *)
+GEN_LIST_ITER_INSERT_FUNC (int, int64_t)
+GEN_LIST_ITER_INSERT_FUNC (float, float)
+
+int
+xmmsv_list_iter_insert_coll (xmmsv_list_iter_t *it, xmmsv_t *elem)
+{
+	return xmmsv_list_iter_insert (it, elem);
+}

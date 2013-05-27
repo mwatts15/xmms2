@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -20,8 +20,8 @@
 #include <stdarg.h>
 #include <glib.h>
 
-#include "xmms/xmms_object.h"
-#include "xmmsc/xmmsc_compiler.h"
+#include <xmms/xmms_object.h>
+#include <xmmsc/xmmsc_compiler.h>
 
 xmmsv_t *__xmms_ipc_call (xmms_object_t *object, gint cmd, ...) XMMS_SENTINEL(0);
 #define XMMS_IPC_CALL(obj, cmd, ...) __xmms_ipc_call (XMMS_OBJECT (obj), cmd, __VA_ARGS__, NULL);

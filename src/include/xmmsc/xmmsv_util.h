@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -18,7 +18,7 @@
 #ifndef __XMMSV_UTIL_H__
 #define __XMMSV_UTIL_H__
 
-#include "xmmsc/xmmsv_general.h"
+#include <xmmsc/xmmsv_general.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,16 +32,16 @@ extern "C" {
 
 #define xmmsv_check_type(type) ((type) > XMMSV_TYPE_NONE && (type) < XMMSV_TYPE_END)
 
-xmmsv_t *xmmsv_decode_url (const xmmsv_t *url);
+xmmsv_t *xmmsv_decode_url (const xmmsv_t *url) XMMS_PUBLIC;
 
-int xmmsv_utf8_validate (const char *str);
+int xmmsv_utf8_validate (const char *str) XMMS_PUBLIC;
 
-xmmsv_t *xmmsv_propdict_to_dict (xmmsv_t *propdict, const char **src_prefs);
+xmmsv_t *xmmsv_propdict_to_dict (xmmsv_t *propdict, const char **src_prefs) XMMS_PUBLIC;
 
-int xmmsv_dict_format (char *target, int len, const char *fmt, xmmsv_t *val);
+int xmmsv_dict_format (char *target, int len, const char *fmt, xmmsv_t *val) XMMS_PUBLIC;
 
-xmmsv_t *xmmsv_serialize (xmmsv_t *v);
-xmmsv_t *xmmsv_deserialize (xmmsv_t *v);
+xmmsv_t *xmmsv_serialize (xmmsv_t *v) XMMS_PUBLIC;
+xmmsv_t *xmmsv_deserialize (xmmsv_t *v) XMMS_PUBLIC;
 
 /** @} */
 

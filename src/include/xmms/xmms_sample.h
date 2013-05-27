@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -18,7 +18,8 @@
 #define __SAMPLE_H__
 
 #include <glib.h>
-#include "xmms/xmms_streamtype.h"
+#include <xmms/xmms_streamtype.h>
+#include <xmmsc/xmmsc_compiler.h>
 
 G_BEGIN_DECLS
 
@@ -57,7 +58,7 @@ typedef gfloat xmms_samplefloat_t;
 typedef gdouble xmms_sampledouble_t;
 typedef void xmms_sample_t;
 
-guint xmms_sample_bytes_to_ms (const xmms_stream_type_t *st, guint samples);
+guint xmms_sample_bytes_to_ms (const xmms_stream_type_t *st, guint samples) XMMS_PUBLIC;
 
 static inline gint
 xmms_sample_size_get (xmms_sample_format_t fmt)

@@ -1,7 +1,7 @@
 /** @file cc_handlers.c
  *  Functions for parsing DAAP content code data.
  *
- *  Copyright (C) 2006-2012 XMMS2 Team
+ *  Copyright (C) 2006-2013 XMMS2 Team
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -24,7 +24,7 @@
 #include "cc_handlers.h"
 #include "daap_conn.h"
 
-#include "xmms/xmms_log.h"
+#include <xmms/xmms_log.h>
 
 #define DMAP_BYTES_REMAINING ((gint) (data_end - current_data))
 

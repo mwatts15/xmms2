@@ -9,7 +9,8 @@ from cxmmsvalue cimport *
 
 VALUE_TYPE_NONE   = XMMSV_TYPE_NONE
 VALUE_TYPE_ERROR  = XMMSV_TYPE_ERROR
-VALUE_TYPE_INT32  = XMMSV_TYPE_INT32
+VALUE_TYPE_INT64  = XMMSV_TYPE_INT64
+VALUE_TYPE_FLOAT  = XMMSV_TYPE_FLOAT
 VALUE_TYPE_STRING = XMMSV_TYPE_STRING
 VALUE_TYPE_COLL   = XMMSV_TYPE_COLL
 VALUE_TYPE_BIN    = XMMSV_TYPE_BIN
@@ -42,9 +43,13 @@ from propdict import PropDict # xmmsclient.propdict
 cdef xmmsv_t *create_native_value(value) except NULL:
 	cdef xmmsv_t *ret=NULL
 	cdef xmmsv_t *v
+	cdef XmmsValue xv
 
 	if value is None:
 		ret = xmmsv_new_none()
+	elif isinstance(value, XmmsValue):
+		xv = value
+		ret = xmmsv_copy(xv.val) # Prevent side effects.
 	elif isinstance(value, int):
 		ret = xmmsv_new_int(value)
 	elif isinstance(value, (unicode, str)):
@@ -127,7 +132,7 @@ cdef class XmmsValue:
 		@return: Whether the value represents an error or not.
 		@rtype: Boolean
 		"""
-		return xmmsv_is_error(self.val)
+		return xmmsv_is_type(self.val, XMMSV_TYPE_ERROR)
 
 	cpdef get_error(self):
 		"""
@@ -144,8 +149,18 @@ cdef class XmmsValue:
 		Get data from the result structure as an int.
 		@rtype: int
 		"""
-		cdef int ret = 0
-		if not xmmsv_get_int(self.val, &ret):
+		cdef int64_t ret = 0
+		if not xmmsv_get_int64(self.val, &ret):
+			raise ValueError("Failed to retrieve value")
+		return ret
+
+	cpdef get_float(self):
+		"""
+		Get data from the result structure as an float.
+		@rtype: float
+		"""
+		cdef float ret = 0
+		if not xmmsv_get_float(self.val, &ret):
 			raise ValueError("Failed to retrieve value")
 		return ret
 
@@ -175,10 +190,9 @@ cdef class XmmsValue:
 		Get data from the result structure as a Collection.
 		@rtype: Collection
 		"""
-		cdef xmmsv_coll_t *coll = NULL
-		if not xmmsv_get_coll(self.val, &coll):
-			raise ValueError("Failed to retrieve value")
-		return create_coll(coll)
+		if not xmmsv_is_type(self.val, XMMSV_TYPE_COLL):
+			raise ValueError("The value is not a collection")
+		return create_coll(self.val)
 
 	cpdef get_dict(self):
 		"""
@@ -226,8 +240,10 @@ cdef class XmmsValue:
 			return None
 		elif vtype == XMMSV_TYPE_ERROR:
 			return self.get_error()
-		elif vtype == XMMSV_TYPE_INT32:
+		elif vtype == XMMSV_TYPE_INT64:
 			return self.get_int()
+		elif vtype == XMMSV_TYPE_FLOAT:
+			return self.get_float()
 		elif vtype == XMMSV_TYPE_STRING:
 			return self.get_string()
 		elif vtype == XMMSV_TYPE_COLL:
@@ -252,7 +268,7 @@ cdef class XmmsListIter:
 	def __cinit__(self):
 		self.val = NULL
 		self.it = NULL
-	
+
 	def __dealloc__(self):
 		if self.it != NULL:
 			xmmsv_list_iter_explicit_destroy(self.it)
@@ -308,7 +324,7 @@ cdef class XmmsDictIter:
 		if not xmmsv_get_dict_iter(self.val, &self.it):
 			raise RuntimeError("Failed to initialize the iterator.")
 		self.sourcepref = value.sourcepref
-	
+
 	def __iter__(self):
 		return self
 
@@ -335,13 +351,13 @@ cdef class CollectionRef:
 
 	def __dealloc__(self):
 		if self.coll != NULL:
-			xmmsv_coll_unref(self.coll)
+			xmmsv_unref(<xmmsv_t *>self.coll)
 		self.coll = NULL
 
-	cdef set_collection(self, xmmsv_coll_t *coll):
+	cdef set_collection(self, xmmsv_t *coll):
 		if self.coll != NULL:
-			xmmsv_coll_unref(self.coll)
-		xmmsv_coll_ref(coll)
+			xmmsv_unref(<xmmsv_t *>self.coll)
+		xmmsv_ref(<xmmsv_t *>coll)
 		self.coll = coll
 
 
@@ -396,7 +412,7 @@ cdef class Collection(CollectionRef):
 				raise TypeError("Can't set idlist for this type of collection")
 			elif self._idlist is ids:
 				pass
-			else: 
+			else:
 				self._idlist.clear()
 				self._idlist.extend(ids)
 
@@ -455,15 +471,26 @@ cdef class AttributesIterator:
 
 	def __next__(self):
 		cdef char *key = NULL
-		cdef char *value = NULL
+		cdef xmmsv_t *value = NULL
 		if self.diter != NULL and xmmsv_dict_iter_valid(self.diter):
-			xmmsv_dict_iter_pair_string(self.diter, <const_char **>&key, <const_char **>&value)
-			if self.itertype == ITER_VALUES:
-				ret = to_unicode(value)
-			elif self.itertype == ITER_ITEMS:
-				ret = (key, to_unicode(value))
-			else: # ITER_KEYS is the default
-				ret = key
+			xmmsv_dict_iter_pair (self.diter, <const_char **>&key, &value)
+			k = to_unicode(key)
+			if self.itertype == ITER_KEYS:
+				ret = k
+			else:
+				v = XmmsValue()
+				v.set_value(value)
+				if self.itertype == ITER_VALUES:
+					ret = v.values
+				elif self.itertype == ITER_ITEMS:
+					ret = (k, v.value())
+				elif self.itertype == ITER_XVALUES:
+					ret = v
+				elif self.itertype == ITER_XITEMS:
+					ret = (k, v)
+				else:
+					# Should never be reached
+					raise RuntimeError("Unknown iter type")
 			xmmsv_dict_iter_next(self.diter)
 			return ret
 		raise StopIteration()
@@ -491,14 +518,26 @@ cdef class CollectionAttributes(CollectionRef):
 	cpdef itervalues(self):
 		return AttributesIterator(self, ITER_VALUES)
 
+	cpdef iterxvalues(self):
+		return AttributesIterator(self, ITER_XVALUES)
+
 	cpdef values(self):
 		return [v for v in self.itervalues()]
+
+	cpdef xvalues(self):
+		return [v for v in self.iterxvalues()]
 
 	cpdef iteritems(self):
 		return AttributesIterator(self, ITER_ITEMS)
 
+	cpdef iterxitems(self):
+		return AttributesIterator(self, ITER_XITEMS)
+
 	cpdef items(self):
 		return [i for i in self.iteritems()]
+
+	cpdef xitems(self):
+		return [i for i in self.iterxitems()]
 
 	def __iter__(self):
 		return self.iterkeys()
@@ -510,16 +549,14 @@ cdef class CollectionAttributes(CollectionRef):
 		return str(self.get_dict())
 
 	def __getitem__(self, name):
-		cdef const_char *value = NULL
-		nam = from_unicode(name)
-		if not xmmsv_coll_attribute_get(self.coll, <char *>nam, &value):
-			raise KeyError("The attribute '%s' doesn't exist" % name)
-		return to_unicode(value)
+		return self.xget(name).value()
 
 	def __setitem__(self, name, value):
+		cdef xmmsv_t *v
 		n = from_unicode(name)
-		v = from_unicode(value)
-		xmmsv_coll_attribute_set(self.coll, <char *>n, <char *>v)
+		v = create_native_value(value)
+		xmmsv_coll_attribute_set_value(self.coll, <char *>n, v)
+		xmmsv_unref(v)
 
 	def __delitem__(self, name):
 		n = from_unicode(name)
@@ -528,9 +565,19 @@ cdef class CollectionAttributes(CollectionRef):
 
 	def get(self, name, default=None):
 		try:
-			return self[name]
+			return self.xget(name).value()
 		except KeyError:
 			return default
+
+	def xget(self, name):
+		cdef xmmsv_t *value = NULL
+		cdef XmmsValue xv
+		nam = from_unicode(name)
+		if not xmmsv_coll_attribute_get_value(self.coll, <char *>nam, &value):
+			raise KeyError("The attribute '%s' doesn't exist" % name)
+		xv = XmmsValue()
+		xv.set_value(value)
+		return xv
 
 	cpdef clear(self):
 		for k in self.keys():
@@ -547,8 +594,8 @@ cdef class CollectionAttributes(CollectionRef):
 			self[k] = kargs[k]
 
 	def __contains__(self, name):
-		cdef const_char *value = NULL
-		return xmmsv_coll_attribute_get(self.coll, name, &value)
+		cdef xmmsv_t *value = NULL
+		return xmmsv_coll_attribute_get_value(self.coll, name, &value)
 
 cdef class CollectionOperands(CollectionRef):
 	#cdef object pylist
@@ -699,7 +746,7 @@ class CollectionWrapper(Collection):
 
 class BaseCollection(CollectionWrapper):
 	def __init__(Collection self, int _colltype, **kargs):
-		self.coll = xmmsv_coll_new(<xmmsv_coll_type_t> _colltype)
+		self.coll = xmmsv_new_coll(<xmmsv_coll_type_t> _colltype)
 		if self.coll == NULL:
 			raise RuntimeError("Bad collection")
 
@@ -813,7 +860,7 @@ class Complement(BaseCollection):
 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_COMPLEMENT, operands=[op])
 
 
-cdef create_coll(xmmsv_coll_t *coll):
+cdef create_coll(xmmsv_t *coll):
 	cdef xmmsv_coll_type_t colltype
 	cdef Collection c
 	cdef const_char *idlist_type
@@ -856,7 +903,7 @@ cdef create_coll(xmmsv_coll_t *coll):
 	elif colltype == XMMS_COLLECTION_TYPE_LIMIT:
 		c.__class__ = Limit
 	elif colltype == XMMS_COLLECTION_TYPE_IDLIST:
-		if xmmsv_coll_attribute_get(coll, "type", &idlist_type):
+		if xmmsv_coll_attribute_get_string(coll, "type", &idlist_type):
 			idtype_uni = to_unicode(idlist_type)
 		else:
 			idtype_uni = "list"
@@ -879,7 +926,7 @@ cdef create_coll(xmmsv_coll_t *coll):
 
 
 def coll_parse(pattern):
-	cdef xmmsv_coll_t *coll = NULL
+	cdef xmmsv_t *coll = NULL
 
 	_pattern = from_unicode(pattern)
 	if not xmmsv_coll_parse(<char *>_pattern, &coll):

@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -22,7 +22,8 @@
 
 #include <glib.h>
 #include <xmmsc/xmmsc_idnumbers.h>
-#include "xmms_configuration.h"
+#include <xmmsc/xmmsc_compiler.h>
+#include <xmms_configuration.h>
 
 #define XMMS_PLUGIN_SHORTNAME_MAX_LEN 32
 
@@ -39,7 +40,7 @@ typedef struct xmms_plugin_desc_St {
 } xmms_plugin_desc_t;
 
 #define XMMS_PLUGIN(type, api_ver, shname, name, ver, desc, setupfunc)	\
-	xmms_plugin_desc_t XMMS_PLUGIN_DESC = {				\
+	xmms_plugin_desc_t XMMS_PUBLIC XMMS_PLUGIN_DESC = { \
 		type,							\
 		api_ver,						\
 		shname,							\
@@ -48,7 +49,7 @@ typedef struct xmms_plugin_desc_St {
 		desc,							\
 		setupfunc						\
 	};
-		
+
 G_END_DECLS
 
 #endif /* __XMMS_PLUGIN_H__ */

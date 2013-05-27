@@ -1,0 +1,14 @@
+def build(bld):
+    bld(features = 'c cprogram',
+        target = '_xmms2-migrate-collections-v0',
+        source = 'migrate-collections.c',
+        includes = '. ../../include ../../includepriv ../../lib/s4/include',
+        use = 'xmmstypes xmmsutils',
+        uselib = 'glib2'
+    )
+
+def configure(conf):
+    pass
+
+def options(o):
+    pass

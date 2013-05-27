@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -14,8 +14,8 @@
  *  Lesser General Public License for more details.
  */
 
-#include "xmmspriv/xmms_fetch_info.h"
-#include "xmmspriv/xmms_fetch_spec.h"
+#include <xmmspriv/xmms_fetch_info.h>
+#include <xmmspriv/xmms_fetch_spec.h>
 #include "s4.h"
 
 #include <glib.h>
@@ -114,7 +114,7 @@ aggregate_set (xmmsv_t **current, gint int_value, const gchar *str_value)
 static gboolean
 aggregate_sum (xmmsv_t **current, gint int_value, const gchar *str_value)
 {
-	gint old_value = 0;
+	int64_t old_value = 0;
 
 	if (str_value != NULL) {
 		/* 'sum' only applies to numbers */
@@ -122,7 +122,7 @@ aggregate_sum (xmmsv_t **current, gint int_value, const gchar *str_value)
 	}
 
 	if (*current != NULL) {
-		xmmsv_get_int (*current, &old_value);
+		xmmsv_get_int64 (*current, &old_value);
 		xmmsv_unref (*current);
 	}
 
@@ -243,11 +243,26 @@ static void *
 result_to_xmmsv (xmmsv_t *ret, gint32 id, const s4_result_t *res,
                  xmms_fetch_spec_t *spec)
 {
+	static gboolean (*aggregate_functions[AGGREGATE_END])(xmmsv_t **c, gint i, const gchar *s) = {
+		aggregate_first,
+		aggregate_sum,
+		aggregate_max,
+		aggregate_min,
+		aggregate_set,
+		aggregate_list,
+		aggregate_random,
+		aggregate_average
+	};
 	const s4_val_t *val;
 	xmmsv_t *dict, *current;
 	const gchar *str_value, *key = NULL;
 	gint32 i, int_value;
 	gboolean changed;
+
+	g_return_val_if_fail (spec->data.metadata.get_size > 0, ret);
+	g_return_val_if_fail (spec->data.metadata.get_size <= METADATA_END, ret);
+	g_return_val_if_fail (spec->data.metadata.aggr_func >= 0, ret);
+	g_return_val_if_fail (spec->data.metadata.aggr_func < AGGREGATE_END, ret);
 
 	/* Loop through all the values the column has */
 	while (res != NULL) {
@@ -257,6 +272,7 @@ result_to_xmmsv (xmmsv_t *ret, gint32 id, const s4_result_t *res,
 		/* Loop through the list of what to get ("key", "source", ..) */
 		for (i = 0; i < spec->data.metadata.get_size; i++) {
 			str_value = NULL;
+			int_value = 0;
 
 			/* Fill str_value with the correct value if it is a string
 			 * or int_value if it is an integer
@@ -280,6 +296,8 @@ result_to_xmmsv (xmmsv_t *ret, gint32 id, const s4_result_t *res,
 						s4_val_get_str (val, &str_value);
 					}
 					break;
+				default:
+					g_assert_not_reached ();
 			}
 
 			/* If this is not the last property to get we use this property
@@ -318,34 +336,7 @@ result_to_xmmsv (xmmsv_t *ret, gint32 id, const s4_result_t *res,
 			}
 		}
 
-		changed = 0;
-
-		switch (spec->data.metadata.aggr_func) {
-			case AGGREGATE_FIRST:
-				changed = aggregate_first (&current, int_value, str_value);
-				break;
-			case AGGREGATE_LIST:
-				changed = aggregate_list (&current, int_value, str_value);
-				break;
-			case AGGREGATE_SET:
-				changed = aggregate_set (&current, int_value, str_value);
-				break;
-			case AGGREGATE_SUM:
-				changed = aggregate_sum (&current, int_value, str_value);
-				break;
-			case AGGREGATE_MIN:
-				changed = aggregate_min (&current, int_value, str_value);
-				break;
-			case AGGREGATE_MAX:
-				changed = aggregate_max (&current, int_value, str_value);
-				break;
-			case AGGREGATE_RANDOM:
-				changed = aggregate_random (&current, int_value, str_value);
-				break;
-			case AGGREGATE_AVG:
-				changed = aggregate_average (&current, int_value, str_value);
-				break;
-		}
+		changed = aggregate_functions[spec->data.metadata.aggr_func](&current, int_value, str_value);
 
 		/* Update the previous dict (if there is one) */
 		if (i > 1 && changed) {
@@ -400,9 +391,11 @@ aggregate_data (xmmsv_t *value, aggregate_function_t aggr_func)
 		case AGGREGATE_AVG:
 			avg_data = data;
 			if (avg_data != NULL) {
-				ret = xmmsv_new_int (avg_data->n ? avg_data->sum / avg_data->n : 0);
+				ret = xmmsv_new_float (avg_data->n ? avg_data->sum * 1.0 / avg_data->n : 0);
 			}
 			break;
+		default:
+			g_assert_not_reached ();
 	}
 
 	xmmsv_unref (value);
@@ -486,7 +479,7 @@ cluster_set (s4_resultset_t *set, xmms_fetch_spec_t *spec,
 	for (position = 0; s4_resultset_get_row (set, position, &row); position++) {
 		s4_resultset_t *cluster;
 		const s4_result_t *res;
-		const gchar *value = "(No value)"; /* Used to represent NULL */
+		const gchar *value = spec->data.cluster.fallback;
 		gchar buf[12];
 
 		if (spec->data.cluster.type == CLUSTER_BY_POSITION) {
@@ -500,6 +493,11 @@ cluster_set (s4_resultset_t *set, xmms_fetch_spec_t *spec,
 				g_snprintf (buf, sizeof (buf), "%i", ival);
 				value = buf;
 			}
+		}
+
+		if (value == NULL) {
+			/* value not found, and no fallback provided */
+			continue;
 		}
 
 		cluster = g_hash_table_lookup (table, value);
@@ -619,6 +617,8 @@ xmms_medialib_query_to_xmmsv (s4_resultset_t *set, xmms_fetch_spec_t *spec)
 
 			g_hash_table_destroy (set_table);
 			break;
+		default:
+			g_assert_not_reached ();
 	}
 
 	return ret;

@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -14,18 +14,15 @@
  *  General Public License for more details.
  */
 
-#include <xmmsclient/xmmsclient.h>
-
-#include <glib.h>
-#include <glib/gprintf.h>
 #include <readline/readline.h>
 #include <readline/history.h>
 
-#include "main.h"
+#include "cli_context.h"
+#include "status.h"
 
-void readline_init (cli_infos_t *infos);
-void readline_suspend (cli_infos_t *infos);
-void readline_resume (cli_infos_t *infos);
-void readline_status_mode (cli_infos_t *infos, const keymap_entry_t map[]);
+void readline_init (cli_context_t *ctx);
+void readline_suspend (cli_context_t *ctx);
+void readline_resume (cli_context_t *ctx);
+void readline_status_mode (cli_context_t *ctx, const keymap_entry_t map[]);
 void readline_status_mode_exit (void);
 void readline_free (void);

@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -14,15 +14,15 @@
  *  Lesser General Public License for more details.
  */
 
-#include "xmms_configuration.h"
-#include "xmmspriv/xmms_medialib.h"
-#include "xmmspriv/xmms_xform.h"
-#include "xmmspriv/xmms_utils.h"
-#include "xmms/xmms_error.h"
-#include "xmms/xmms_config.h"
-#include "xmms/xmms_object.h"
-#include "xmms/xmms_ipc.h"
-#include "xmms/xmms_log.h"
+#include <xmms_configuration.h>
+#include <xmmspriv/xmms_medialib.h>
+#include <xmmspriv/xmms_xform.h>
+#include <xmmspriv/xmms_utils.h>
+#include <xmms/xmms_error.h>
+#include <xmms/xmms_config.h>
+#include <xmms/xmms_object.h>
+#include <xmms/xmms_ipc.h>
+#include <xmms/xmms_log.h>
 
 
 #include <string.h>
@@ -33,8 +33,8 @@
 #include <glib/gstdio.h>
 #include <time.h>
 
-#include "xmmspriv/xmms_fetch_info.h"
-#include "xmmspriv/xmms_fetch_spec.h"
+#include <xmmspriv/xmms_fetch_info.h>
+#include <xmmspriv/xmms_fetch_spec.h>
 #include "s4.h"
 
 
@@ -731,11 +731,11 @@ xmms_medialib_client_rehash (xmms_medialib_t *medialib,
  * @return a reverse sorted list of encoded urls
  */
 static gboolean
-process_dir (xmms_medialib_t *medialib, xmmsv_coll_t *entries,
+process_dir (xmms_medialib_t *medialib, xmmsv_t *entries,
              const gchar *directory, xmms_error_t *error)
 {
 	xmmsv_list_iter_t *it;
-	xmmsv_t *list;
+	xmmsv_t *list, *val;
 
 	list = xmms_xform_browse (directory, error);
 	if (!list) {
@@ -744,12 +744,9 @@ process_dir (xmms_medialib_t *medialib, xmmsv_coll_t *entries,
 
 	xmmsv_get_list_iter (list, &it);
 
-	while (xmmsv_list_iter_valid (it)) {
-		xmmsv_t *val;
+	while (xmmsv_list_iter_entry (it, &val)) {
 		const gchar *str;
 		gint isdir;
-
-		xmmsv_list_iter_entry (it, &val);
 
 		xmmsv_dict_entry_get_string (val, "path", &str);
 		xmmsv_dict_entry_get_int (val, "isdir", &isdir);
@@ -787,13 +784,13 @@ process_dir (xmms_medialib_t *medialib, xmmsv_coll_t *entries,
  *
  * @return an IDLIST collection with the added entries
  */
-xmmsv_coll_t *
+xmmsv_t *
 xmms_medialib_add_recursive (xmms_medialib_t *medialib, const gchar *path,
                              xmms_error_t *error)
 {
-	xmmsv_coll_t *entries;
+	xmmsv_t *entries;
 
-	entries = xmmsv_coll_new (XMMS_COLLECTION_TYPE_IDLIST);
+	entries = xmmsv_new_coll (XMMS_COLLECTION_TYPE_IDLIST);
 
 	g_return_val_if_fail (medialib, entries);
 	g_return_val_if_fail (path, entries);
@@ -807,7 +804,7 @@ static void
 xmms_medialib_client_import_path (xmms_medialib_t *medialib, const gchar *path,
                                   xmms_error_t *error)
 {
-	xmmsv_coll_unref (xmms_medialib_add_recursive (medialib, path, error));
+	xmmsv_unref (xmms_medialib_add_recursive (medialib, path, error));
 }
 
 static gboolean
@@ -1203,7 +1200,7 @@ xmms_medialib_check_id (xmms_medialib_session_t *session,
  */
 xmms_medialib_entry_t
 xmms_medialib_query_random_id (xmms_medialib_session_t *session,
-                               xmmsv_coll_t *coll)
+                               xmmsv_t *coll)
 {
 	xmms_medialib_entry_t ret;
 	xmmsv_t *spec, *res;
@@ -1393,7 +1390,7 @@ xmms_medialib_url_encode (const gchar *path)
  * @return An xmmsv_t with the structure requested in fetch
  */
 xmmsv_t *
-xmms_medialib_query (xmms_medialib_session_t *session, xmmsv_coll_t *coll,
+xmms_medialib_query (xmms_medialib_session_t *session, xmmsv_t *coll,
                      xmmsv_t *fetch, xmms_error_t *err)
 {
 	s4_sourcepref_t *sourcepref;

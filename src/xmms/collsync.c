@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -20,13 +20,20 @@
  *  after the last collections-change.
  */
 
-#include "xmmspriv/xmms_collsync.h"
-#include "xmmspriv/xmms_collserial.h"
-#include "xmmspriv/xmms_thread_name.h"
-#include "xmms/xmms_log.h"
-#include <glib.h>
+#include <xmmspriv/xmms_collsync.h>
+#include <xmmspriv/xmms_utils.h>
 
-#define XMMS_COLL_SYNC_DELAY 10 * G_USEC_PER_SEC
+#include <xmms/xmms_config.h>
+#include <xmms/xmms_ipc.h>
+#include <xmms/xmms_log.h>
+
+#include <errno.h>
+
+#include <glib.h>
+#include <glib/gstdio.h>
+
+
+#define XMMS_COLL_SYNC_DELAY 10 * G_TIME_SPAN_SECOND
 
 static void xmms_coll_sync_schedule_sync (xmms_object_t *object, xmmsv_t *val, gpointer udata);
 static gpointer xmms_coll_sync_loop (gpointer udata);
@@ -35,8 +42,19 @@ static void xmms_coll_sync_destroy (xmms_object_t *object);
 static void xmms_coll_sync_start (xmms_coll_sync_t *sync);
 static void xmms_coll_sync_stop (xmms_coll_sync_t *sync);
 
+static void xmms_coll_sync_client_sync (xmms_coll_sync_t *sync, xmms_error_t *err);
+
+typedef enum xmms_coll_sync_state_t {
+	XMMS_COLL_SYNC_STATE_IDLE,
+	XMMS_COLL_SYNC_STATE_DELAYED,
+	XMMS_COLL_SYNC_STATE_IMMEDIATE,
+	XMMS_COLL_SYNC_STATE_SHUTDOWN
+} xmms_coll_sync_state_t;
+
 struct xmms_coll_sync_St {
 	xmms_object_t object;
+
+	xmms_config_property_t *config;
 
 	xmms_coll_dag_t *dag;
 	xmms_playlist_t *playlist;
@@ -44,12 +62,13 @@ struct xmms_coll_sync_St {
 	gchar *uuid;
 
 	GThread *thread;
-	GMutex *mutex;
-	GCond *cond;
+	GMutex mutex;
+	GCond cond;
 
-	gboolean want_sync;
-	gboolean keep_running;
+	xmms_coll_sync_state_t state;
 };
+
+#include "collsync_ipc.c"
 
 /**
  * Get the collection-to-database-synchronization thread running.
@@ -58,19 +77,25 @@ xmms_coll_sync_t *
 xmms_coll_sync_init (const gchar *uuid, xmms_coll_dag_t *dag, xmms_playlist_t *playlist)
 {
 	xmms_coll_sync_t *sync;
+	gchar *path;
 
 	sync = xmms_object_new (xmms_coll_sync_t, xmms_coll_sync_destroy);
 
 	sync->uuid = g_strdup (uuid);
 
-	sync->cond = g_cond_new ();
-	sync->mutex = g_mutex_new ();
+	g_cond_init (&sync->cond);
+	g_mutex_init (&sync->mutex);
 
 	xmms_object_ref (dag);
 	sync->dag = dag;
 
 	xmms_object_ref (playlist);
 	sync->playlist = playlist;
+
+	path = XMMS_BUILD_PATH ("collections", "${uuid}.db");
+	sync->config = xmms_config_property_register ("collection.directory", path,
+	                                              xmms_coll_sync_schedule_sync, sync);
+	g_free (path);
 
 	/* Connection coll_sync_cb to some signals */
 	xmms_object_connect (XMMS_OBJECT (dag),
@@ -90,6 +115,8 @@ xmms_coll_sync_init (const gchar *uuid, xmms_coll_dag_t *dag, xmms_playlist_t *p
 	                     XMMS_IPC_SIGNAL_PLAYLIST_LOADED,
 	                     xmms_coll_sync_schedule_sync, sync);
 
+	xmms_coll_sync_register_ipc_commands (XMMS_OBJECT (sync));
+
 	xmms_coll_sync_start (sync);
 
 	return sync;
@@ -106,6 +133,12 @@ xmms_coll_sync_destroy (xmms_object_t *object)
 	g_return_if_fail (sync);
 
 	XMMS_DBG ("Deactivating collection synchronizer object.");
+
+	xmms_coll_sync_unregister_ipc_commands ();
+
+	xmms_config_property_callback_remove (sync->config,
+	                                      xmms_coll_sync_schedule_sync,
+	                                      sync);
 
 	xmms_object_disconnect (XMMS_OBJECT (sync->playlist),
 	                        XMMS_IPC_SIGNAL_PLAYLIST_CHANGED,
@@ -128,9 +161,185 @@ xmms_coll_sync_destroy (xmms_object_t *object)
 	xmms_object_unref (sync->playlist);
 	xmms_object_unref (sync->dag);
 
-	g_mutex_free (sync->mutex);
-	g_cond_free (sync->cond);
+	g_mutex_clear (&sync->mutex);
+	g_cond_clear (&sync->cond);
 	g_free (sync->uuid);
+}
+
+static gboolean
+xmms_coll_sync_move_to_legacy_path (const gchar *path, GError **error)
+{
+	gchar *legacy;
+	gint64 now;
+	gint res;
+
+	now = g_get_real_time ();
+
+	legacy = g_strdup_printf ("%s.%" G_GINT64_FORMAT ".legacy", path, now);
+	res = g_rename (path, legacy);
+	g_free (legacy);
+
+	if (res != 0) {
+		g_set_error (error, G_FILE_ERROR,
+		             g_file_error_from_errno (errno),
+		             "%s", g_strerror (errno));
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+/* TODO: Remove me before release */
+static gboolean
+xmms_coll_sync_sorry_to_revert_your_collections (const gchar *path)
+{
+	const gchar *legacy;
+	gchar *directory, *basename;
+	GDir *dir;
+	GError *error = NULL;
+	gboolean success = TRUE;
+
+	basename = g_path_get_basename (path);
+	directory = g_path_get_dirname (path);
+
+	if (!xmms_coll_sync_move_to_legacy_path (path, &error)) {
+		success = FALSE;
+		goto cleanup;
+	}
+
+	dir = g_dir_open (directory, 0, &error);
+	if (dir == NULL) {
+		success = FALSE;
+		goto cleanup;
+	}
+
+	while ((legacy = g_dir_read_name (dir)) != NULL) {
+		gchar *legacy_path;
+		gint res;
+
+		if (!g_str_has_prefix (legacy, basename))
+			continue;
+		if (!g_str_has_suffix (legacy, ".legacy"))
+			continue;
+
+		legacy_path = g_build_filename (directory, legacy, NULL);
+		if (g_file_test (path, G_FILE_TEST_IS_DIR)) {
+			g_free (legacy_path);
+			continue;
+		}
+
+		res = g_rename (legacy_path, path);
+		g_free (legacy_path);
+
+		if (res != 0) {
+			g_set_error (&error, G_FILE_ERROR,
+			             g_file_error_from_errno (errno),
+			             "%s", g_strerror (errno));
+			success = FALSE;
+		}
+		break;
+	}
+
+	g_dir_close (dir);
+
+cleanup:
+	if (success == FALSE) {
+		xmms_log_error ("Could not ressurect collections, sorry...");
+		if (error != NULL) {
+			XMMS_DBG ("%s", error->message);
+		}
+	}
+
+	g_free (basename);
+	g_free (directory);
+
+	return success;
+}
+
+static gboolean
+xmms_coll_sync_prepare_path (const gchar *path, GError **error)
+{
+	if (g_file_test (path, G_FILE_TEST_IS_REGULAR))
+		return TRUE;
+
+	if (g_file_test (path, G_FILE_TEST_IS_DIR)) {
+		/* TODO: This branch can be removed after release as it will only
+		 * be used for installations that were running development
+		 * builds between 0.8 and 0.9
+		 */
+		gint exit_status;
+		gchar *cmdline;
+
+		exit_status = 0;
+
+		cmdline = g_strdup_printf ("_xmms2-migrate-collections-v0 %s", path);
+
+		if (!g_spawn_command_line_sync (cmdline, NULL, NULL, &exit_status, NULL) || exit_status) {
+			xmms_log_fatal ("Could not run \"%s\", try to run it manually", cmdline);
+		}
+
+		/* If migration for some reason failed, just move the failing
+		 * directory and leave room for a fresh one.
+		 */
+		if (g_file_test (path, G_FILE_TEST_IS_DIR))
+			return xmms_coll_sync_move_to_legacy_path (path, error);
+	} else {
+		gchar *dirname;
+		gint res;
+
+		dirname = g_path_get_dirname (path);
+		res = g_mkdir_with_parents (dirname, 0755);
+		g_free (dirname);
+
+		if (res != 0) {
+			g_set_error (error, G_FILE_ERROR,
+			             g_file_error_from_errno (errno),
+			             "%s", g_strerror (errno));
+			return FALSE;
+		}
+	}
+
+	return TRUE;
+}
+
+static gchar *
+xmms_coll_sync_get_path (xmms_coll_sync_t *sync)
+{
+	const gchar *original;
+	GString *result;
+	gchar **parts;
+	gint i;
+
+	result = g_string_new ("");
+
+	original = xmms_config_property_get_string (sync->config);
+
+	parts = g_strsplit (original, "${uuid}", 0);
+
+	for (i = 0; parts[i] != NULL; i++) {
+		if (*parts[i] == '\0') {
+			g_string_append (result, sync->uuid);
+		} else {
+			g_string_append (result, parts[i]);
+		}
+	}
+
+	g_strfreev (parts);
+
+	return g_string_free (result, FALSE);
+}
+
+static void
+xmms_coll_sync_set_state (xmms_coll_sync_t *sync, xmms_coll_sync_state_t state)
+{
+	g_mutex_lock (&sync->mutex);
+
+	if (sync->state != state) {
+		sync->state = state;
+		g_cond_signal (&sync->cond);
+	}
+
+	g_mutex_unlock (&sync->mutex);
 }
 
 static void
@@ -139,9 +348,8 @@ xmms_coll_sync_start (xmms_coll_sync_t *sync)
 	g_return_if_fail (sync);
 	g_return_if_fail (sync->thread == NULL);
 
-	sync->want_sync = FALSE;
-	sync->keep_running = TRUE;
-	sync->thread = g_thread_create (xmms_coll_sync_loop, sync, TRUE, NULL);
+	sync->state = XMMS_COLL_SYNC_STATE_IDLE;
+	sync->thread = g_thread_new (	"x2 coll sync", xmms_coll_sync_loop, sync);
 }
 
 
@@ -154,12 +362,7 @@ xmms_coll_sync_stop (xmms_coll_sync_t *sync)
 	g_return_if_fail (sync);
 	g_return_if_fail (sync->thread != NULL);
 
-	g_mutex_lock (sync->mutex);
-
-	sync->keep_running = FALSE;
-	g_cond_signal (sync->cond);
-
-	g_mutex_unlock (sync->mutex);
+	xmms_coll_sync_set_state (sync, XMMS_COLL_SYNC_STATE_SHUTDOWN);
 
 	g_thread_join (sync->thread);
 
@@ -177,10 +380,109 @@ xmms_coll_sync_schedule_sync (xmms_object_t *object, xmmsv_t *val,
 
 	g_return_if_fail (sync);
 
-	g_mutex_lock (sync->mutex);
-	sync->want_sync = TRUE;
-	g_cond_signal (sync->cond);
-	g_mutex_unlock (sync->mutex);
+	xmms_coll_sync_set_state (sync, XMMS_COLL_SYNC_STATE_DELAYED);
+}
+
+/**
+ * Schedule a collection-to-database-synchronization right away.
+ */
+static void
+xmms_coll_sync_client_sync (xmms_coll_sync_t *sync, xmms_error_t *err)
+{
+	g_return_if_fail (sync);
+
+	xmms_coll_sync_set_state (sync, XMMS_COLL_SYNC_STATE_IMMEDIATE);
+}
+
+static void
+xmms_coll_sync_save (xmms_coll_sync_t *sync)
+{
+	GError *error = NULL;
+
+	gchar *path = xmms_coll_sync_get_path (sync);
+
+	XMMS_DBG ("Syncing collections to '%s'.", path);
+
+	if (xmms_coll_sync_prepare_path (path, &error)) {
+		xmmsv_t *snapshot, *serialized;
+		const guchar *buffer;
+		guint length;
+
+		snapshot = xmms_collection_snapshot (sync->dag);
+
+		serialized = xmmsv_serialize (snapshot);
+		xmmsv_unref (snapshot);
+
+		xmmsv_get_bin (serialized, &buffer, &length);
+
+		if (!g_file_set_contents (path, (const gchar *) buffer, (gssize) length, &error)) {
+			xmms_log_error ("Could not save collections to disk.");
+		}
+
+		xmmsv_unref (serialized);
+	}
+
+	if (error != NULL) {
+		XMMS_DBG ("%s", error->message);
+		g_error_free (error);
+	}
+
+	g_free (path);
+}
+
+static void
+xmms_coll_sync_restore (xmms_coll_sync_t *sync, gboolean sad_hack)
+{
+	xmmsv_t *snapshot = NULL;
+	GError *error = NULL;
+	gchar *buffer;
+	gsize length;
+
+	gchar *path = xmms_coll_sync_get_path (sync);
+
+	XMMS_DBG ("Restoring collections from '%s'.", path);
+
+	if (xmms_coll_sync_prepare_path (path, &error)) {
+		if (g_file_get_contents (path, &buffer, &length, &error)) {
+			xmmsv_t *serialized;
+
+			serialized = xmmsv_new_bin ((const guchar *) buffer, (guint) length);
+			g_free (buffer);
+
+			snapshot = xmmsv_deserialize (serialized);
+			xmmsv_unref (serialized);
+
+			/* TODO: Remove me, nasty hack because the new serialization
+			 * got merged a bit too early and now is not the time to add
+			 * versioning, should be removed before release.
+			 *
+			 * Move the collection database to deprecated path, and re-run
+			 * the migration from the first new version..
+			 *
+			 * sorry for the lost changes folks <3
+			 */
+			if (snapshot == NULL && sad_hack != TRUE) {
+				xmms_coll_sync_sorry_to_revert_your_collections (path);
+				xmms_coll_sync_restore (sync, TRUE);
+				return;
+			}
+		}
+	}
+
+	if (error != NULL) {
+		XMMS_DBG ("%s", error->message);
+		g_error_free (error);
+	}
+
+	if (snapshot != NULL) {
+		xmms_collection_restore (sync->dag, snapshot);
+		xmmsv_unref (snapshot);
+	} else {
+		xmms_log_error ("Could not restore collections from disk.");
+		xmms_collection_restore (sync->dag, NULL);
+	}
+
+	g_free (path);
 }
 
 /**
@@ -191,45 +493,43 @@ static gpointer
 xmms_coll_sync_loop (gpointer udata)
 {
 	xmms_coll_sync_t *sync = (xmms_coll_sync_t *) udata;
-	GTimeVal time;
 
-	xmms_set_thread_name ("x2 coll sync");
+	xmms_coll_sync_restore (sync, FALSE);
 
-	g_mutex_lock (sync->mutex);
+	g_mutex_lock (&sync->mutex);
 
-	xmms_collection_dag_restore (sync->dag, sync->uuid);
-
-	while (sync->keep_running) {
-		if (!sync->want_sync) {
-			g_cond_wait (sync->cond, sync->mutex);
+	while (sync->state != XMMS_COLL_SYNC_STATE_SHUTDOWN) {
+		if (sync->state == XMMS_COLL_SYNC_STATE_IDLE) {
+			g_cond_wait (&sync->cond, &sync->mutex);
 		}
 
 		/* Wait until no requests have been filed for 10 seconds. */
-		while (sync->keep_running && sync->want_sync) {
-			sync->want_sync = FALSE;
+		while (sync->state == XMMS_COLL_SYNC_STATE_DELAYED) {
+			gint64 end_time;
 
-			g_get_current_time (&time);
-			g_time_val_add (&time, XMMS_COLL_SYNC_DELAY);
+			sync->state = XMMS_COLL_SYNC_STATE_IDLE;
 
-			g_cond_timed_wait (sync->cond, sync->mutex, &time);
+			end_time = g_get_monotonic_time () + XMMS_COLL_SYNC_DELAY;
+
+			g_cond_wait_until (&sync->cond, &sync->mutex, end_time);
 		}
 
-		if (sync->keep_running) {
+		if (sync->state != XMMS_COLL_SYNC_STATE_SHUTDOWN) {
 			/* The dag might be locked when calling schedule_sync, so we need to
-			 * unlock to avoid deadlocks */
-			g_mutex_unlock (sync->mutex);
+			 * unlock to avoid deadlocks. We also reset state to IDLE to ack that
+			 * the request to sync is being taken care of.
+			 */
+			sync->state = XMMS_COLL_SYNC_STATE_IDLE;
 
-			XMMS_DBG ("Syncing collections to database.");
-
-			xmms_collection_dag_save (sync->dag, sync->uuid);
-
-			g_mutex_lock (sync->mutex);
+			g_mutex_unlock (&sync->mutex);
+			xmms_coll_sync_save (sync);
+			g_mutex_lock (&sync->mutex);
 		}
 	}
 
-	xmms_collection_dag_save (sync->dag, sync->uuid);
+	g_mutex_unlock (&sync->mutex);
 
-	g_mutex_unlock (sync->mutex);
+	xmms_coll_sync_save (sync);
 
 	return NULL;
 }

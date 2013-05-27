@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -192,12 +192,23 @@ c_value_get (VALUE self)
 static VALUE
 int_get (xmmsv_t *val)
 {
-	int32_t id = 0;
+	int64_t id = 0;
 
-	if (!xmmsv_get_int (val, &id))
+	if (!xmmsv_get_int64 (val, &id))
 		rb_raise (eValueError, "cannot retrieve value");
 
 	return INT2NUM (id);
+}
+
+static VALUE
+float_get (xmmsv_t *val)
+{
+	float id = 0;
+
+	if (!xmmsv_get_float (val, &id))
+		rb_raise (eValueError, "cannot retrieve value");
+
+	return rb_float_new((double) id);
 }
 
 static VALUE
@@ -226,12 +237,10 @@ bin_get (xmmsv_t *val)
 static VALUE
 coll_get (xmmsv_t *val)
 {
-	xmmsc_coll_t *coll = NULL;
-
-	if (!xmmsv_get_coll (val, &coll))
+	if (!xmmsv_is_type (val, XMMSV_TYPE_COLL))
 		rb_raise (eValueError, "cannot retrieve value");
 
-	return TO_XMMS_CLIENT_COLLECTION (coll);
+	return TO_XMMS_CLIENT_COLLECTION (val);
 }
 
 static void
@@ -259,8 +268,10 @@ static VALUE
 extract_value (VALUE parent, xmmsv_t *val)
 {
 	switch (xmmsv_get_type (val)) {
-		case XMMSV_TYPE_INT32:
+		case XMMSV_TYPE_INT64:
 			return int_get (val);
+		case XMMSV_TYPE_FLOAT:
+			return float_get (val);
 		case XMMSV_TYPE_STRING:
 			return string_get (val);
 		case XMMSV_TYPE_BIN:

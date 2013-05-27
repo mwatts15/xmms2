@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -16,7 +16,7 @@
 #ifndef __JSONISM_H__
 #define __JSONISM_H__
 
-#include "xmmsc/xmmsv.h"
+#include <xmmsc/xmmsv.h>
 
 xmmsv_t *xmmsv_from_xson (const char *spec);
 xmmsv_t *xmmsv_from_json (const char *spec);

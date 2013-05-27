@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -14,10 +14,10 @@
  *  Lesser General Public License for more details.
  */
 
-#include "xmms/xmms_xformplugin.h"
-#include "xmms/xmms_log.h"
-#include "xmms/xmms_medialib.h"
-#include "xmms/xmms_util.h"
+#include <xmms/xmms_xformplugin.h>
+#include <xmms/xmms_log.h>
+#include <xmms/xmms_medialib.h>
+#include <xmms/xmms_util.h>
 
 /* xform methods */
 static gboolean xmms_html_setup (xmms_xform_plugin_t *xform);

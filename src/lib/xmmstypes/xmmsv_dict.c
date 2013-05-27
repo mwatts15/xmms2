@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -17,8 +17,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "xmmspriv/xmmsv.h"
-#include "xmmspriv/xmms_list.h"
+#include <xmmscpriv/xmmsv.h>
+#include <xmmscpriv/xmms_list.h>
 
 typedef struct xmmsv_dict_data_St {
 	uint32_t hash;
@@ -716,8 +716,15 @@ xmmsv_dict_iter_remove (xmmsv_dict_iter_t *it)
 	}
 
 GEN_DICT_EXTRACTOR_FUNC (string, const char *)
-GEN_DICT_EXTRACTOR_FUNC (int, int32_t)
-GEN_DICT_EXTRACTOR_FUNC (coll, xmmsv_coll_t *)
+GEN_DICT_EXTRACTOR_FUNC (int32, int32_t)
+GEN_DICT_EXTRACTOR_FUNC (int64, int64_t)
+GEN_DICT_EXTRACTOR_FUNC (float, float)
+
+int
+xmmsv_dict_entry_get_coll (xmmsv_t *val, const char *key, xmmsv_t **r)
+{
+	return xmmsv_dict_get (val, key, r);
+}
 
 /* macro-magically define dict set functions */
 #define GEN_DICT_SET_FUNC(typename, type)	  \
@@ -735,8 +742,14 @@ GEN_DICT_EXTRACTOR_FUNC (coll, xmmsv_coll_t *)
 	}
 
 GEN_DICT_SET_FUNC (string, const char *)
-GEN_DICT_SET_FUNC (int, int32_t)
-GEN_DICT_SET_FUNC (coll, xmmsv_coll_t *)
+GEN_DICT_SET_FUNC (int, int64_t)
+GEN_DICT_SET_FUNC (float, float)
+
+int
+xmmsv_dict_set_coll (xmmsv_t *dict, const char *key, xmmsv_t *elem)
+{
+	return xmmsv_dict_set (dict, key, elem);
+}
 
 /* macro-magically define dict_iter extractors */
 #define GEN_DICT_ITER_EXTRACTOR_FUNC(typename, type)	  \
@@ -757,8 +770,15 @@ GEN_DICT_SET_FUNC (coll, xmmsv_coll_t *)
 	}
 
 GEN_DICT_ITER_EXTRACTOR_FUNC (string, const char *)
-GEN_DICT_ITER_EXTRACTOR_FUNC (int, int32_t)
-GEN_DICT_ITER_EXTRACTOR_FUNC (coll, xmmsv_coll_t *)
+GEN_DICT_ITER_EXTRACTOR_FUNC (int32, int32_t)
+GEN_DICT_ITER_EXTRACTOR_FUNC (int64, int64_t)
+GEN_DICT_ITER_EXTRACTOR_FUNC (float, float)
+
+int
+xmmsv_dict_iter_pair_coll (xmmsv_dict_iter_t *it, const char **key, xmmsv_t **r)
+{
+	return xmmsv_dict_iter_pair (it, key, r);
+}
 
 /* macro-magically define dict_iter set functions */
 #define GEN_DICT_ITER_SET_FUNC(typename, type)	  \
@@ -776,5 +796,11 @@ GEN_DICT_ITER_EXTRACTOR_FUNC (coll, xmmsv_coll_t *)
 	}
 
 GEN_DICT_ITER_SET_FUNC (string, const char *)
-GEN_DICT_ITER_SET_FUNC (int, int32_t)
-GEN_DICT_ITER_SET_FUNC (coll, xmmsv_coll_t *)
+GEN_DICT_ITER_SET_FUNC (int, int64_t)
+GEN_DICT_ITER_SET_FUNC (float, float)
+
+int
+xmmsv_dict_iter_set_coll (xmmsv_dict_iter_t *it, xmmsv_t *elem)
+{
+	return xmmsv_dict_iter_set (it, elem);
+}

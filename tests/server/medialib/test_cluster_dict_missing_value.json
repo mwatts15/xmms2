@@ -18,8 +18,7 @@
     },
     "expected": {
         "result": {
-            "Lungs for Life": ["Decade", "Breathing Place"],
-            "(No value)": ["Prehistoric Dog"]
+            "Lungs for Life": ["Decade", "Breathing Place"]
         }
     }
 }

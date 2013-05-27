@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -17,8 +17,10 @@
 #ifndef __SIGNAL_XMMS_H__
 #define __SIGNAL_XMMS_H__
 
+#include <xmmsc/xmmsc_compiler.h>
+
 /* Don't forget to up this when protocol changes */
-#define XMMS_IPC_PROTOCOL_VERSION 20
+#define XMMS_IPC_PROTOCOL_VERSION 22
 
 typedef enum {
 	XMMS_IPC_OBJECT_SIGNAL,
@@ -32,6 +34,7 @@ typedef enum {
 	XMMS_IPC_OBJECT_MEDIAINFO_READER,
 	XMMS_IPC_OBJECT_XFORM,
 	XMMS_IPC_OBJECT_BINDATA,
+	XMMS_IPC_OBJECT_COLL_SYNC,
 	XMMS_IPC_OBJECT_END
 } xmms_ipc_objects_t;
 
@@ -135,6 +138,11 @@ typedef enum {
 	XMMS_IPC_CMD_MLIB_ADD_URL
 } xmms_ipc_medialib_cmds_t;
 
+/* Coll sync methods */
+typedef enum {
+	XMMS_IPC_CMD_COLL_SYNC_SYNC = XMMS_IPC_CMD_FIRST
+} xmms_ipc_coll_sync_cmds_t;
+
 /* Collection methods */
 typedef enum {
 	XMMS_IPC_CMD_COLLECTION_GET = XMMS_IPC_CMD_FIRST,
@@ -145,8 +153,7 @@ typedef enum {
 	XMMS_IPC_CMD_COLLECTION_RENAME,
 	XMMS_IPC_CMD_QUERY,
 	XMMS_IPC_CMD_QUERY_INFOS,
-	XMMS_IPC_CMD_IDLIST_FROM_PLS,
-	XMMS_IPC_CMD_COLLECTION_SYNC
+	XMMS_IPC_CMD_IDLIST_FROM_PLS
 } xmms_ipc_collection_cmds_t;
 
 /* bindata methods */
@@ -258,7 +265,7 @@ typedef const char* xmmsv_coll_namespace_t;
 #define XMMS_ACTIVE_PLAYLIST "_active"
 
 /* Default source preferences for accessing "propdicts" (decl. in value.c) */
-extern const char *xmmsv_default_source_pref[];
+extern const char *xmmsv_default_source_pref[] XMMS_PUBLIC;
 
 /* compability */
 typedef xmmsv_coll_type_t xmmsc_coll_type_t;

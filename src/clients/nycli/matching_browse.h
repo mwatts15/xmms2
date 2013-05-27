@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -16,6 +16,9 @@
 
 #ifndef __MATCHING_BROWSE_H_
 #define __MATCHING_BROWSE_H_
+
+#include <glib.h>
+#include <xmmsclient/xmmsclient.h>
 
 typedef struct browse_entry_St browse_entry_t;
 

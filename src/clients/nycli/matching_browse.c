@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -15,7 +15,9 @@
  */
 
 #include <string.h>
-#include "commands.h"
+
+#include <glib.h>
+
 #include "matching_browse.h"
 
 static void add_match (const gchar *path, gint isdir, GList **files);

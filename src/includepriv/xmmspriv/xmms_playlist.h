@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -40,9 +40,9 @@
 struct xmms_playlist_St;
 typedef struct xmms_playlist_St xmms_playlist_t;
 
-#include "xmms/xmms_error.h"
-#include "xmmspriv/xmms_medialib.h"
-#include "xmmspriv/xmms_mediainfo.h"
+#include <xmms/xmms_error.h>
+#include <xmmspriv/xmms_medialib.h>
+#include <xmmspriv/xmms_mediainfo.h>
 
 /*
  * Public functions
@@ -54,11 +54,11 @@ void xmms_playlist_update (xmms_playlist_t *playlist, const gchar *plname);
 
 gboolean xmms_playlist_advance (xmms_playlist_t *playlist);
 xmms_medialib_entry_t xmms_playlist_current_entry (xmms_playlist_t *playlist);
-void xmms_playlist_add_entry_unlocked (xmms_playlist_t *playlist, const const gchar *plname, xmmsv_coll_t *plcoll, xmms_medialib_entry_t file, xmms_error_t *err);
+void xmms_playlist_add_entry_unlocked (xmms_playlist_t *playlist, const gchar *plname, xmmsv_t *plcoll, xmms_medialib_entry_t file, xmms_error_t *err);
 GList * xmms_playlist_list (xmms_playlist_t *playlist, const gchar *plname, xmms_error_t *err);
 
 void xmms_playlist_add_entry (xmms_playlist_t *playlist, const gchar *plname, xmms_medialib_entry_t file, xmms_error_t *err);
-void xmms_playlist_insert_entry (xmms_playlist_t *playlist, const gchar *plname, guint32 pos, xmms_medialib_entry_t file, xmms_error_t *err);
+void xmms_playlist_insert_entry (xmms_playlist_t *playlist, const gchar *plname, gint32 pos, xmms_medialib_entry_t file, xmms_error_t *err);
 
 /*
  * Entry modifications

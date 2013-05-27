@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -25,19 +25,19 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "xmmsc/xmmsc_idnumbers.h"
-#include "xmmspriv/xmms_config.h"
-#include "xmmspriv/xmms_utils.h"
-#include "xmms/xmms_ipc.h"
-#include "xmms/xmms_log.h"
+#include <xmmsc/xmmsc_idnumbers.h>
+#include <xmmspriv/xmms_config.h>
+#include <xmmspriv/xmms_utils.h>
+#include <xmms/xmms_ipc.h>
+#include <xmms/xmms_log.h>
 
 /*
-#include "xmms/util.h"
-#include "xmms/xmms.h"
-#include "xmms/object.h"
-#include "xmms/signal_xmms.h"
-#include "xmms/plugin.h"
-#include "xmms/ipc.h"
+#include <xmms/util.h>
+#include <xmms/xmms.h>
+#include <xmms/object.h>
+#include <xmms/signal_xmms.h>
+#include <xmms/plugin.h>
+#include <xmms/ipc.h>
 */
 
 /** @internal */
@@ -89,7 +89,7 @@ struct xmms_config_St {
 	GTree *properties;
 
 	/* Lock on globals are great! */
-	GMutex *mutex;
+	GMutex mutex;
 
 	/* parsing */
 	gboolean is_parsing;
@@ -173,9 +173,9 @@ xmms_config_lookup (const gchar *path)
 	xmms_config_property_t *prop;
 	g_return_val_if_fail (global_config, NULL);
 
-	g_mutex_lock (global_config->mutex);
+	g_mutex_lock (&global_config->mutex);
 	prop = g_tree_lookup (global_config->properties, path);
-	g_mutex_unlock (global_config->mutex);
+	g_mutex_unlock (&global_config->mutex);
 
 	return prop;
 }
@@ -331,7 +331,7 @@ xmms_config_property_register (const gchar *path,
 
 	xmms_config_property_t *prop;
 
-	g_mutex_lock (global_config->mutex);
+	g_mutex_lock (&global_config->mutex);
 
 	prop = g_tree_lookup (global_config->properties, path);
 	if (!prop) {
@@ -346,7 +346,7 @@ xmms_config_property_register (const gchar *path,
 		xmms_config_property_callback_set (prop, cb, userdata);
 	}
 
-	g_mutex_unlock (global_config->mutex);
+	g_mutex_unlock (&global_config->mutex);
 
 	return prop;
 }
@@ -605,11 +605,11 @@ xmms_config_client_list_values (xmms_config_t *conf, xmms_error_t *err)
 {
 	xmmsv_t *ret = xmmsv_new_dict ();
 
-	g_mutex_lock (conf->mutex);
+	g_mutex_lock (&conf->mutex);
 	g_tree_foreach (conf->properties,
 	                (GTraverseFunc) xmms_config_foreach_dict,
 	                (gpointer) ret);
-	g_mutex_unlock (conf->mutex);
+	g_mutex_unlock (&conf->mutex);
 
 	return ret;
 }
@@ -639,7 +639,7 @@ xmms_config_destroy (xmms_object_t *object)
 
 	XMMS_DBG ("Deactivating config object.");
 
-	g_mutex_free (config->mutex);
+	g_mutex_clear (&config->mutex);
 
 	g_tree_destroy (config->properties);
 
@@ -774,7 +774,7 @@ xmms_config_init (const gchar *filename)
 	xmms_config_t *config;
 
 	config = xmms_object_new (xmms_config_t, xmms_config_destroy);
-	config->mutex = g_mutex_new ();
+	g_mutex_init (&config->mutex);
 	config->filename = filename;
 
 	config->properties = create_tree ();

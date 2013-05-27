@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -21,7 +21,8 @@
 #define __XMMS_ERROR_H__
 
 #include <glib.h>
-#include "xmmsc/xmmsc_errorcodes.h"
+#include <xmmsc/xmmsc_errorcodes.h>
+#include <xmmsc/xmmsc_compiler.h>
 
 #define XMMS_ERROR_MESSAGE_MAXLEN 255
 
@@ -59,7 +60,7 @@ xmms_error_reset (xmms_error_t *err)
 
 #define xmms_error_type_get(e) ((e)->code)
 
-const gchar *xmms_error_message_get (xmms_error_t *err);
+const gchar *xmms_error_message_get (xmms_error_t *err) XMMS_PUBLIC;
 
 G_END_DECLS
 

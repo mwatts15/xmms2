@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -22,7 +22,7 @@
 #include <windows.h>
 #include <time.h>
 
-#include "xmmsc/xmmsc_util.h"
+#include <xmmsc/xmmsc_util.h>
 
 /**
  * Get the absolute path to the user config dir.

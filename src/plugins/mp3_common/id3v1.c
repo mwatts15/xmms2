@@ -1,6 +1,6 @@
 /*  XMMS2 - X Music Multiplexer System
  *
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -18,9 +18,9 @@
  */
 
 #include <glib.h>
-#include "xmms/xmms_xformplugin.h"
-#include "xmms/xmms_medialib.h"
-#include "xmms/xmms_log.h"
+#include <xmms/xmms_xformplugin.h>
+#include <xmms/xmms_medialib.h>
+#include <xmms/xmms_log.h>
 
 static const gchar * const id3_genres[] = {
         "Blues", "Classic Rock", "Country", "Dance",

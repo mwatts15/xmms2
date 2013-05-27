@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -20,7 +20,7 @@
 #ifndef __XMMS_PRIV_CONFIG_H__
 #define __XMMS_PRIV_CONFIG_H__
 
-#include "xmms/xmms_config.h"
+#include <xmms/xmms_config.h>
 
 #define XMMS_MAX_CONFIGFILE_LEN 255
 #define XMMS_CONFIG_SYSTEMWIDE SYSCONFDIR "/xmms2.conf"

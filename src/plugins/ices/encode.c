@@ -13,7 +13,7 @@
 
 /*
  * Modifications for xmms2
- * Copyright (C) 2003-2012 XMMS2 Team
+ * Copyright (C) 2003-2013 XMMS2 Team
  */
 
 #ifdef HAVE_CONFIG_H
@@ -27,8 +27,8 @@
 #include <vorbis/vorbisenc.h>
 
 #include "encode.h"
-#include "xmms/xmms_log.h"
-#include "xmms/xmms_sample.h"
+#include <xmms/xmms_log.h>
+#include <xmms/xmms_sample.h>
 
 #define MODULE "encode/"
 

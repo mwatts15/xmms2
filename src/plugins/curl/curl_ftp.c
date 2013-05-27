@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -22,11 +22,11 @@
   * This plugin will provide FTP transport.
   */
 
-#include "xmms/xmms.h"
-#include "xmms/plugin.h"
-#include "xmms/transport.h"
-#include "xmms/util.h"
-#include "xmms/magic.h"
+#include <xmms/xmms.h>
+#include <xmms/plugin.h>
+#include <xmms/transport.h>
+#include <xmms/util.h>
+#include <xmms/magic.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>

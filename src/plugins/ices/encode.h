@@ -13,7 +13,7 @@
 
 /*
  * Modifications for xmms2
- * Copyright (C) 2003-2012 XMMS2 Team
+ * Copyright (C) 2003-2013 XMMS2 Team
  */
 
 #ifndef __ENCODE_H
@@ -23,7 +23,7 @@
 #include <ogg/ogg.h>
 #include <vorbis/codec.h>
 
-#include "xmms/xmms_sample.h"
+#include <xmms/xmms_sample.h>
 
 typedef struct encoder_state encoder_state;
 

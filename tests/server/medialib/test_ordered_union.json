@@ -9,44 +9,37 @@
         { "tracknr": 3, "artist": "Vibrasphere", "album": "Lungs for Life", "title": "Ensueno (Morning mix)" }
     ],
     "collection": {
-        "type": "order",
-        "attributes": { "type": "id" },
+        "type": "union",
         "operands": [{
-            "type": "union",
-            "operands": [
-                {
-                    "type": "order",
-                    "attributes": {
-                        "type": "value",
-                        "field": "tracknr"
-                    },
-                    "operands": [{
-                        "type": "equals",
-                        "attributes": {
-                            "type": "value",
-                            "field": "artist",
-                            "value": "Vibrasphere"
-                        },
-                        "operands": [{ "type": "universe" }]
-                    }]
+            "type": "order",
+            "attributes": {
+                "type": "value",
+                "field": "tracknr"
+            },
+            "operands": [{
+                "type": "equals",
+                "attributes": {
+                    "type": "value",
+                    "field": "artist",
+                    "value": "Vibrasphere"
                 },
-                {
-                    "type": "order",
-                    "attributes": {
-                        "type": "value",
-                        "field": "tracknr"
-                    },
-                    "operands": [{
-                        "type": "equals",
-                        "attributes": {
-                            "type": "value",
-                            "field": "artist",
-                            "value": "Red Fang"
-                        },
-                        "operands": [{ "type": "universe" }]
-                    }]
-                }
-            ]
+                "operands": [{ "type": "universe" }]
+            }]
+        }, {
+            "type": "order",
+            "attributes": {
+                "type": "value",
+                "field": "tracknr"
+            },
+            "operands": [{
+                "type": "equals",
+                "attributes": {
+                    "type": "value",
+                    "field": "artist",
+                    "value": "Red Fang"
+                },
+                "operands": [{ "type": "universe" }]
+            }]
         }]
     },
     "specification": {
@@ -79,13 +72,13 @@
     "expected": {
         "ordered": 1,
         "result": [
+            { "id": 5, "tracknr": 1, "title": "Decade" },
+            { "id": 6, "tracknr": 2, "title": "Breathing Place" },
+            { "id": 7, "tracknr": 3, "title": "Ensueno (Morning mix)"},
             { "id": 1, "tracknr": 1, "title": "Prehistoric Dog" },
             { "id": 2, "tracknr": 2, "title": "Reverse Thunder" },
             { "id": 3, "tracknr": 3, "title": "Night Destroyer" },
-            { "id": 4, "tracknr": 4, "title": "Humans Remain Human Remains" },
-            { "id": 5, "tracknr": 1, "title": "Decade" },
-            { "id": 6, "tracknr": 2, "title": "Breathing Place" },
-            { "id": 7, "tracknr": 3, "title": "Ensueno (Morning mix)"}
+            { "id": 4, "tracknr": 4, "title": "Humans Remain Human Remains" }
         ]
     }
 }

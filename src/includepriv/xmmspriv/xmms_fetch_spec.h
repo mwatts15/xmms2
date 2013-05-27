@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -18,10 +18,10 @@
 #define __XMMS_PRIV_FETCH_SPEC_H__
 
 #include <glib.h>
-#include "xmmspriv/xmms_fetch_info.h"
-#include "xmmsc/xmmsv_coll.h"
-#include "xmmsc/xmmsv.h"
-#include "xmms/xmms_error.h"
+#include <xmmspriv/xmms_fetch_info.h>
+#include <xmmsc/xmmsv_coll.h>
+#include <xmmsc/xmmsv.h>
+#include <xmms/xmms_error.h>
 
 typedef enum {
 	AGGREGATE_FIRST,
@@ -31,7 +31,8 @@ typedef enum {
 	AGGREGATE_SET,
 	AGGREGATE_LIST,
 	AGGREGATE_RANDOM,
-	AGGREGATE_AVG
+	AGGREGATE_AVG,
+	AGGREGATE_END
 } aggregate_function_t;
 
 typedef struct xmms_fetch_spec_St xmms_fetch_spec_t;
@@ -42,7 +43,8 @@ struct xmms_fetch_spec_St {
 		FETCH_CLUSTER_DICT,
 		FETCH_ORGANIZE,
 		FETCH_METADATA,
-		FETCH_COUNT
+		FETCH_COUNT,
+		FETCH_END
 	} type;
 	union {
 		struct {
@@ -50,8 +52,10 @@ struct xmms_fetch_spec_St {
 				CLUSTER_BY_ID,
 				CLUSTER_BY_POSITION,
 				CLUSTER_BY_VALUE,
+				CLUSTER_BY_END
 			} type;
 			int column;
+			const gchar *fallback;
 			xmms_fetch_spec_t *data;
 		} cluster;
 		struct {
@@ -59,8 +63,9 @@ struct xmms_fetch_spec_St {
 				METADATA_ID,
 				METADATA_KEY,
 				METADATA_VALUE,
-				METADATA_SOURCE
-			} get[5];
+				METADATA_SOURCE,
+				METADATA_END
+			} get[METADATA_END];
 			int get_size;
 			int col_count;
 			int *cols;

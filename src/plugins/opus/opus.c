@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -22,13 +22,13 @@
 
 #include <glib.h>
 
-#include "opusfile/opusfile.h"
+#include <opusfile.h>
 
-#include "xmms/xmms_xformplugin.h"
-#include "xmms/xmms_sample.h"
-#include "xmms/xmms_log.h"
-#include "xmms/xmms_medialib.h"
-#include "xmms/xmms_bindata.h"
+#include <xmms/xmms_xformplugin.h>
+#include <xmms/xmms_sample.h>
+#include <xmms/xmms_log.h>
+#include <xmms/xmms_medialib.h>
+#include <xmms/xmms_bindata.h>
 
 #include <glib.h>
 
@@ -96,14 +96,14 @@ xmms_opus_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
-	                              "application/opus",
+	                              "audio/ogg; codecs=opus",
 	                              NULL);
 
-	xmms_magic_add ("ogg/opus header",
+	xmms_magic_add ("Opus header", "audio/ogg; codecs=opus",
 	                "0 string OggS",
 	                ">28 string OpusHead", NULL);
 
-	xmms_magic_extension_add ("application/opus", "*.opus");
+	xmms_magic_extension_add ("audio/ogg; codecs=opus", "*.opus");
 
 	return TRUE;
 }
@@ -122,9 +122,8 @@ xmms_opus_destroy (xmms_xform_t *xform)
 	g_free (data);
 }
 
-static size_t
-opus_callback_read (void *ptr, size_t size, size_t nmemb,
-                      void *datasource)
+static int
+opus_callback_read (void *datasource, unsigned char *ptr, int size)
 {
 	xmms_opus_data_t *data;
 	xmms_xform_t *xform = datasource;
@@ -136,9 +135,9 @@ opus_callback_read (void *ptr, size_t size, size_t nmemb,
 	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, 0);
 
-	ret = xmms_xform_read (xform, ptr, size * nmemb, &error);
+	ret = xmms_xform_read (xform, ptr, size, &error);
 
-	return ret / size;
+	return ret;
 }
 
 static int

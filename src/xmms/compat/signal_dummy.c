@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -20,8 +20,8 @@
  */
 
 
-#include "xmmspriv/xmms_signal.h"
-#include "xmms/xmms_object.h"
+#include <xmmspriv/xmms_signal.h>
+#include <xmms/xmms_object.h>
 
 void
 xmms_signal_block (void)

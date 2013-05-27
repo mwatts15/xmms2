@@ -29,10 +29,10 @@
  * id3v2
  */
 
-#include "xmms/xmms_medialib.h"
-#include "xmms/xmms_log.h"
-#include "xmms/xmms_xformplugin.h"
-#include "xmms/xmms_bindata.h"
+#include <xmms/xmms_medialib.h>
+#include <xmms/xmms_log.h>
+#include <xmms/xmms_xformplugin.h>
+#include <xmms/xmms_bindata.h>
 #include "id3.h"
 
 #include <glib.h>
@@ -116,6 +116,10 @@
  *>TXXX:BARCODE                     Barcode
  *>TXXX:CATALOGNUMBER               Record label catalog number
  *>TXXX:QuodLibet::albumartist      Album Artist Name (more to come)
+ *>TXXX:REPLAYGAIN_TRACK_GAIN       Replaygain tag for a track
+ *>TXXX:REPLAYGAIN_TRACK_PEAK       Replaygain tag for peak of a track
+ *>TXXX:REPLAYGAIN_ALBUM_GAIN       Replaygain tag for an album
+ *>TXXX:REPLAYGAIN_ALBUM_PEAK       Replaygain tag for peak of an album
  */
 
 static const gchar * const id3_genres[] =
@@ -340,6 +344,18 @@ handle_id3v2_txxx (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 	} else if (g_ascii_strcasecmp (key, "CATALOGNUMBER") == 0) {
 		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_CATALOGNUMBER;
 		xmms_xform_metadata_set_str (xform, metakey, val);
+	} else if (g_ascii_strcasecmp (key, "replaygain_track_gain") == 0) {
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_TRACK;
+		xmms_xform_metadata_parse_replay_gain (xform, metakey, val, 0);
+	} else if (g_ascii_strcasecmp (key, "replaygain_album_gain") == 0) {
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_ALBUM;
+		xmms_xform_metadata_parse_replay_gain (xform, metakey, val, 0);
+	} else if (g_ascii_strcasecmp (key, "replaygain_track_peak") == 0) {
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_TRACK;
+		xmms_xform_metadata_set_str (xform, metakey, val);
+	} else if (g_ascii_strcasecmp (key, "replaygain_album_peak") == 0) {
+		metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_ALBUM;
+		xmms_xform_metadata_set_str (xform, metakey, val);
 	} else {
 		XMMS_DBG ("Unhandled tag 'TXXX:%s' = '%s'", key, val);
 	}
@@ -486,6 +502,11 @@ handle_id3v2_apic (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 	len--;
 	mime = buf;
 	typ = find_nul (buf, &len);
+
+	if (!typ || len == 0) {
+		XMMS_DBG ("Unable to read APIC frame, malformed tag?");
+		return;
+	}
 
 	if (typ[0] != 0x00 && typ[0] != 0x03) {
 		XMMS_DBG ("Picture type %02x not handled", typ[0]);

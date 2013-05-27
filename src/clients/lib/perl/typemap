@@ -1,6 +1,6 @@
 TYPEMAP
 xmmsc_connection_t*			XMMSC_CONNECTION_T
-xmmsv_coll_t*				XMMSV_COLL_T
+xmmsv_t*				    XMMSV_T
 xmmsv_coll_type_t			XMMSV_COLL_TYPE_T
 xmms_playback_seek_mode_t	XMMSV_PLAYBACK_SEEK_MODE_T
 xmmsv_coll_namespace_t		T_PV
@@ -23,7 +23,7 @@ XMMSC_CONNECTION_T
 		$arg = perl_xmmsclient_new_sv_from_ptr ($var, \"Audio::XMMSClient\");
 	}
 
-XMMSV_COLL_T
+XMMSV_T
 	$arg = perl_xmmsclient_new_sv_from_ptr ($var, \"Audio::XMMSClient::Collection\");
 
 XMMSC_RESULT_T
@@ -51,8 +51,10 @@ XMMSV_TYPE_T
 			sv_setpv ($arg, \"none\");
 		} else if ($var == XMMSV_TYPE_ERROR) {
 			sv_setpv ($arg, \"error\");
-		} else if ($var == XMMSV_TYPE_INT32) {
+		} else if ($var == XMMSV_TYPE_INT64) {
 			sv_setpv ($arg, \"int\");
+        } else if ($var == XMMSV_TYPE_FLOAT) {
+			sv_setpv ($arg, \"float\");
 		} else if ($var == XMMSV_TYPE_STRING) {
 			sv_setpv ($arg, \"string\");
 		} else if ($var == XMMSV_TYPE_DICT) {
@@ -71,6 +73,9 @@ XMMSV_COLL_TYPE_T
 		$arg = newSVpv ("", 0);
 		if ($var == XMMS_COLLECTION_TYPE_REFERENCE) {
 			sv_setpv ($arg, \"reference\");
+		}
+		else if ($var == XMMS_COLLECTION_TYPE_UNIVERSE) {
+			sv_setpv ($arg, \"universe\");
 		}
 		else if ($var == XMMS_COLLECTION_TYPE_UNION) {
 			sv_setpv ($arg, \"union\");
@@ -144,7 +149,7 @@ INPUT
 XMMSC_CONNECTION_T
 	$var = ($type)perl_xmmsclient_get_ptr_from_sv ($arg, \"Audio::XMMSClient\");
 
-XMMSV_COLL_T
+XMMSV_T
 	$var = ($type)perl_xmmsclient_get_ptr_from_sv ($arg, \"Audio::XMMSClient::Collection\");
 
 XMMSC_RESULT_T
@@ -155,7 +160,7 @@ XMMSC_RESULT_PROPDICT_T
 
 XMMS_PLUGIN_TYPE_T
 	{
-		char *plugin_type = NULL;
+		const char *plugin_type = NULL;
 		if ($arg == NULL) {
 			plugin_type = \"\";
 		} else {
@@ -185,6 +190,9 @@ XMMSV_COLL_TYPE_T
 
 		if (strcmp (coll_type, \"reference\") == 0) {
 			$var = XMMS_COLLECTION_TYPE_REFERENCE;
+		}
+		else if (strcmp (coll_type, \"universe\") == 0) {
+			$var = XMMS_COLLECTION_TYPE_UNIVERSE;
 		}
 		else if (strcmp (coll_type, \"union\") == 0) {
 			$var = XMMS_COLLECTION_TYPE_UNION;

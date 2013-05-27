@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -18,12 +18,11 @@
 
 #include <glib.h>
 
-#include "xmmspriv/xmms_streamtype.h"
-#include "xmms/xmms_object.h"
-#include "xmms/xmms_sample.h"
+#include <xmmspriv/xmms_streamtype.h>
+#include <xmms/xmms_object.h>
+#include <xmms/xmms_sample.h>
 
 SETUP (streamtype) {
-	g_thread_init (0);
 	return 0;
 }
 
@@ -315,4 +314,3 @@ CASE (test_coerce)
 	xmms_object_unref (from);
 	xmms_object_unref (to);
 }
-

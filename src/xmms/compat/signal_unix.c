@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -22,10 +22,10 @@
  */
 
 
-#include "xmmspriv/xmms_signal.h"
-#include "xmmspriv/xmms_thread_name.h"
-#include "xmms/xmms_log.h"
-#include "xmms/xmms_object.h"
+#include <xmmspriv/xmms_signal.h>
+#include <xmmspriv/xmms_thread_name.h>
+#include <xmms/xmms_log.h>
+#include <xmms/xmms_object.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -43,8 +43,6 @@ sigwaiter (gpointer data)
 	xmms_object_cmd_arg_t arg;
 	sigset_t signals;
 	int caught;
-
-	xmms_set_thread_name ("x2 sig waiter");
 
 	sigemptyset(&signals);
 	sigaddset (&signals, SIGINT);
@@ -104,5 +102,5 @@ xmms_signal_restore (void)
 void
 xmms_signal_init (xmms_object_t *obj)
 {
-	g_thread_create (sigwaiter, obj, FALSE, NULL);
+	g_thread_new ("x2 sig waiter", sigwaiter, obj);
 }

@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -14,17 +14,45 @@
  *  General Public License for more details.
  */
 
-#include "cli_infos.h"
-#include "commands.h"
-#include "command_utils.h"
-#include "command_trie.h"
-#include "configuration.h"
+#include <stdlib.h>
+#include <string.h>
+
+#include <glib.h>
+#include <glib/gprintf.h>
+
 #include "alias.h"
+#include "cli_context.h"
+#include "command_trie.h"
+#include "command.h"
+#include "configuration.h"
 
 static void
 free_token (gpointer data, gpointer udata)
 {
 	g_free (data);
+}
+
+static GList *
+tokenize (const gchar *define)
+{
+	GList *tokens;
+	gchar *tok, *def;
+
+	tokens = NULL;
+
+	def = g_strdup (define);
+
+	/* FIXME: join consecutive strings without '$' char */
+	tok = strtok (def, " ");
+	while (tok != NULL) {
+		tokens = g_list_prepend (tokens, g_strdup (tok));
+		tok = strtok (NULL, " ");
+	}
+	tokens = g_list_reverse (tokens);
+
+	g_free (def);
+
+	return tokens;
 }
 
 static gboolean
@@ -37,7 +65,7 @@ runnable_alias (gchar *def, gint argc, gchar **argv, const gchar *line, gchar **
 	GList *tokens, *it;
 
 	/* Substitute parameters: $0: line, $@: line, $1: field 1, $2: field 2, ... */
-	tokens = alias_tokenize (def);
+	tokens = tokenize (def);
 
 	len = g_list_length (tokens);
 
@@ -90,21 +118,22 @@ finish:
 	return retval;;
 }
 
-gboolean
-alias_action (cli_infos_t *infos, command_context_t *ctx)
+static gboolean
+alias_action (cli_context_t *ctx, command_t *cmd)
 {
+	configuration_t *config = cli_context_config (ctx);
 	gchar *runnable, *def, *line;
 	gboolean retval = TRUE;
 	gchar **argv;
 	gint argc;
 
-	def = g_hash_table_lookup (configuration_get_aliases (infos->config),
-	                           command_name_get (ctx));
+	def = g_hash_table_lookup (configuration_get_aliases (config),
+	                           command_name_get (cmd));
 
-	argc = command_arg_count (ctx);
-	argv = command_argv_get (ctx);
+	argc = command_arg_count (cmd);
+	argv = command_argv_get (cmd);
 
-	if (!command_arg_longstring_get_escaped (ctx, 0, &line)) {
+	if (!command_arg_longstring_get_escaped (cmd, 0, &line)) {
 		line = NULL;
 	}
 
@@ -113,38 +142,15 @@ alias_action (cli_infos_t *infos, command_context_t *ctx)
 		goto finish;
 	}
 
-	cli_infos_alias_begin (infos);
-	command_run (infos, runnable);
-	cli_infos_alias_end (infos);
+	cli_context_alias_begin (ctx);
+	cli_context_execute_command (ctx, runnable);
+	cli_context_alias_end (ctx);
 
 	finish:
 	g_free (line);
 	g_free (runnable);
 
 	return retval;
-}
-
-GList *
-alias_tokenize (const gchar *define)
-{
-	GList *tokens;
-	gchar *tok, *def;
-
-	tokens = NULL;
-
-	def = g_strdup (define);
-
-	/* FIXME: join consecutive strings without '$' char */
-	tok = strtok (def, " ");
-	while (tok != NULL) {
-		tokens = g_list_prepend (tokens, g_strdup (tok));
-		tok = strtok (NULL, " ");
-	}
-	tokens = g_list_reverse (tokens);
-
-	g_free (def);
-
-	return tokens;
 }
 
 void

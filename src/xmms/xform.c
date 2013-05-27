@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -21,15 +21,15 @@
 
 #include <string.h>
 
-#include "xmmspriv/xmms_plugin.h"
-#include "xmmspriv/xmms_xform.h"
-#include "xmmspriv/xmms_streamtype.h"
-#include "xmmspriv/xmms_medialib.h"
-#include "xmmspriv/xmms_utils.h"
-#include "xmmspriv/xmms_xform_plugin.h"
-#include "xmms/xmms_ipc.h"
-#include "xmms/xmms_log.h"
-#include "xmms/xmms_object.h"
+#include <xmmspriv/xmms_plugin.h>
+#include <xmmspriv/xmms_xform.h>
+#include <xmmspriv/xmms_streamtype.h>
+#include <xmmspriv/xmms_medialib.h>
+#include <xmmspriv/xmms_utils.h>
+#include <xmmspriv/xmms_xform_plugin.h>
+#include <xmms/xmms_ipc.h>
+#include <xmms/xmms_log.h>
+#include <xmms/xmms_object.h>
 
 struct xmms_xform_object_St {
 	xmms_object_t obj;

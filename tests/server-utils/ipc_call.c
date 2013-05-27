@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -17,7 +17,7 @@
 #include <stdio.h>
 
 #include "ipc_call.h"
-#include "xmmsc/xmmsc_util.h"
+#include <xmmsc/xmmsc_util.h>
 
 struct xmms_future_St {
 	xmms_object_t *object;
@@ -28,8 +28,8 @@ struct xmms_future_St {
 	glong delay;
 	glong timeout;
 
-	GMutex *mutex;
-	GCond *cond;
+	GMutex mutex;
+	GCond cond;
 };
 
 xmmsv_t *
@@ -70,14 +70,14 @@ future_callback (xmms_object_t *object, xmmsv_t *val, gpointer udata)
 {
 	xmms_future_t *future = (xmms_future_t *) udata;
 
-	g_mutex_lock (future->mutex);
+	g_mutex_lock (&future->mutex);
 
 	if (future->result != NULL) {
 		xmmsv_list_append (future->result, val);
-		g_cond_signal (future->cond);
+		g_cond_signal (&future->cond);
 	}
 
-	g_mutex_unlock (future->mutex);
+	g_mutex_unlock (&future->mutex);
 }
 
 xmms_future_t *
@@ -92,8 +92,8 @@ __xmms_ipc_check_signal (xmms_object_t *object, gint message,
 	future->object = object;
 	future->message = message;
 
-	future->mutex = g_mutex_new ();
-	future->cond = g_cond_new ();
+	g_mutex_init (&future->mutex);
+	g_cond_init (&future->cond);
 
 	future->delay = delay;
 	future->timeout = timeout;
@@ -114,8 +114,8 @@ xmms_future_free (xmms_future_t *future)
 	xmmsv_unref (future->result);
 	future->result = NULL;
 
-	g_mutex_free (future->mutex);
-	g_cond_free (future->cond);
+	g_mutex_clear (&future->mutex);
+	g_cond_clear (&future->cond);
 
 	g_free (future);
 }
@@ -137,23 +137,23 @@ xmms_future_await (xmms_future_t *future, gint count)
 	GTimeVal timeout;
 	gint i, entries;
 
-	g_mutex_lock (future->mutex);
+	g_mutex_lock (&future->mutex);
 
 	g_get_current_time (&timeout);
 	g_time_val_add (&timeout, future->timeout);
 
 	while (xmmsv_list_get_size (future->result) < count) {
-		GTimeVal now, wait;
+		GTimeVal now;
+		gint64 end_time;
 
 		g_get_current_time (&now);
 		if (now.tv_sec >= timeout.tv_sec && now.tv_usec > timeout.tv_usec) {
 			break;
 		}
 
-		g_get_current_time (&wait);
-		g_time_val_add (&wait, future->delay);
+		end_time = g_get_monotonic_time () + future->delay;
 
-		g_cond_timed_wait (future->cond, future->mutex, &wait);
+		g_cond_wait_until (&future->cond, &future->mutex, end_time);
 	}
 
 	result = xmmsv_new_list ();
@@ -165,7 +165,7 @@ xmms_future_await (xmms_future_t *future, gint count)
 		xmmsv_list_remove (future->result, 0);
 	}
 
-	g_mutex_unlock (future->mutex);
+	g_mutex_unlock (&future->mutex);
 
 	return result;
 }

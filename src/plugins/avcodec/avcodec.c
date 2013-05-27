@@ -1,7 +1,7 @@
 /** @file avcodec.c
  *  Decoder plugin for ffmpeg avcodec formats
  *
- *  Copyright (C) 2006-2012 XMMS2 Team
+ *  Copyright (C) 2006-2013 XMMS2 Team
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -14,10 +14,10 @@
  *  Lesser General Public License for more details.
  */
 
-#include "xmms_configuration.h"
-#include "xmms/xmms_xformplugin.h"
-#include "xmms/xmms_sample.h"
-#include "xmms/xmms_log.h"
+#include <xmms_configuration.h>
+#include <xmms/xmms_xformplugin.h>
+#include <xmms/xmms_sample.h>
+#include <xmms/xmms_log.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -90,7 +90,7 @@ xmms_avcodec_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	xmms_magic_add ("A/52 (AC-3) header", "audio/x-ffmpeg-ac3",
 	                "0 beshort 0x0b77", NULL);
 	xmms_magic_add ("DTS header", "audio/x-ffmpeg-dca",
-	                "0 belong 0x7ffe8001", NULL); 
+	                "0 belong 0x7ffe8001", NULL);
 
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
@@ -197,7 +197,8 @@ xmms_avcodec_init (xmms_xform_t *xform)
 		    !strcmp (data->codec_id, "adpcm_swf") ||
 		    !strcmp (data->codec_id, "pcm_s16le") ||
 		    !strcmp (data->codec_id, "ac3") ||
-		    !strcmp (data->codec_id, "dca")) {
+		    !strcmp (data->codec_id, "dca") ||
+		    !strcmp (data->codec_id, "nellymoser")) {
 			/* number 1024 taken from libavformat raw.c RAW_PACKET_SIZE */
 			data->extradata = g_malloc0 (1024);
 			data->extradata_size = 1024;

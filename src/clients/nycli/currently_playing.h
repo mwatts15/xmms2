@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -17,8 +17,11 @@
 #ifndef __CURRENTLY_PLAYING_H__
 #define __CURRENTLY_PLAYING_H__
 
-#include "main.h"
+#include <glib.h>
 
-status_entry_t *currently_playing_init (const gchar *format, gint refresh);
+#include "cli_context.h"
+#include "status.h"
+
+status_entry_t *currently_playing_init (cli_context_t *ctx, const gchar *format, gint refresh);
 
 #endif /* __CURRENTLY_PLAYING_H__ */

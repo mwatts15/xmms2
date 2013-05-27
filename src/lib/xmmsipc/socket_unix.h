@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -18,7 +18,7 @@
 #ifndef XMMS_SOCKET_UNIX_H
 #define XMMS_SOCKET_UNIX_H
 
-#include "xmmsc/xmmsc_ipc_transport.h"
+#include <xmmsc/xmmsc_ipc_transport.h>
 #include "url.h"
 
 xmms_ipc_transport_t *xmms_ipc_usocket_server_init (const xmms_url_t *url);

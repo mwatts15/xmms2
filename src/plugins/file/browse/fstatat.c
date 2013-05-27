@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -16,7 +16,7 @@
 
 #define _ATFILE_SOURCE
 
-#include "xmms/xmms_xformplugin.h"
+#include <xmms/xmms_xformplugin.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>

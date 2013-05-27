@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  * 
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  * 
@@ -22,10 +22,10 @@
 #include <unistd.h>
 
 
-#include "xmmsclient/xmmsclient.h"
-#include "xmmsclientpriv/xmmsclient.h"
-#include "xmmsclientpriv/xmmsclient_ipc.h"
-#include "xmmsc/xmmsc_idnumbers.h"
+#include <xmmsclient/xmmsclient.h>
+#include <xmmsclientpriv/xmmsclient.h>
+#include <xmmsclientpriv/xmmsclient_ipc.h>
+#include <xmmsc/xmmsc_idnumbers.h>
 
 /**
  * @defgroup ConfigControl ConfigControl

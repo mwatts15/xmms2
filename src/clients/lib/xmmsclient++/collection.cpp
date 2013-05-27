@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -154,7 +154,7 @@ namespace Xmms
 	CollPtr
 	Collection::parse( const std::string& pattern ) const
 	{
-		xmmsv_coll_t* coll;
+		xmmsv_t* coll;
 
 		if( !xmmsv_coll_parse( pattern.c_str(), &coll ) ) {
 			throw collection_parsing_error( "invalid collection pattern" );

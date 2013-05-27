@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -17,26 +17,29 @@
 #ifndef __XMMSV_INTERNAL_H__
 #define __XMMSV_INTERNAL_H__
 
-#include "xmmsc/xmmsv.h"
-#include "xmmsc/xmmsc_stdbool.h"
+#include <stdint.h>
+
+#include <xmmsc/xmmsv.h>
+#include <xmmsc/xmmsc_stdbool.h>
 
 typedef struct xmmsv_dict_internal_St xmmsv_dict_internal_t;
 typedef struct xmmsv_list_internal_St xmmsv_list_internal_t;
+typedef struct xmmsv_coll_internal_St xmmsv_coll_internal_t;
 
 struct xmmsv_St {
 	union {
 		char *error;
-		int32_t int32;
+		int64_t int64;
+		float flt32;
 		char *string;
-		xmmsv_coll_t *coll;
+		xmmsv_coll_internal_t *coll;
+		xmmsv_list_internal_t *list;
+		xmmsv_dict_internal_t *dict;
 
 		struct {
 			unsigned char *data;
 			uint32_t len;
 		} bin;
-
-		xmmsv_list_internal_t *list;
-		xmmsv_dict_internal_t *dict;
 
 		struct {
 			bool ro;
@@ -55,5 +58,6 @@ xmmsv_t *_xmmsv_new (xmmsv_type_t type);
 
 void _xmmsv_list_free (xmmsv_list_internal_t *dict);
 void _xmmsv_dict_free (xmmsv_dict_internal_t *dict);
+void _xmmsv_coll_free (xmmsv_coll_internal_t *coll);
 
 #endif

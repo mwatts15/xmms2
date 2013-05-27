@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -21,10 +21,10 @@
 #define __XMMS_OBJECT_H__
 
 #include <glib.h>
-#include "xmms/xmms_error.h"
-#include "xmmsc/xmmsc_idnumbers.h"
-#include "xmmsc/xmmsv.h"
-#include "xmmsc/xmmsv_coll.h"
+#include <xmms/xmms_error.h>
+#include <xmmsc/xmmsc_idnumbers.h>
+#include <xmmsc/xmmsv.h>
+#include <xmmsc/xmmsv_coll.h>
 
 #define XMMS_OBJECT_MID 0x00455574
 
@@ -40,7 +40,7 @@ typedef void (*xmms_object_destroy_func_t) (xmms_object_t *object);
   */
 struct xmms_object_St {
 	guint32 id;
-	GMutex *mutex;
+	GMutex mutex;
 
 	GTree *signals;
 	GTree *cmds;
@@ -77,11 +77,9 @@ typedef void (*xmms_object_cmd_func_t) (xmms_object_t *object, xmms_object_cmd_a
 
 void xmms_object_cleanup (xmms_object_t *object);
 
-void xmms_object_connect (xmms_object_t *object, guint32 signalid,
-			  xmms_object_handler_t handler, gpointer userdata);
+void xmms_object_connect (xmms_object_t *object, guint32 signalid, xmms_object_handler_t handler, gpointer userdata) XMMS_PUBLIC;
 
-void xmms_object_disconnect (xmms_object_t *object, guint32 signalid,
-			     xmms_object_handler_t handler, gpointer userdata);
+void xmms_object_disconnect (xmms_object_t *object, guint32 signalid, xmms_object_handler_t handler, gpointer userdata) XMMS_PUBLIC;
 
 void xmms_object_emit (xmms_object_t *object, guint32 signalid, xmmsv_t *data);
 
@@ -92,8 +90,8 @@ void xmms_object_cmd_add (xmms_object_t *object, guint cmdid, const xmms_object_
 void xmms_object_cmd_call (xmms_object_t *object, guint cmdid, xmms_object_cmd_arg_t *arg);
 
 
-void __int_xmms_object_unref (xmms_object_t *object);
-xmms_object_t *__int_xmms_object_new (gint size, xmms_object_destroy_func_t destfunc);
+void __int_xmms_object_unref (xmms_object_t *object) XMMS_PUBLIC;
+xmms_object_t *__int_xmms_object_new (gint size, xmms_object_destroy_func_t destfunc) XMMS_PUBLIC;
 
 #define xmms_object_ref(obj) do { \
 	if (obj && XMMS_IS_OBJECT (obj)) { \

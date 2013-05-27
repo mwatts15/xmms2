@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -17,12 +17,14 @@
 #ifndef __XMMS_BINDATA_H__
 #define __XMMS_BINDATA_H__
 
+#include <xmmsc/xmmsc_compiler.h>
+
 #include <glib.h>
 
 G_BEGIN_DECLS
 
-gchar *xmms_bindata_calculate_md5 (const guchar *data, gsize size, gchar ret[33]);
-gboolean xmms_bindata_plugin_add (const guchar *data, gsize size, gchar hash[33]);
+gchar *xmms_bindata_calculate_md5 (const guchar *data, gsize size, gchar ret[33]) XMMS_PUBLIC;
+gboolean xmms_bindata_plugin_add (const guchar *data, gsize size, gchar hash[33]) XMMS_PUBLIC;
 
 G_END_DECLS
 

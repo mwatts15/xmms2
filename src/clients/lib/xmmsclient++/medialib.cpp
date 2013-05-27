@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -214,7 +214,24 @@ namespace Xmms
 		using boost::bind;
 		xmmsc_result_t* res =
 		    call( connected_,
-		          bind( xmmsc_broadcast_medialib_entry_changed, conn_ ) );
+		          bind( xmmsc_broadcast_medialib_entry_updated, conn_ ) );
+		return IntSignal( res, ml_ );
+	}
+
+	IntSignal Medialib::broadcastEntryUpdated() const
+	{
+		using boost::bind;
+		xmmsc_result_t* res =
+			call( connected_,
+			      bind( xmmsc_broadcast_medialib_entry_updated, conn_ ) );
+		return IntSignal( res, ml_ );
+	}
+
+	IntSignal Medialib::broadcastEntryRemoved() const
+	{
+		xmmsc_result_t* res =
+			call( connected_,
+			      boost::bind( xmmsc_broadcast_medialib_entry_removed, conn_ ) );
 		return IntSignal( res, ml_ );
 	}
 
@@ -225,4 +242,3 @@ namespace Xmms
 	}
 
 }
-

@@ -1,13 +1,16 @@
 from waflib import Options, Errors
 
 source = """
-main.c
-cli_infos.c
+cli_context.c
 cli_cache.c
 command_trie.c
 commands.c
+commands_coll.c
+commands_playback.c
+commands_playlist.c
+commands_server.c
 matching_browse.c
-command_utils.c
+command.c
 cmdnames.c
 configuration.c
 status.c
@@ -22,17 +25,25 @@ playlist_positions.c
 def build(bld):
     compat = ['compat_%s.c' % bld.env.CLI_COMPAT_IMPL]
 
-    bld(features = 'c cprogram',
-        target = 'xmms2',
+    bld.objects(
+        target = 'xmmscli',
         source = source + compat,
         includes = '. ../../../ ../../include',
         uselib = 'glib2 readline readline_ncurses',
-        use = 'xmmsclient'
-        )
+        defines = 'GETTEXT_PACKAGE=\"xmms2\"',
+        install_path = None
+    )
+
+    bld(features = 'c cprogram',
+        target = 'xmms2',
+        source = 'main.c',
+        includes = '. ../../../ ../../include',
+        use = 'xmmscli xmmsclient'
+    )
 
     bld(features = 'man',
         source = 'xmms2.1'
-        )
+    )
 
 
 def configure(conf):

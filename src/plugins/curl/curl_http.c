@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -14,9 +14,9 @@
  *  Lesser General Public License for more details.
  */
 
-#include "xmms/xmms_xformplugin.h"
-#include "xmms/xmms_log.h"
-#include "xmms/xmms_medialib.h"
+#include <xmms/xmms_xformplugin.h>
+#include <xmms/xmms_log.h>
+#include <xmms/xmms_medialib.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>

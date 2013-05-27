@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -28,8 +28,8 @@
 #include <signal.h>
 #include <syslog.h>
 
-#include "xmmsc/xmmsc_ipc_transport.h"
-#include "xmmsc/xmmsc_util.h"
+#include <xmmsc/xmmsc_ipc_transport.h>
+#include <xmmscpriv/xmmsc_util.h>
 #include "url.h"
 #include "socket_unix.h"
 

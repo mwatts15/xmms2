@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -24,14 +24,14 @@
 
 #include <sys/types.h>
 
-#include "xmmspriv/xmms_list.h"
+#include <xmmscpriv/xmms_list.h>
 
-#include "xmmsclient/xmmsclient.h"
-#include "xmmsclientpriv/xmmsclient.h"
-#include "xmmsc/xmmsc_idnumbers.h"
-#include "xmmsc/xmmsc_stdint.h"
-#include "xmmsc/xmmsc_stringport.h"
-#include "xmmsc/xmmsc_util.h"
+#include <xmmsclient/xmmsclient.h>
+#include <xmmsclientpriv/xmmsclient.h>
+#include <xmmsc/xmmsc_idnumbers.h>
+#include <xmmsc/xmmsc_stdint.h>
+#include <xmmsc/xmmsc_stringport.h>
+#include <xmmsc/xmmsc_util.h>
 
 
 #define XMMS_MAX_URI_LEN 1024

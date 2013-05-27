@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -18,9 +18,10 @@
 #define __ALIAS_H__
 
 #include <glib.h>
-#include <glib/gprintf.h>
 
-#include "main.h"
+#include "command_trie.h"
+
+typedef struct alias_define_St alias_define_t;
 
 struct alias_define_St {
 	gchar *name;
@@ -28,9 +29,7 @@ struct alias_define_St {
 	GList *tokens;
 };
 
-gboolean alias_action (cli_infos_t *infos, command_context_t *ctx);
 void alias_setup (command_action_t *action, alias_define_t *alias);
-GList* alias_tokenize (const gchar *define);
 void alias_free (alias_define_t *alias);
 alias_define_t *alias_init (gchar *name, gchar *define);
 alias_define_t *alias_list (GHashTable *hash);

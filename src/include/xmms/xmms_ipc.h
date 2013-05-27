@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -18,18 +18,18 @@
 #define __XMMS_IPC_H__
 
 #include <glib.h>
-#include "xmms/xmms_object.h"
+#include <xmms/xmms_object.h>
+#include <xmmsc/xmmsc_compiler.h>
 
 G_BEGIN_DECLS
 
-void xmms_ipc_object_register (xmms_ipc_objects_t objectid, xmms_object_t *object);
-void xmms_ipc_object_unregister (xmms_ipc_objects_t objectid);
-void xmms_ipc_broadcast_register (xmms_object_t *object, xmms_ipc_signals_t signalid);
-void xmms_ipc_broadcast_unregister (xmms_ipc_signals_t signalid);
-void xmms_ipc_signal_register (xmms_object_t *object, xmms_ipc_signals_t signalid);
-void xmms_ipc_signal_unregister (xmms_ipc_signals_t signalid);
+void xmms_ipc_object_register (xmms_ipc_objects_t objectid, xmms_object_t *object) XMMS_PUBLIC;
+void xmms_ipc_object_unregister (xmms_ipc_objects_t objectid) XMMS_PUBLIC;
+void xmms_ipc_broadcast_register (xmms_object_t *object, xmms_ipc_signals_t signalid) XMMS_PUBLIC;
+void xmms_ipc_broadcast_unregister (xmms_ipc_signals_t signalid) XMMS_PUBLIC;
+void xmms_ipc_signal_register (xmms_object_t *object, xmms_ipc_signals_t signalid) XMMS_PUBLIC;
+void xmms_ipc_signal_unregister (xmms_ipc_signals_t signalid) XMMS_PUBLIC;
 
 G_END_DECLS
 
 #endif
-

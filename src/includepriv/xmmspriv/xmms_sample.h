@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -17,9 +17,9 @@
 #ifndef __XMMS_PRIV_SAMPLE_H__
 #define __XMMS_PRIV_SAMPLE_H__
 
-#include "xmmspriv/xmms_streamtype.h"
-#include "xmms/xmms_sample.h"
-#include "xmms/xmms_medialib.h"
+#include <xmmspriv/xmms_streamtype.h>
+#include <xmms/xmms_sample.h>
+#include <xmms/xmms_medialib.h>
 
 typedef guint (*xmms_sample_conv_func_t) (xmms_sample_converter_t *, xmms_sample_t *, guint , xmms_sample_t *);
 

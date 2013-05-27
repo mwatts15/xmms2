@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -14,7 +14,7 @@
  *  Lesser General Public License for more details.
  */
 
-#include "xmmspriv/xmms_localtime.h"
+#include <xmmspriv/xmms_localtime.h>
 
 gboolean
 xmms_localtime (const time_t *tt, struct tm *res)

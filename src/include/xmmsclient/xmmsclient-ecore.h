@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -17,14 +17,15 @@
 #ifndef __XMMSCLIENT_ECORE_H__
 #define __XMMSCLIENT_ECORE_H__
 
-#include "xmmsclient/xmmsclient.h"
+#include <xmmsc/xmmsc_compiler.h>
+#include <xmmsclient/xmmsclient.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void *xmmsc_mainloop_ecore_init (xmmsc_connection_t *connection);
-void xmmsc_mainloop_ecore_shutdown (xmmsc_connection_t *connection, void *udata);
+void *xmmsc_mainloop_ecore_init (xmmsc_connection_t *connection) XMMS_PUBLIC;
+void xmmsc_mainloop_ecore_shutdown (xmmsc_connection_t *connection, void *udata) XMMS_PUBLIC;
 
 #ifdef __cplusplus
 }

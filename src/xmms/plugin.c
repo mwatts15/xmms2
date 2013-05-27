@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -14,15 +14,15 @@
  *  Lesser General Public License for more details.
  */
 
-#include "xmms_configuration.h"
-#include "xmmspriv/xmms_plugin.h"
-#include "xmms/xmms_config.h"
-#include "xmmspriv/xmms_config.h"
-#include "xmms/xmms_object.h"
-#include "xmms/xmms_log.h"
-#include "xmmspriv/xmms_playlist.h"
-#include "xmmspriv/xmms_outputplugin.h"
-#include "xmmspriv/xmms_xform.h"
+#include <xmms_configuration.h>
+#include <xmmspriv/xmms_plugin.h>
+#include <xmms/xmms_config.h>
+#include <xmmspriv/xmms_config.h>
+#include <xmms/xmms_object.h>
+#include <xmms/xmms_log.h>
+#include <xmmspriv/xmms_playlist.h>
+#include <xmmspriv/xmms_outputplugin.h>
+#include <xmmspriv/xmms_xform.h>
 
 #include <gmodule.h>
 #include <string.h>
@@ -199,11 +199,13 @@ xmms_plugin_add_builtin_plugins (void)
 	extern const xmms_plugin_desc_t xmms_builtin_converter;
 	extern const xmms_plugin_desc_t xmms_builtin_segment;
 	extern const xmms_plugin_desc_t xmms_builtin_visualization;
+	extern const xmms_plugin_desc_t xmms_builtin_ringbuf;
 
 	xmms_plugin_load (&xmms_builtin_magic, NULL);
 	xmms_plugin_load (&xmms_builtin_converter, NULL);
 	xmms_plugin_load (&xmms_builtin_segment, NULL);
 	xmms_plugin_load (&xmms_builtin_visualization, NULL);
+	xmms_plugin_load (&xmms_builtin_ringbuf, NULL);
 }
 
 

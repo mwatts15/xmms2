@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -19,7 +19,7 @@
 
 #include <glib.h>
 
-#include "xmms/xmms_xformplugin.h"
+#include <xmms/xmms_xformplugin.h>
 
 gboolean xmms_metadata_mapper_match (GHashTable *table, xmms_xform_t *xform, const gchar *key, const gchar *value, gsize value_length);
 GHashTable *xmms_metadata_mapper_init (const xmms_xform_metadata_basic_mapping_t *basic_mapping, gint basic_count, const xmms_xform_metadata_mapping_t *mapping, gint count);

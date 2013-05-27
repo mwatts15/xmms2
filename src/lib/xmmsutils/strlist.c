@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -24,7 +24,7 @@
 #include <unistd.h>
 #include <string.h>
 
-#include "xmmsc/xmmsc_strlist.h"
+#include <xmmsc/xmmsc_strlist.h>
 
 /**
  * Convert a list of variable arguments into a list of strings.

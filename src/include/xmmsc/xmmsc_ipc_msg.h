@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2012 XMMS2 Team
+ *  Copyright (C) 2003-2013 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -17,13 +17,13 @@
 #ifndef __XMMS_IPC_MSG_H__
 #define __XMMS_IPC_MSG_H__
 
-#include "xmmsc/xmmsc_compiler.h"
-#include "xmmsc/xmmsc_stdint.h"
-#include "xmmsc/xmmsc_stdbool.h"
-#include "xmmsc/xmmsc_util.h"
-#include "xmmsc/xmmsc_ipc_transport.h"
-#include "xmmsc/xmmsv_coll.h"
-#include "xmmsc/xmmsv.h"
+#include <xmmsc/xmmsc_compiler.h>
+#include <xmmsc/xmmsc_stdint.h>
+#include <xmmsc/xmmsc_stdbool.h>
+#include <xmmsc/xmmsc_util.h>
+#include <xmmsc/xmmsc_ipc_transport.h>
+#include <xmmsc/xmmsv_coll.h>
+#include <xmmsc/xmmsv.h>
 
 #define XMMS_IPC_MSG_DEFAULT_SIZE 128 /*32768*/
 #define XMMS_IPC_MSG_HEAD_LEN 16 /* all but data */

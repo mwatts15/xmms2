@@ -1,7 +1,7 @@
 /** @file mp4.c
  *  Decoder plugin for MP4 audio format
  *
- *  Copyright (C) 2005-2012 XMMS2 Team
+ *  Copyright (C) 2005-2013 XMMS2 Team
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -14,10 +14,10 @@
  *  GNU General Public License for more details.
  */
 
-#include "xmms/xmms_xformplugin.h"
-#include "xmms/xmms_bindata.h"
-#include "xmms/xmms_sample.h"
-#include "xmms/xmms_log.h"
+#include <xmms/xmms_xformplugin.h>
+#include <xmms/xmms_bindata.h>
+#include <xmms/xmms_sample.h>
+#include <xmms/xmms_log.h>
 
 #include <stdio.h>
 #include <stdlib.h>
