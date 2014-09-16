@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -82,17 +82,6 @@ struct xmms_medialib_St {
 	s4_sourcepref_t *default_sp;
 };
 
-static const gchar *source_pref[] = {
-	"server",
-	"client/*",
-	"plugin/playlist",
-	"plugin/id3v2",
-	"plugin/segment",
-	"plugin/*",
-	"*",
-	NULL
-};
-
 static void
 xmms_medialib_destroy (xmms_object_t *object)
 {
@@ -144,7 +133,7 @@ xmms_medialib_init (void)
 
 	medialib_path = xmms_config_property_get_string (cfg);
 	medialib->s4 = xmms_medialib_database_open (medialib_path, indices);
-	medialib->default_sp = s4_sourcepref_create (source_pref);
+	medialib->default_sp = s4_sourcepref_create (xmmsv_default_source_pref);
 
 	return medialib;
 }
@@ -959,7 +948,7 @@ xmms_medialib_entry_to_tree (xmms_medialib_session_t *session,
 {
 	s4_resultset_t *set;
 	s4_val_t *song_id;
-	xmmsv_t *ret, *v_entry;
+	xmmsv_t *ret, *id;
 	gint i;
 
 	song_id = s4_val_new_int (entry);
@@ -974,6 +963,7 @@ xmms_medialib_entry_to_tree (xmms_medialib_session_t *session,
 
 		res = s4_resultset_get_result (set, 0, 0);
 		while (res != NULL) {
+			xmmsv_t *v_entry = NULL;
 			const s4_val_t *val;
 			const char *s;
 			gint32 i;
@@ -994,9 +984,10 @@ xmms_medialib_entry_to_tree (xmms_medialib_session_t *session,
 	}
 
 	s4_resultset_free (set);
-	v_entry = xmmsv_new_int (entry);
-	xmms_medialib_tree_add_tuple (ret, "id", "server", v_entry);
-	xmmsv_unref (v_entry);
+
+	id = xmmsv_new_int (entry);
+	xmms_medialib_tree_add_tuple (ret, "id", "server", id);
+	xmmsv_unref (id);
 
 	return ret;
 }
@@ -1420,6 +1411,14 @@ xmms_medialib_query (xmms_medialib_session_t *session, xmmsv_t *coll,
 
 	xmms_fetch_spec_free (spec);
 	xmms_fetch_info_free (info);
+
+	if (ret == NULL) {
+		if (err) {
+			xmms_error_set (err, XMMS_ERROR_NOENT, "Failed to retrieve query "
+			                "result. This is probably a bug in xmms2d.");
+		}
+		return NULL;
+	}
 
 	xmms_medialib_session_track_garbage (session, ret);
 

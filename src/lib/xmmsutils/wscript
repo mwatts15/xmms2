@@ -1,7 +1,7 @@
 # encoding: utf-8
 #
 # WAF build scripts for XMMS2
-# Copyright (C) 2006-2013 XMMS2 Team
+# Copyright (C) 2006-2014 XMMS2 Team
 #
 
 from waflib import Options, Logs, Errors
@@ -10,13 +10,14 @@ def build(bld):
     source = """
     strlist.c
     utils.c
+    log.c
     """.split()
     if bld.env.util_impl == 'win32':
         source.extend(['utils_win32.c'])
     else:
         source.extend(['utils_unix.c'])
 
-    if bld.env.HAVE_VALGRIND:
+    if bld.env.have_valgrind:
         source.extend(['stacktrace.c'])
     else:
         source.extend(['stacktrace_dummy.c'])
@@ -28,7 +29,8 @@ def build(bld):
         source = source,
         includes = '. ../../.. ../../include ../../includepriv',
         uselib = 'rt valgrind',
-        install_path = None
+        install_path = None,
+        defines = 'XMMSC_LOG_DOMAIN="xmmsc/xmmsutils"'
         )
 
 

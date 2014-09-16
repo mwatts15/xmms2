@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -329,7 +329,7 @@ xmmsc_coll_idlist_from_playlist_file (xmmsc_connection_t *conn, const char *path
 
 	x_check_conn (conn, NULL);
 
-	enc_url = xmmsc_medialib_encode_url (path);
+	enc_url = xmmsv_encode_url (path);
 
 	res = xmmsc_send_cmd (conn, XMMS_IPC_OBJECT_COLLECTION,
 	                      XMMS_IPC_CMD_IDLIST_FROM_PLS,

@@ -1,7 +1,7 @@
 /** @file daap_xform.c
  *  XMMS2 transform for accessing DAAP music shares.
  *
- *  Copyright (C) 2006-2013 XMMS2 Team
+ *  Copyright (C) 2006-2014 XMMS2 Team
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -74,11 +74,11 @@ xmms_daap_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error);
 /*
  * Plugin header
  */
-XMMS_XFORM_PLUGIN ("daap",
-                   "DAAP access plugin",
-                   "SoC",
-                   "Accesses iTunes (DAAP) music shares",
-                   xmms_daap_plugin_setup);
+XMMS_XFORM_PLUGIN_DEFINE ("daap",
+                          "DAAP access plugin",
+                          "SoC",
+                          "Accesses iTunes (DAAP) music shares",
+                          xmms_daap_plugin_setup);
 
 
 /**
@@ -121,12 +121,14 @@ get_data_from_url (const gchar *url, gchar **host, guint *port, gchar **cmd, xmm
 		return FALSE;
 	}
 
-	if (port_ptr) {
-		*host = g_strndup (stripped, port_ptr - stripped);
-	} else if (cmd_ptr) {
-		*host = g_strndup (stripped, cmd_ptr - stripped);
-	} else {
-		*host = g_strdup (stripped);
+	if (host) {
+		if (port_ptr) {
+			*host = g_strndup (stripped, port_ptr - stripped);
+		} else if (cmd_ptr) {
+			*host = g_strndup (stripped, cmd_ptr - stripped);
+		} else {
+			*host = g_strdup (stripped);
+		}
 	}
 
 	return TRUE;

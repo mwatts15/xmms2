@@ -1,7 +1,7 @@
 /** @file wma.c
  *  Transport plugin for MMS streams
  *
- *  Copyright (C) 2006-2013 XMMS2 Team
+ *  Copyright (C) 2006-2014 XMMS2 Team
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -42,8 +42,8 @@ static gint xmms_mms_read (xmms_xform_t *xform, void *buffer, gint len,
 /*
  * Plugin header
  */
-XMMS_XFORM_PLUGIN ("mms", "MMS xform plugin", XMMS_VERSION,
-                   "Microsoft Media Services xform", xmms_mms_plugin_setup);
+XMMS_XFORM_PLUGIN_DEFINE ("mms", "MMS xform plugin", XMMS_VERSION,
+                          "Microsoft Media Services xform", xmms_mms_plugin_setup);
 
 static gboolean
 xmms_mms_plugin_setup (xmms_xform_plugin_t *plugin)
@@ -148,4 +148,3 @@ xmms_mms_read (xmms_xform_t *xform, void *buffer, gint len,
 
 	return ret;
 }
-

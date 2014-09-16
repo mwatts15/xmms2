@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -34,6 +34,7 @@
 
 /* needed by connection_St */
 
+typedef struct xmmsc_sc_interface_entity_St xmmsc_sc_interface_entity_t;
 typedef struct xmmsc_visualization_St xmmsc_visualization_t;
 
 /**
@@ -57,6 +58,12 @@ struct xmmsc_connection_St {
 	int visc;
 	xmmsc_visualization_t **visv;
 
+	/* this client's id, assigned by the server */
+	int64_t id;
+
+	/* anonymous root namespace */
+	xmmsc_sc_interface_entity_t *sc_root;
+
 	/* we need to hold the connection path to get the hostname */
 	char path[XMMS_PATH_MAX];
 };
@@ -64,9 +71,12 @@ struct xmmsc_connection_St {
 xmmsc_result_t *xmmsc_result_new (xmmsc_connection_t *c, xmmsc_result_type_t type, uint32_t cookie);
 
 uint32_t xmmsc_result_cookie_get (xmmsc_result_t *result);
+void xmmsc_result_c2c_set (xmmsc_result_t *res);
+xmmsc_result_type_t xmmsc_result_type_set (xmmsc_result_t *res, xmmsc_result_type_t new);
 void xmmsc_result_run (xmmsc_result_t *res, xmms_ipc_msg_t *msg);
 
 xmmsc_result_t *xmmsc_send_cmd (xmmsc_connection_t *c, int obj, int cmd, ...) XMMS_SENTINEL(0);
+uint32_t xmmsc_send_cmd_cookie (xmmsc_connection_t *c, int obj, int cmd, ...) XMMS_SENTINEL(0);
 xmmsc_result_t *xmmsc_send_msg_no_arg (xmmsc_connection_t *c, int object, int cmd);
 xmmsc_result_t *xmmsc_send_msg (xmmsc_connection_t *c, xmms_ipc_msg_t *msg);
 xmmsc_result_t *xmmsc_send_msg_flush (xmmsc_connection_t *c, xmms_ipc_msg_t *msg);
@@ -83,6 +93,7 @@ void xmmsc_result_visc_set (xmmsc_result_t *res, xmmsc_visualization_t *visc);
 xmmsc_visualization_t *xmmsc_result_visc_get (xmmsc_result_t *res);
 xmmsc_connection_t *xmmsc_result_get_connection (xmmsc_result_t *res);
 
+void xmmsc_sc_interface_entity_destroy (xmmsc_sc_interface_entity_t *ifent);
 
 #endif
 

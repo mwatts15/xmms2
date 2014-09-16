@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -239,7 +239,7 @@ command_trie_elem_insert (command_trie_t* node, gchar c)
 			node->next = g_list_prepend (curr, t);
 		} else {
 			/* Insert at the correct position (assign to suppress warning) */
-			prev = g_list_insert_before (prev, curr, t);
+			g_list_insert_before (prev, curr, t);
 		}
 	}
 

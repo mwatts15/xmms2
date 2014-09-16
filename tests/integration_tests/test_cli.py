@@ -1,5 +1,5 @@
 # XMMS2 - X Music Multiplexer System
-# Copyright (C) 2003-2013 XMMS2 Team
+# Copyright (C) 2003-2014 XMMS2 Team
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public
@@ -181,37 +181,39 @@ class Config(object):
     def fetch():
         return KeyValue.parse(cmd("server", "config").stdout)
 
-class TestPlaylist(unittest.TestCase):
+class BasicPlaylist(unittest.TestCase):
     TEST_PLAYLIST_1 = "cli-test-1"
     TEST_PLAYLIST_2 = "cli-test-2"
     TEST_PLAYLIST_3 = "cli-test-3"
     TEST_PLAYLIST_4 = "cli-test-4"
 
     def setUp(self):
-        cmd("playlist", "create", TestPlaylist.TEST_PLAYLIST_1)
-        cmd("playlist", "clear", TestPlaylist.TEST_PLAYLIST_1)
-        cmd("add", "-p", TestPlaylist.TEST_PLAYLIST_1, "album:\"Modern Day City Symphony\"", "AND", "url~Music")
+        cmd("playlist", "create", BasicPlaylist.TEST_PLAYLIST_1)
+        cmd("playlist", "clear", BasicPlaylist.TEST_PLAYLIST_1)
+        cmd("add", "-p", BasicPlaylist.TEST_PLAYLIST_1, "album:\"Modern Day City Symphony\"", "AND", "url~Music")
 
-        cmd("playlist", "create", TestPlaylist.TEST_PLAYLIST_2)
-        cmd("playlist", "clear", TestPlaylist.TEST_PLAYLIST_2)
-        cmd("add", "-p", TestPlaylist.TEST_PLAYLIST_2, "album:\"Modern Day City Symphony\"", "AND", "url~Music")
+        cmd("playlist", "create", BasicPlaylist.TEST_PLAYLIST_2)
+        cmd("playlist", "clear", BasicPlaylist.TEST_PLAYLIST_2)
+        cmd("add", "-p", BasicPlaylist.TEST_PLAYLIST_2, "album:\"Modern Day City Symphony\"", "AND", "url~Music")
 
         self.previous_playlist = Collections.fetch_playlists().active
 
-        cmd("playlist", "switch", TestPlaylist.TEST_PLAYLIST_1)
+        cmd("playlist", "switch", BasicPlaylist.TEST_PLAYLIST_1)
 
     def tearDown(self):
         cmd("playlist", "switch", self.previous_playlist)
 
         playlists = (
-            TestPlaylist.TEST_PLAYLIST_1,
-            TestPlaylist.TEST_PLAYLIST_2,
-            TestPlaylist.TEST_PLAYLIST_3,
-            TestPlaylist.TEST_PLAYLIST_4
+            BasicPlaylist.TEST_PLAYLIST_1,
+            BasicPlaylist.TEST_PLAYLIST_2,
+            BasicPlaylist.TEST_PLAYLIST_3,
+            BasicPlaylist.TEST_PLAYLIST_4
         )
         for playlist in playlists:
             cmd("playlist", "remove", playlist)
 
+
+class TestPlaylist(BasicPlaylist):
     def testListEntries(self):
         # list active playlist
         playlist = Playlist.parse(cmd("list").stdout)
@@ -335,32 +337,7 @@ class TestPlaylist(unittest.TestCase):
         self.assertTrue(TestPlaylist.TEST_PLAYLIST_2 in result.stdout)
         self.assertTrue("_active" in result.stdout)
 
-class TestServer(unittest.TestCase):
-    def setUp(self):
-        cmd("playlist", "create", TestPlaylist.TEST_PLAYLIST_1)
-        cmd("playlist", "clear", TestPlaylist.TEST_PLAYLIST_1)
-        cmd("add", "-p", TestPlaylist.TEST_PLAYLIST_1, "album:\"Modern Day City Symphony\"", "AND", "url~Music")
-
-        cmd("playlist", "create", TestPlaylist.TEST_PLAYLIST_2)
-        cmd("playlist", "clear", TestPlaylist.TEST_PLAYLIST_2)
-        cmd("add", "-p", TestPlaylist.TEST_PLAYLIST_2, "album:\"Modern Day City Symphony\"", "AND", "url~Music")
-
-        self.previous_playlist = Collections.fetch_playlists().active
-
-        cmd("playlist", "switch", TestPlaylist.TEST_PLAYLIST_1)
-
-    def tearDown(self):
-        cmd("playlist", "switch", self.previous_playlist)
-
-        playlists = (
-            TestPlaylist.TEST_PLAYLIST_1,
-            TestPlaylist.TEST_PLAYLIST_2,
-            TestPlaylist.TEST_PLAYLIST_3,
-            TestPlaylist.TEST_PLAYLIST_4
-        )
-        for playlist in playlists:
-            cmd("playlist", "remove", playlist)
-
+class TestServer(BasicPlaylist):
     def testBrowse(self):
         self.assertTrue("file://" in cmd("server", "browse", "file:///").stdout)
 
@@ -377,6 +354,14 @@ class TestServer(unittest.TestCase):
         cmd("server", "volume", "0")
         volume = Volume.fetch()
         self.assertEqual(set([0]), set(volume.values()))
+
+        cmd("server", "volume", "+10")
+        volume = Volume.fetch()
+        self.assertEqual(set([10]), set(volume.values()))
+
+        cmd("server", "volume", "-5")
+        volume = Volume.fetch()
+        self.assertEqual(set([5]), set(volume.values()))
 
         volume = Volume.fetch()
         channel = volume.iterkeys().next()
@@ -435,6 +420,30 @@ class TestServer(unittest.TestCase):
         self.assertTrue("output.buffersize" in result.stdout)
 
 
+class TestPlayback(BasicPlaylist):
+    def testPlaybackToggle(self):
+        self.assertTrue(cmd("stop").success)
+        self.assertEquals(cmd("current", "-f", "${playback_status}").stdout.strip(), "Stopped")
+        self.assertTrue(cmd("play").success)
+        self.assertEquals(cmd("current", "-f", "${playback_status}").stdout.strip(), "Playing")
+        self.assertTrue(cmd("stop").success)
+
+    def testPlaybackSeek(self):
+        def pos():
+            minutes, seconds = cmd("current", "-f", "${playtime}").stdout.strip().split(":")
+            return int(minutes) * 60 + int(seconds)
+
+        self.assertTrue(cmd("stop").success)
+        self.assertTrue(cmd("play").success)
+        # TODO: Use await() here
+        time.sleep(0.2)
+        self.assertEquals(0, pos())
+        self.assertTrue(cmd("seek", "20").success)
+        self.assertEquals(20, pos())
+        self.assertTrue(cmd("seek", "0").success)
+        # TODO: Use await() here
+        time.sleep(0.2)
+        self.assertTrue(pos() < 20)
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -41,14 +41,17 @@ xmms_fetch_info_free (xmms_fetch_info_t *info)
 }
 
 int
+xmms_fetch_info_add_song_id (xmms_fetch_info_t *info, void *object)
+{
+	return 0;
+}
+
+int
 xmms_fetch_info_add_key (xmms_fetch_info_t *info, void *object,
                          const char *key, s4_sourcepref_t *prefs)
 {
 	GHashTable *table;
 	int index, null = 0;
-
-	if (key != NULL && strcmp (key, "id") == 0)
-		return 0;
 
 	table = g_hash_table_lookup (info->ft, object);
 	if (table == NULL) {

@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -138,8 +138,11 @@ _xmmsv_compare (xmmsv_t *a, xmmsv_t *b, int ordered)
 							break;
 						}
 					}
-					if (!match)
+					if (!match) {
+						if (matched != NULL)
+							free (matched);
 						return 0;
+					}
 				}
 			}
 
@@ -150,6 +153,9 @@ _xmmsv_compare (xmmsv_t *a, xmmsv_t *b, int ordered)
 		}
 		case XMMSV_TYPE_COLL: {
 			return xmmsv_coll_compare (a, b);
+		}
+		case XMMSV_TYPE_NONE: {
+			return xmmsv_is_type (b, XMMSV_TYPE_NONE);
 		}
 		default: {
 			return 0;

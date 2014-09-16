@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -51,7 +51,7 @@
 static command_trie_t *trie;
 
 static gboolean
-cmd_dummy (cli_context_t *infos, command_t *cmd)
+cmd_dummy (void *ctx, command_t *cmd)
 {
 	return FALSE;
 }

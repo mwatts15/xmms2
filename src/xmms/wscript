@@ -1,7 +1,7 @@
 # encoding: utf-8
 #
 # WAF build scripts for XMMS2
-# Copyright (C) 2006-2013 XMMS2 Team
+# Copyright (C) 2006-2014 XMMS2 Team
 #
 
 import os
@@ -30,15 +30,18 @@ source = """
     magic.c
     ringbuf.c
     xform.c
+    xform_object.c
     xform_plugin.c
     streamtype.c
     converter_plugin.c
-    segment_plugin.c
+    cutter_plugins.c
     ringbuf_xform.c
     outputplugin.c
     bindata.c
-    sample.genpy
+    sample.c
+    converter.genpy
     utils.c
+    courier.c
     visualization/format.c
     visualization/object.c
     visualization/udp.c
@@ -57,6 +60,8 @@ ipc_object_files = """
     playlist
     visualization/object
     xform
+    courier
+    ipc_manager
 """.split()
 
 def build(bld):
@@ -79,12 +84,24 @@ def build(bld):
         "visualization/%s.c" % bld.env.visualization_impl
     ]
 
+    builtin_env = bld.env.derive()
+    builtin_env.GENPY_ARGS = ' '.join(bld.env.XMMS_PLUGINS_BUILTIN)
+    bld(features = 'c',
+        target = 'xmms_builtin_plugins',
+        source = 'builtin_plugins.genpy',
+        includes = '. ../.. ../include ../includepriv',
+        uselib = 'glib2',
+        use = ' '.join(['xmms_' + x for x in bld.env.XMMS_PLUGINS_BUILTIN]),
+        env = builtin_env
+    )
+
     bld(features='c visibilityhidden ' + (bld.env.xmms_shared_library and 'cshlib' or 'cstlib'),
         target = 'xmms2core',
         source = source + compat,
         includes = '. ../.. ../include ../includepriv',
         uselib = 'glib2 gmodule2 statfs socket shm valgrind',
-        use = 'xmmsipc xmmssocket xmmsutils xmmstypes xmmsvisualization s4'
+        use = 'xmmsipc xmmssocket xmmsutils xmmstypes xmmsvisualization s4 xmmsc-glib xmms_builtin_plugins',
+        defines = 'G_LOG_DOMAIN="core"'
     )
 
     objects = []
@@ -96,8 +113,8 @@ def build(bld):
         source = 'main.c',
         includes = '. ../.. ../include ../includepriv',
         uselib = 'math glib2 gmodule2 statfs socket shm valgrind s4',
-        use = 'xmms2core',
-        add_objects = objects
+        use = ['xmms2core'] + objects,
+        defines = 'G_LOG_DOMAIN=""'
     )
 
     bld(features = 'man',
@@ -176,22 +193,27 @@ def get_visualization_impl(conf):
     if conf.options.without_unixshmserver:
         return 'dummy'
 
-    conf.check_cc(function_name='semctl',
-                  header_name=['sys/types.h','sys/ipc.h','sys/sem.h'],
-                  mandatory=False)
+    try:
+        conf.check_cc(function_name='semctl',
+                      header_name=['sys/types.h','sys/ipc.h','sys/sem.h'])
+    except:
+        have_semctl = False
+    else:
+        have_semctl = True
+
     try:
         conf.check_cc(fragment=semun_fragment, uselib_store="semun",
                       msg = "Checking for union semun")
     except Errors.ConfigurationError:
         conf.env.append_value('DEFINES_shm', "_SEM_SEMUN_UNDEFINED")
 
-    if conf.env.HAVE_SEMCTL:
+    if have_semctl:
         return 'unixshm'
-
-    return 'dummy'
+    else:
+        return 'dummy'
 
 def configure(conf):
-    conf.check_tool('python-generator', tooldir=os.path.abspath('waftools'))
+    conf.load('python-generator', tooldir='waftools')
 
     conf.check_cfg(package='gmodule-2.0', atleast_version='2.32.0',
             uselib_store='gmodule2', args='--cflags --libs')
@@ -216,9 +238,6 @@ def configure(conf):
     conf.env.xmms_shared_library = (Options.platform == 'win32')
 
     conf.env.XMMS_PKGCONF_FILES.append(('xmms2-plugin', ''))
-
-    conf.check_cfg(package='valgrind', uselib_store='valgrind', args='--cflags',
-                   mandatory=False)
 
     return True
 

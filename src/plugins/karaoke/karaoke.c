@@ -1,7 +1,7 @@
 /** @file karaoke.c
  *  Voice removal effect plugin
  *
- *  Copyright (C) 2008-2013 XMMS2 Team
+ *  Copyright (C) 2008-2014 XMMS2 Team
  *
  *  Heavily based on DeFX plugin created for XMMS:
  *  DeFX Copyright (C) 2002 Franco Catrin L. <ancelot@directo.cl>
@@ -62,10 +62,10 @@ static void xmms_karaoke_update_coeffs (xmms_karaoke_data_t *data);
  * Plugin header
  */
 
-XMMS_XFORM_PLUGIN ("karaoke",
-                   "Karaoke effect", XMMS_VERSION,
-                   "Voice removal effect plugin",
-                   xmms_karaoke_plugin_setup);
+XMMS_XFORM_PLUGIN_DEFINE ("karaoke",
+                          "Karaoke effect", XMMS_VERSION,
+                          "Voice removal effect plugin",
+                          xmms_karaoke_plugin_setup);
 
 static gboolean
 xmms_karaoke_plugin_setup (xmms_xform_plugin_t *xform_plugin)
@@ -302,4 +302,3 @@ xmms_karaoke_update_coeffs (xmms_karaoke_data_t *data)
 	data->y1 = 0.0;
 	data->y2 = 0.0;
 }
-

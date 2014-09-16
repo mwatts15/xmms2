@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  */
@@ -9,13 +9,14 @@
 #include <xmms/xmms_sample.h>
 #include <xmms/xmms_medialib.h>
 #include <xmms/xmms_log.h>
-#include <modplug.h>
 
 #include <glib.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <ctype.h>
+
+#include "modplug_compat.h"
 
 /*
  * Type definitions
@@ -60,11 +61,11 @@ static void xmms_modplug_config_changed (xmms_object_t *obj, xmmsv_t *_value, gp
 /*
  * Plugin header
  */
-XMMS_XFORM_PLUGIN ("modplug",
-                   "MODPLUG decoder ",
-                   XMMS_VERSION,
-                   "Module file decoder",
-                   xmms_modplug_plugin_setup);
+XMMS_XFORM_PLUGIN_DEFINE ("modplug",
+                          "MODPLUG decoder ",
+                          XMMS_VERSION,
+                          "Module file decoder",
+                          xmms_modplug_plugin_setup);
 
 static gboolean
 xmms_modplug_plugin_setup (xmms_xform_plugin_t *xform_plugin)

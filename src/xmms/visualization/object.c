@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -19,8 +19,8 @@
 #include <stdlib.h>
 
 #include <xmms/xmms_object.h>
+#include <xmms/xmms_sample.h>
 #include <xmmspriv/xmms_ipc.h>
-#include <xmmspriv/xmms_sample.h>
 
 #include "common.h"
 

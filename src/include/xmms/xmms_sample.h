@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -20,6 +20,7 @@
 #include <glib.h>
 #include <xmms/xmms_streamtype.h>
 #include <xmmsc/xmmsc_compiler.h>
+#include <xmms/xmms_error.h>
 
 G_BEGIN_DECLS
 
@@ -35,8 +36,6 @@ typedef enum {
 	XMMS_SAMPLE_FORMAT_DOUBLE,
 	/* DO NOT CHANGE ORDER! Just add to the end! */
 } xmms_sample_format_t;
-
-typedef struct xmms_sample_converter_St xmms_sample_converter_t;
 
 
 typedef gint8 xmms_samples8_t;
@@ -58,7 +57,14 @@ typedef gfloat xmms_samplefloat_t;
 typedef gdouble xmms_sampledouble_t;
 typedef void xmms_sample_t;
 
-guint xmms_sample_bytes_to_ms (const xmms_stream_type_t *st, guint samples) XMMS_PUBLIC;
+gint xmms_sample_frame_size_get (const xmms_stream_type_t *st) XMMS_PUBLIC;
+gint64 xmms_sample_ms_to_samples (const xmms_stream_type_t *st, gint64 ms) XMMS_PUBLIC;
+gint64 xmms_sample_samples_to_ms (const xmms_stream_type_t *st, gint64 samples) XMMS_PUBLIC;
+gint64 xmms_sample_samples_to_bytes (const xmms_stream_type_t *st, gint64 samples) XMMS_PUBLIC;
+gint64 xmms_sample_bytes_to_samples (const xmms_stream_type_t *st, gint64 bytes, xmms_error_t *error) XMMS_PUBLIC;
+gint64 xmms_sample_bytes_to_samples_inexact (const xmms_stream_type_t *st, gint64 bytes) XMMS_PUBLIC;
+gint64 xmms_sample_ms_to_bytes (const xmms_stream_type_t *st, gint64 ms) XMMS_PUBLIC;
+gint64 xmms_sample_bytes_to_ms (const xmms_stream_type_t *st, gint64 bytes) XMMS_PUBLIC;
 
 static inline gint
 xmms_sample_size_get (xmms_sample_format_t fmt)

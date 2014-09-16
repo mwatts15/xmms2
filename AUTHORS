@@ -156,6 +156,7 @@ D: additional id3-tags
 N: Guilherme Gonçalves
 E: guilherme.p.gonc@gmail.com
 D: nycli fixes
+D: Service Clients (Summer of Code 2011)
 
 N: Dries Harnie
 E: dries@harnie.be
@@ -164,6 +165,13 @@ D: Status aware CLI
 N: Johannes Heimansberg
 E: wejpilot@gmail.com
 D: Fix remove command in cli.
+
+N: Tobias Hieta
+E: tobias@hieta.se
+E: tobias.hieta@purplescout.se
+W: http://tobias.hieta.se/
+P: 1024D/9B1FA0CB 527E C4EC D205 88ED FC07  B744 315F F685 9B1F A0CB
+D: Stuff all over the map. Former release manager.
 
 N: Jonathan Horowitz
 E: jhorowitz@cs.uri.edu
@@ -382,13 +390,6 @@ E: andy@aeruder.net
 W: http://www.aeruder.net
 D: Various fixes
 
-N: Tobias Hieta
-E: tobias@hieta.se
-E: tobias.hieta@purplescout.se
-W: http://tobias.hieta.se/
-P: 1024D/9B1FA0CB 527E C4EC D205 88ED FC07  B744 315F F685 9B1F A0CB
-D: Stuff all over the map. Former release manager.
-
 N: Martin Salzer
 E: stoky@gmx.net
 D: sorting fix
@@ -444,6 +445,10 @@ D: Debian packages. Various fixes.
 N: Frank Terbeck
 E: ft@bewatermyfriend.org
 D: cli fixes
+
+N: Pascal Terjan
+E: pterjan@google.com
+D: bugfix in vistest wscript
 
 N: Cole Thompson
 E: cole.thompson@gmail.com
@@ -513,5 +518,5 @@ N: Yang Zhe
 E: yangzhe1990@gmail.com
 D: Bug fixing tta xform
 
-# Unless you really are after "Ma Xuan" when sorted alphabetically
+# Unless you really are after "Yang Zhe" when sorted alphabetically
 # don't add your name here.

@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -37,7 +37,7 @@ static xmmsc_connection_t *connection;
 static int vis;
 static int height;
 
-short data[256];
+static short data[256];
 
 static void
 draw (void) {

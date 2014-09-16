@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -85,9 +85,9 @@ static void CALLBACK on_block_done (HWAVEOUT hWaveOut, UINT uMsg,
  * Plugin header
  */
 
-XMMS_OUTPUT_PLUGIN ("waveout", "WaveOut Output", XMMS_VERSION,
-                    "WaveOut Output plugin",
-                    xmms_waveout_plugin_setup);
+XMMS_OUTPUT_PLUGIN_DEFINE ("waveout", "WaveOut Output", XMMS_VERSION,
+                           "WaveOut Output plugin",
+                           xmms_waveout_plugin_setup);
 
 
 

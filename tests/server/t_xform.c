@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -22,6 +22,7 @@
 
 #include <xmmspriv/xmms_plugin.h>
 #include <xmmspriv/xmms_xform.h>
+#include <xmmspriv/xmms_xform_object.h>
 #include <xmmspriv/xmms_config.h>
 #include <xmmspriv/xmms_log.h>
 #include <xmmspriv/xmms_ipc.h>
@@ -63,11 +64,11 @@ static gboolean xmms_metadata_test_xform_init (xmms_xform_t *xform);
 static gboolean xmms_metadata_test_xform_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 static gboolean xmms_metadata_test_coverart (xmms_xform_t *xform, const gchar *key, const gchar *value, gsize length);
 
-XMMS_XFORM_BUILTIN (metadata_test_xform,
-                    "metadata test xform",
-                    XMMS_VERSION,
-                    "metadata test xform",
-                    xmms_metadata_test_xform_plugin_setup);
+XMMS_XFORM_BUILTIN_DEFINE (metadata_test_xform,
+                           "metadata test xform",
+                           XMMS_VERSION,
+                           "metadata test xform",
+                           xmms_metadata_test_xform_plugin_setup);
 
 /** These are the properties that we extract from the comments */
 static const xmms_xform_metadata_basic_mapping_t basic_mappings[] = {
@@ -241,11 +242,11 @@ xmms_browse_test_xform_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	return TRUE;
 }
 
-XMMS_XFORM_BUILTIN (browse_test_xform,
-                    "browse test xform",
-                    XMMS_VERSION,
-                    "browse test xform",
-                    xmms_browse_test_xform_plugin_setup);
+XMMS_XFORM_BUILTIN_DEFINE (browse_test_xform,
+                           "browse test xform",
+                           XMMS_VERSION,
+                           "browse test xform",
+                           xmms_browse_test_xform_plugin_setup);
 
 #define CU_ASSERT_BROWSE_ENTRY(list, pos, path, isdir, size) do { \
 		xmmsv_t *entry;                                         \

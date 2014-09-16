@@ -1,7 +1,7 @@
 # encoding: utf-8
 #
 # WAF build scripts for XMMS2
-# Copyright (C) 2006-2013 XMMS2 Team
+# Copyright (C) 2006-2014 XMMS2 Team
 #
 
 import sys
@@ -26,24 +26,13 @@ APPNAME='xmms2'
 top = '.'
 out = '_build_'
 
-_waf_hexversion = 0x01060700
+_waf_hexversion = 0x1070f00
 _waf_mismatch_msg = """
 You are building xmms2 with a waf version that is different from the one
 distributed with xmms2. This is not supported by the XMMS2 Team. Before
 reporting any errors with this setup, please rebuild XMMS2 using './waf
 configure build install'
 """
-
-####
-## Patch undefine so that HAVE_* envs are still defined after
-## we write the configuration header file.
-####
-@Configure.conf
-def undefine(self, key):
-    ban = key + '='
-    lst = [x for x in self.env['DEFINES'] if not x.startswith(ban)]
-    self.env['DEFINES'] = lst
-    self.env.append_unique('define_key', key)
 
 ####
 ## Initialization
@@ -59,11 +48,11 @@ def init(ctx):
 xmms2d_dirs = """
 src/xmms
 src/lib/s4/src/lib
-src/lib/s4/tests
 """.split()
 
 subdirs = """
 src/lib/xmmstypes
+src/lib/xmmsc-glib
 src/lib/xmmssocket
 src/lib/xmmsipc
 src/lib/xmmsutils
@@ -89,10 +78,16 @@ src/clients/lib/python
 src/clients/lib/perl
 src/clients/lib/ruby
 src/lib/s4/src/tools/s4
+src/lib/s4/tests
 src/tools/sqlite2s4
 src/tools/migrate-collections
 tests
 pixmaps
+""".split()
+
+builtin_plugins_defaults = """
+equalizer
+replaygain
 """.split()
 
 def is_plugin(x):
@@ -122,9 +117,9 @@ def build(bld):
         bld.fatal("You need to run waf configure")
         raise SystemExit()
 
-    bld.add_subdirs(subdirs)
-    bld.add_subdirs(plugindirs)
-    bld.add_subdirs(optionaldirs)
+    bld.recurse(subdirs)
+    bld.recurse(plugindirs)
+    bld.recurse(optionaldirs)
 
     for name, lib in bld.env.XMMS_PKGCONF_FILES:
         bld(features = 'subst',
@@ -175,17 +170,17 @@ def _configure_optionals(conf):
 
     succeeded_optionals = set()
 
-    for o in selected_optionals:
-        x = [x for x in optional_subdirs if os.path.basename(x) == o][0]
+    for o in optional_subdirs:
+        if os.path.basename(o) not in selected_optionals:
+            continue
         try:
-            conf.sub_config(x)
-            conf.env.append_value('XMMS_OPTIONAL_BUILD', x)
+            conf.recurse(o)
+            conf.env.append_value('XMMS_OPTIONAL_BUILD', o)
             succeeded_optionals.add(o)
         except Errors.ConfigurationError:
             if optionals_must_work:
                 # This raises a new exception:
-                conf.fatal("The required optional %s failed to configure: %s"
-                        % (o, sys.exc_info()[1]))
+                conf.fatal("The required optional %s failed to configure: %s" % (o, sys.exc_info()[1]))
             else:
                 pass
 
@@ -196,23 +191,25 @@ def _configure_optionals(conf):
 
 def _configure_plugins(conf):
     """Process ll xmms2d plugins"""
-    def _check_exist(plugins, msg):
-        unknown_plugins = plugins.difference(all_plugins)
+    def _check_exist(universe, plugins, msg):
+        unknown_plugins = plugins.difference(universe)
         if unknown_plugins:
             conf.fatal(msg%dict(unknown_plugins=', '.join(unknown_plugins)))
             raise SystemExit(1)
         return plugins
 
     conf.env.XMMS_PLUGINS_ENABLED = []
+    conf.env.XMMS_PLUGINS_BUILTIN = []
 
     if conf.options.enable_plugins is not None:
-        selected_plugins = _check_exist(set(conf.options.enable_plugins),
+        selected_plugins = _check_exist(all_plugins, set(conf.options.enable_plugins),
                 "The following plugin(s) were requested, "
                 "but don't exist: %(unknown_plugins)s")
+
         disabled_plugins = all_plugins.difference(selected_plugins)
         plugins_must_work = True
     elif conf.options.disable_plugins is not None:
-        disabled_plugins = _check_exist(set(conf.options.disable_plugins),
+        disabled_plugins = _check_exist(all_plugins, set(conf.options.disable_plugins),
                 "The following plugin(s) were disabled, "
                 "but don't exist: %(unknown_plugins)s")
         selected_plugins = all_plugins.difference(disabled_plugins)
@@ -226,9 +223,20 @@ def _configure_plugins(conf):
         disabled_plugins = set()
         plugins_must_work = False
 
-    def disable_plugin(plugin, exc = None):
+    if conf.options.builtin_plugins is None:
+        builtin_plugins = selected_plugins.intersection(builtin_plugins_defaults)
+    else:
+        builtin_plugins = conf.options.builtin_plugins
+
+    if builtin_plugins and not conf.options.without_xmms2d:
+        builtin_plugins = _check_exist(selected_plugins, set(builtin_plugins),
+                                      "The following plugin(s) were requested to be built-in, "
+                                      "but weren't enabled: %(unknown_plugins)s")
+        conf.env.XMMS_PLUGINS_BUILTIN = builtin_plugins
+
+    def disable_plugin(plugin, must_work, exc = None):
         disabled_plugins.add(plugin)
-        if plugins_must_work:
+        if must_work:
              if exc:
                  conf.fatal("The required plugin %s failed to configure: %s"
                          % (plugin, exc))
@@ -237,16 +245,15 @@ def _configure_plugins(conf):
                          % plugin)
 
     for plugin in selected_plugins:
+        must_work = plugins_must_work or plugin in conf.env.XMMS_PLUGINS_BUILTIN
         try:
-            conf.sub_config("src/plugins/%s" % plugin)
-            if (not conf.env.XMMS_PLUGINS_ENABLED or
-                    (len(conf.env.XMMS_PLUGINS_ENABLED) > 0 and
-                        conf.env.XMMS_PLUGINS_ENABLED[-1] != plugin)):
-                disable_plugin(plugin)
+            conf.recurse("src/plugins/%s" % plugin)
+            if plugin not in conf.env.XMMS_PLUGINS_ENABLED[-1:]:
+                disable_plugin(plugin, must_work)
         except Errors.ConfigurationError:
-            disable_plugin(plugin, sys.exc_info()[1])
+            disable_plugin(plugin, must_work, sys.exc_info()[1])
 
-    return conf.env.XMMS_PLUGINS_ENABLED, disabled_plugins
+    return conf.env.XMMS_PLUGINS_ENABLED, disabled_plugins, conf.env.XMMS_PLUGINS_BUILTIN
 
 def check_git_submodules():
     submodules = gittools.get_submodules()
@@ -271,7 +278,7 @@ def check_git_submodules():
                 "Some submodules are not up-to-date. You may need to run "
                 "`git submodule update` and reconfigure.")
 
-def _output_summary(enabled_plugins, disabled_plugins,
+def _output_summary(enabled_plugins, disabled_plugins, builtin_plugins,
                     enabled_optionals, disabled_optionals,
                     output_plugins, warning_cache):
     enabled_plugins = [x for x in enabled_plugins if x not in output_plugins]
@@ -299,6 +306,8 @@ def _output_summary(enabled_plugins, disabled_plugins,
     Logs.pprint('BLUE', ', '.join(sorted(enabled_plugins)))
     Logs.pprint('Normal', 'Disabled: ', sep='')
     Logs.pprint('BLUE', ', '.join(sorted(disabled_plugins)))
+    Logs.pprint('Normal', 'Built-ins: ', sep='')
+    Logs.pprint('BLUE', ', '.join(sorted(builtin_plugins)))
 
     if len(warning_cache) > 0:
         fmter = Logs.formatter();
@@ -338,13 +347,13 @@ def configure(conf):
 
     conf.env.BUILD_SUBDIRS = subdirs
 
-    conf.check_tool('gnu_dirs')
-    conf.check_tool('man', tooldir=os.path.abspath('waftools'))
-    conf.check_tool('misc')
-    conf.check_tool('gcc')
-    conf.check_tool('g++')
+    conf.load('gnu_dirs')
+    conf.load('man', tooldir='waftools')
+    conf.load('misc')
+    conf.load('gcc')
+    conf.load('g++')
 
-    conf.check_tool('visibility', tooldir = os.path.abspath('waftools'))
+    conf.load('visibility', tooldir='waftools')
 
     if conf.options.target_platform:
         Options.platform = conf.options.target_platform
@@ -430,7 +439,6 @@ def configure(conf):
         conf.env.cprogram_PATTERN = '%s.exe'
 
     if Options.platform == 'darwin':
-        conf.env.append_value('LINKFLAGS', '-multiply_defined_suppress')
         conf.env.append_value('LINKFLAGS', '-headerpad_max_install_names')
         conf.env.explicit_install_name = True
     else:
@@ -438,9 +446,6 @@ def configure(conf):
 
     if Options.platform == 'sunos':
         conf.check_cc(function_name='socket', lib='socket', header_name='sys/socket.h', uselib_store='socket')
-        if not conf.env.HAVE_SOCKET:
-            conf.fatal("xmms2 requires libsocket on Solaris.")
-            raise SystemExit(1)
         conf.env.append_unique('CFLAGS', '-D_POSIX_PTHREAD_SEMANTICS')
         conf.env.append_unique('CFLAGS', '-D_REENTRANT')
         conf.env.append_unique('CFLAGS', '-std=gnu99')
@@ -489,7 +494,7 @@ int main() { return 0; }
     conf.env.xmms_icon = False
     if Options.platform == 'win32':
         try:
-            conf.check_tool('winres')
+            conf.load('winres')
         except Errors.ConfigurationError:
             pass
         else:
@@ -506,9 +511,15 @@ int main() { return 0; }
 
     # Valgrind can be used for debugging here and there, so lets check
     # it at top-level so each consumer don't have to bother.
-    conf.check_cfg(package='valgrind', uselib_store='valgrind', args='--cflags', mandatory=False)
+    try:
+        conf.check_cfg(package='valgrind', uselib_store='valgrind',
+                       args='--cflags')
+    except Errors.ConfigurationError:
+        conf.env.have_valgrind = False
+    else:
+        conf.env.have_valgrind = True
 
-    enabled_plugins, disabled_plugins = _configure_plugins(conf)
+    enabled_plugins, disabled_plugins, builtin_plugins = _configure_plugins(conf)
     enabled_optionals, disabled_optionals = _configure_optionals(conf)
 
     plugins = conf.env.XMMS_PLUGINS_ENABLED
@@ -517,13 +528,13 @@ int main() { return 0; }
     newest = get_newest(subdirs, plugindirs, optionaldirs)
     conf.env.NEWEST_WSCRIPT_SUBDIR = newest
 
-    [conf.sub_config(s) for s in subdirs]
+    [conf.recurse(s) for s in subdirs]
     conf.write_config_header('xmms_configuration.h')
 
     output_plugins = [name for x, name in conf.env.XMMS_OUTPUT_PLUGINS if x > 0]
 
     _output_summary(
-            enabled_plugins, disabled_plugins,
+            enabled_plugins, disabled_plugins, builtin_plugins,
             enabled_optionals, disabled_optionals,
             output_plugins, warning_cache)
 
@@ -533,17 +544,30 @@ int main() { return 0; }
 ## Options
 ####
 def _list_cb(option, opt, value, parser):
-    """Callback that lets you specify lists of targets."""
-    vals = value.replace(' ','').split(',')
-    if vals == ['']:
+    """
+    Callback for specifying a comma seperated lists of strings.
+
+    If the string value is empty, set the option to []. If the string value
+    starts with a comma, augment the pre-existing option (if any) with the list
+    represented by the string value[1::]. Otherwise set the option to the list
+    represented by the string value.
+
+    Before the above delete any space from the string value.
+    """
+    value = value.replace(' ','')
+    if value == '':
         vals = []
-    if getattr(parser.values, option.dest):
-        vals += getattr(parser.values, option.dest)
+    elif value[0] == ',':
+        vals = value[1::].split(',')
+        if getattr(parser.values, option.dest):
+           vals = getattr(parser.values, option.dest) + vals
+    else:
+        vals = value.split(',')
     setattr(parser.values, option.dest, vals)
 
 def options(opt):
-    opt.tool_options('gnu_dirs')
-    opt.tool_options('gcc')
+    opt.load('gnu_dirs')
+    opt.load('gcc')
 
     opt.add_option('--with-custom-version', type='string',
                    dest='customversion', help="Override git commit hash version")
@@ -553,6 +577,10 @@ def options(opt):
     opt.add_option('--without-plugins', action="callback", callback=_list_cb,
                    type="string", dest="disable_plugins", default=None,
                    help="Comma separated list of plugins to skip")
+    opt.add_option('--with-builtin-plugins', action="callback", callback=_list_cb,
+                   type="string", dest="builtin_plugins", default=None,
+                   help="Comma separated list of plugins to link statically "
+                        "into daemon. [Default: %s]" % ','.join(builtin_plugins_defaults))
     opt.add_option('--with-default-output-plugin', type='string',
                    dest='default_output_plugin',
                    help="Force a default output plugin")
@@ -581,9 +609,9 @@ def options(opt):
     opt.add_option('--without-ldconfig', action='store_false',
                    dest='ldconfig', help="Don't run ldconfig after install")
 
-    opt.sub_options("src/xmms")
+    opt.recurse("src/xmms")
     for o in optional_subdirs + subdirs:
-        opt.sub_options(o)
+        opt.recurse(o)
 
 def shutdown(ctx):
     if ctx.cmd != 'install':

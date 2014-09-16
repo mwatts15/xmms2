@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -20,7 +20,7 @@
 #include <xmmsc/xmmsc_compiler.h>
 
 /* Don't forget to up this when protocol changes */
-#define XMMS_IPC_PROTOCOL_VERSION 22
+#define XMMS_IPC_PROTOCOL_VERSION 23
 
 typedef enum {
 	XMMS_IPC_OBJECT_SIGNAL,
@@ -35,6 +35,8 @@ typedef enum {
 	XMMS_IPC_OBJECT_XFORM,
 	XMMS_IPC_OBJECT_BINDATA,
 	XMMS_IPC_OBJECT_COLL_SYNC,
+	XMMS_IPC_OBJECT_COURIER,
+	XMMS_IPC_OBJECT_IPC_MANAGER,
 	XMMS_IPC_OBJECT_END
 } xmms_ipc_objects_t;
 
@@ -54,6 +56,9 @@ typedef enum {
 	XMMS_IPC_SIGNAL_QUIT,
 	XMMS_IPC_SIGNAL_MEDIAINFO_READER_STATUS,
 	XMMS_IPC_SIGNAL_MEDIAINFO_READER_UNINDEXED,
+	XMMS_IPC_SIGNAL_COURIER_MESSAGE,
+	XMMS_IPC_SIGNAL_IPC_MANAGER_CLIENT_CONNECTED,
+	XMMS_IPC_SIGNAL_IPC_MANAGER_CLIENT_DISCONNECTED,
 	XMMS_IPC_SIGNAL_END
 } xmms_ipc_signals_t;
 
@@ -180,6 +185,13 @@ typedef enum {
 	XMMS_IPC_CMD_BROWSE = XMMS_IPC_CMD_FIRST
 } xmms_ipc_xform_cmds_t;
 
+/* courier methods */
+typedef enum {
+	XMMS_IPC_CMD_SEND_MESSAGE = XMMS_IPC_CMD_FIRST,
+	XMMS_IPC_CMD_REPLY_MESSAGE,
+	XMMS_IPC_CMD_GET_CONNECTED_CLIENTS
+} xmms_ipc_courier_cmds_t;
+
 typedef enum {
 	XMMS_PLAYLIST_CHANGED_ADD,
 	XMMS_PLAYLIST_CHANGED_INSERT,
@@ -256,6 +268,22 @@ typedef enum {
 	XMMS_MEDIALIB_ENTRY_STATUS_NOT_AVAILABLE,
 	XMMS_MEDIALIB_ENTRY_STATUS_REHASH
 } xmmsc_medialib_entry_status_t;
+
+typedef enum {
+	XMMS_LOG_LEVEL_UNKNOWN,
+	XMMS_LOG_LEVEL_FATAL,
+	XMMS_LOG_LEVEL_FAIL,
+	XMMS_LOG_LEVEL_ERROR,
+	XMMS_LOG_LEVEL_INFO,
+	XMMS_LOG_LEVEL_DEBUG,
+	XMMS_LOG_LEVEL_COUNT /* must be last */
+} xmmsc_log_level_t;
+
+typedef enum {
+	XMMS_C2C_REPLY_POLICY_NO_REPLY,
+	XMMS_C2C_REPLY_POLICY_SINGLE_REPLY,
+	XMMS_C2C_REPLY_POLICY_MULTI_REPLY
+} xmmsc_c2c_reply_policy_t;
 
 typedef const char* xmmsv_coll_namespace_t;
 #define	XMMS_COLLECTION_NS_ALL          "*"

@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -39,8 +39,8 @@ typedef struct xmms_plugin_desc_St {
 	gboolean (*setup_func)(gpointer);
 } xmms_plugin_desc_t;
 
-#define XMMS_PLUGIN(type, api_ver, shname, name, ver, desc, setupfunc)	\
-	xmms_plugin_desc_t XMMS_PUBLIC XMMS_PLUGIN_DESC = { \
+#define XMMS_PLUGIN_DEFINE(type, api_ver, shname, name, ver, desc, setupfunc)	\
+	xmms_plugin_desc_t XMMS_PUBLIC XMMS_PLUGIN_DESC_SYMBOL_NAME = { \
 		type,							\
 		api_ver,						\
 		shname,							\

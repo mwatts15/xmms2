@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -248,7 +248,7 @@ c_coll_idlist_set (VALUE self, VALUE ids)
 	rb_ary = RARRAY_PTR (ids);
 	rb_ary_len = RARRAY_LEN (ids);
 
-	ary = malloc (sizeof (int *) * (rb_ary_len + 1));
+	ary = malloc (sizeof (int) * (rb_ary_len + 1));
 
 	for (i = 0; i < rb_ary_len; i++)
 		ary[i] = NUM2INT (rb_ary[i]);

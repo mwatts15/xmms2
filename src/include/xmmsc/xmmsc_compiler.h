@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -33,8 +33,7 @@
 #	define XMMS_DEPRECATED
 #endif
 
-#if __has_attribute (sentinel) || \
-    defined (__GNUC__)
+#if __has_attribute (sentinel) || defined (__GNUC__)
 #	define XMMS_SENTINEL(x) __attribute__((sentinel(x)))
 #else
 #	define XMMS_SENTINEL(x)
@@ -46,4 +45,10 @@
 #	define XMMS_PUBLIC
 #endif
 
+#if __has_attribute (format) || defined (__GNUC__)
+#	define XMMS_FORMAT(t, f, r) __attribute__((format(t, f, r)))
+#else
+#	define XMMS_FORMAT(t, f, r)
 #endif
+
+#endif /* XMMSC_COMPILER_H */

@@ -1,7 +1,7 @@
 # encoding: utf-8
 #
 # WAF build scripts for XMMS2
-# Copyright (C) 2006-2013 XMMS2 Team
+# Copyright (C) 2006-2014 XMMS2 Team
 #
 
 def build(bld):
@@ -20,7 +20,8 @@ def build(bld):
         source = source,
         includes = '. ../../.. ../../include',
         uselib = 'socket',
-        install_path = None
+        install_path = None,
+        defines = 'XMMSC_LOG_DOMAIN="xmmsc/xmmssocket"'
         )
 
 

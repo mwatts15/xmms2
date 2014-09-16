@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -56,11 +56,11 @@ static gint64 xmms_gvfs_seek (xmms_xform_t *xform, gint64 offset,
 static gboolean xmms_gvfs_browse (xmms_xform_t *xform, const gchar *url,
                                   xmms_error_t *error);
 
-XMMS_XFORM_PLUGIN ("gvfs",
-                   "gvfs transport",
-                   XMMS_VERSION,
-                   "Transport for glibs virtual filesystem",
-                   xmms_gvfs_plugin_setup);
+XMMS_XFORM_PLUGIN_DEFINE ("gvfs",
+                          "gvfs transport",
+                          XMMS_VERSION,
+                          "Transport for glibs virtual filesystem",
+                          xmms_gvfs_plugin_setup);
 
 static gboolean
 xmms_gvfs_plugin_setup (xmms_xform_plugin_t *xform_plugin)

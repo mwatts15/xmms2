@@ -1,6 +1,6 @@
 /*  XMMS2 - X Music Multiplexer System
  *
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -79,11 +79,11 @@ static gint64 xmms_mad_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_see
  * Plugin header
  */
 
-XMMS_XFORM_PLUGIN ("mad",
-                   "MAD decoder",
-                   XMMS_VERSION,
-                   "MPEG Layer 1/2/3 decoder",
-                   xmms_mad_plugin_setup);
+XMMS_XFORM_PLUGIN_DEFINE ("mad",
+                          "MAD decoder",
+                          XMMS_VERSION,
+                          "MPEG Layer 1/2/3 decoder",
+                          xmms_mad_plugin_setup);
 
 static gboolean
 xmms_mad_plugin_setup (xmms_xform_plugin_t *xform_plugin)

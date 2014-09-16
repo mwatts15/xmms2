@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -23,6 +23,7 @@
 
 xmmsv_t *xmmsv_coll_intersect_with_playlist (xmmsv_t *coll, const gchar *playlist);
 xmmsv_t *xmmsv_coll_apply_default_order (xmmsv_t *query);
+xmmsv_t *xmmsv_coll_from_stdin (void);
 void xmmsv_print_value (const gchar *source, const gchar *key, xmmsv_t *val);
 
 void print_padding (gint length, const gchar padchar);
@@ -33,5 +34,6 @@ void enrich_mediainfo (xmmsv_t *val);
 gchar *decode_url (const gchar *string);
 gchar *encode_url (gchar *url);
 gchar *format_url (const gchar *path, GFileTest test);
+void breakdown_timespan (int64_t span, gint *days, gint *hours, gint *minutes, gint *seconds);
 
 #endif /* __UTILS_H__ */

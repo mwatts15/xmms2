@@ -1,5 +1,5 @@
 /*  flv - A demuxer plugin for XMMS2
- *  Copyright (C) 2008-2013 XMMS2 Team and Anthony Garcia
+ *  Copyright (C) 2008-2014 XMMS2 Team and Anthony Garcia
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -112,9 +112,9 @@ get_be64 (guint8 *b)
 	return (guint64)get_be32 (b) << 32 | (guint64)get_be32 (b + 4);
 }
 
-XMMS_XFORM_PLUGIN ("flv", "FLV demuxer", XMMS_VERSION,
-                   "Extracts an audio stream from an FLV",
-                   xmms_flv_setup)
+XMMS_XFORM_PLUGIN_DEFINE ("flv", "FLV demuxer", XMMS_VERSION,
+                          "Extracts an audio stream from an FLV",
+                          xmms_flv_setup)
 
 static gboolean
 xmms_flv_setup (xmms_xform_plugin_t *xform)
@@ -272,7 +272,7 @@ init_err:
 static gint
 read_audio_tag_header (xmms_xform_t *xform)
 {
-	gint ret;
+	gint ret = 0;
 	xmms_flv_data_t *data;
 	guint8 header[FLV_TAG_SIZE + 1];
 	xmms_error_t err;

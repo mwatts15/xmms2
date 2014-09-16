@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -22,10 +22,10 @@
 
 #include "../vorbis_common/common.c"
 
-XMMS_XFORM_PLUGIN ("tremor",
-                   "Vorbis Decoder (tremor)", XMMS_VERSION,
-                   "Xiph's Ogg/Vorbis decoder (integer-only version)",
-                   xmms_vorbis_plugin_setup);
+XMMS_XFORM_PLUGIN_DEFINE ("tremor",
+                          "Vorbis Decoder (tremor)", XMMS_VERSION,
+                          "Xiph's Ogg/Vorbis decoder (integer-only version)",
+                          xmms_vorbis_plugin_setup);
 
 static void
 xmms_vorbis_set_duration (xmms_xform_t *xform, guint dur)

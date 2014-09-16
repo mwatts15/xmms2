@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -30,7 +30,12 @@
   * @{
   */
 
-
+/**
+ * Manages client connection/disconnection signals.
+ */
+struct xmms_ipc_manager_St {
+	xmms_object_t object;
+};
 
 /**
  * The IPC object list
@@ -77,10 +82,17 @@ typedef struct xmms_ipc_client_St {
 
 	guint pendingsignals[XMMS_IPC_SIGNAL_END];
 	GList *broadcasts[XMMS_IPC_SIGNAL_END];
+
+	gint32 id;
 } xmms_ipc_client_t;
+
+/* id 0 is reserved for the server */
+static gint32 next_client_id = 1;
 
 static GMutex ipc_servers_lock;
 static GList *ipc_servers = NULL;
+
+static xmms_ipc_manager_t *ipc_manager = NULL;
 
 static GMutex ipc_object_pool_lock;
 static struct xmms_ipc_object_pool_t *ipc_object_pool = NULL;
@@ -88,9 +100,14 @@ static struct xmms_ipc_object_pool_t *ipc_object_pool = NULL;
 static void xmms_ipc_close (void);
 static void xmms_ipc_client_destroy (xmms_ipc_client_t *client);
 
+static xmms_ipc_client_t *xmms_ipc_lookup_client (gint32 clientid);
+
 static void xmms_ipc_register_signal (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg, xmmsv_t *arguments);
 static void xmms_ipc_register_broadcast (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg, xmmsv_t *arguments);
 static gboolean xmms_ipc_client_msg_write (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg);
+static gboolean xmms_ipc_client_broadcast_write (guint broadcastid, xmms_ipc_client_t *cli, xmmsv_t *arg);
+
+#include "ipc_manager_ipc.c"
 
 static void
 xmms_ipc_handle_cmd_value (xmms_ipc_msg_t *msg, xmmsv_t *val)
@@ -113,7 +130,7 @@ xmms_ipc_register_signal (xmms_ipc_client_t *client,
 		return;
 	}
 
-	r = xmmsv_get_int (arg, &signalid);
+	r = xmmsv_get_int32 (arg, &signalid);
 
 	if (!r) {
 		xmms_log_error ("Cannot extract signal id from value");
@@ -143,7 +160,7 @@ xmms_ipc_register_broadcast (xmms_ipc_client_t *client,
 		return;
 	}
 
-	r = xmmsv_get_int (arg, &broadcastid);
+	r = xmmsv_get_int32 (arg, &broadcastid);
 
 	if (!r) {
 		xmms_log_error ("Cannot extract broadcast id from value");
@@ -216,9 +233,16 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
 
 	xmms_object_cmd_arg_init (&arg);
 	arg.args = arguments;
+	arg.client = client->id;
+	arg.cookie = xmms_ipc_msg_get_cookie (msg);
 
 	xmms_object_cmd_call (object, cmdid, &arg);
 	if (xmms_error_isok (&arg.error)) {
+		if (!arg.retval) {
+			/* Skip reply if method is a noreply and didn't fail */
+			goto out;
+		}
+
 		retmsg = xmms_ipc_msg_new (objid, XMMS_IPC_CMD_REPLY);
 		xmms_ipc_handle_cmd_value (retmsg, arg.retval);
 	} else {
@@ -390,6 +414,11 @@ xmms_ipc_client_new (xmms_ipc_t *ipc, xmms_ipc_transport_t *transport)
 	client->ipc = ipc;
 	client->out_msg = g_queue_new ();
 	g_mutex_init (&client->lock);
+	client->id = next_client_id++;
+
+	xmms_object_emit (XMMS_OBJECT (ipc_manager),
+	                  XMMS_IPC_SIGNAL_IPC_MANAGER_CLIENT_CONNECTED,
+	                  xmmsv_new_int(client->id));
 
 	return client;
 }
@@ -424,6 +453,10 @@ xmms_ipc_client_destroy (xmms_ipc_client_t *client)
 		g_list_free (client->broadcasts[i]);
 	}
 
+	xmms_object_emit (XMMS_OBJECT (ipc_manager),
+	                  XMMS_IPC_SIGNAL_IPC_MANAGER_CLIENT_DISCONNECTED,
+	                  xmmsv_new_int(client->id));
+
 	g_mutex_unlock (&client->lock);
 	g_mutex_clear (&client->lock);
 	g_free (client);
@@ -442,6 +475,90 @@ on_config_ipcsocket_change (xmms_object_t *object, xmmsv_t *_data, gpointer udat
 	xmms_ipc_close ();
 	value = xmms_config_property_get_string ((xmms_config_property_t *) object);
 	xmms_ipc_setup_server (value);
+}
+
+/**
+ * Format and send a broadcast to a single client.
+ */
+void
+xmms_ipc_send_broadcast (guint broadcastid, gint32 clientid, xmmsv_t *arg,
+                         xmms_error_t *err)
+{
+	gboolean ret;
+	xmms_ipc_client_t *cli;
+
+	cli = xmms_ipc_lookup_client (clientid);
+	if (cli == NULL) {
+		xmms_error_set (err, XMMS_ERROR_NOENT, "client not found");
+		return;
+	}
+
+	g_mutex_lock (&cli->lock);
+	ret = xmms_ipc_client_broadcast_write (broadcastid, cli, arg);
+	g_mutex_unlock (&cli->lock);
+
+	if (!ret) {
+		xmms_error_set (err, XMMS_ERROR_GENERIC, "failed to write broadcast");
+	}
+
+	return;
+}
+
+/**
+ * Send an ipc message to a client.
+ */
+void
+xmms_ipc_send_message (gint32 clientid, xmms_ipc_msg_t *msg, xmms_error_t *err)
+{
+	gboolean ret;
+	xmms_ipc_client_t *cli;
+
+	cli = xmms_ipc_lookup_client (clientid);
+	if (cli == NULL) {
+		xmms_error_set (err, XMMS_ERROR_NOENT, "client not found");
+		return;
+	}
+
+	g_mutex_lock (&cli->lock);
+	ret = xmms_ipc_client_msg_write (cli, msg);
+	g_mutex_unlock (&cli->lock);
+
+	if (!ret) {
+		xmms_error_set (err, XMMS_ERROR_GENERIC, "failed to write message");
+	}
+
+	return;
+}
+
+/**
+ * Look up a client based on its id.
+ */
+static xmms_ipc_client_t *
+xmms_ipc_lookup_client (gint32 id)
+{
+	GList *c, *s;
+	xmms_ipc_t *ipc;
+	xmms_ipc_client_t *cli;
+
+	g_mutex_lock (&ipc_servers_lock);
+	for (s = ipc_servers; s && s->data; s = g_list_next (s)) {
+		ipc = s->data;
+
+		g_mutex_lock (&ipc->mutex_lock);
+		for (c = ipc->clients; c; c = g_list_next (c)) {
+			cli = c->data;
+
+			if (cli->id == id) {
+				g_mutex_unlock (&ipc->mutex_lock);
+				g_mutex_unlock (&ipc_servers_lock);
+				return cli;
+			}
+		}
+		g_mutex_unlock (&ipc->mutex_lock);
+	}
+	g_mutex_unlock (&ipc_servers_lock);
+
+	return NULL;
 }
 
 /**
@@ -477,12 +594,37 @@ xmms_ipc_client_msg_write (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
 	return TRUE;
 }
 
+/**
+ * Write a broadcast to a single client.
+ * Should hold client->lock.
+ */
+static gboolean
+xmms_ipc_client_broadcast_write (guint broadcastid, xmms_ipc_client_t *cli,
+                                 xmmsv_t *arg)
+{
+	GList *l;
+	xmms_ipc_msg_t *msg;
+
+	for (l = cli->broadcasts[broadcastid]; l; l = g_list_next (l)) {
+		msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_BROADCAST);
+		xmms_ipc_msg_set_cookie (msg, GPOINTER_TO_UINT (l->data));
+		xmms_ipc_handle_cmd_value (msg, arg);
+		if (!xmms_ipc_client_msg_write (cli, msg)) {
+			return FALSE;
+		}
+	}
+
+	return TRUE;
+}
+
+
 static gboolean
 xmms_ipc_source_accept (GIOChannel *chan, GIOCondition cond, gpointer data)
 {
 	xmms_ipc_t *ipc = (xmms_ipc_t *) data;
 	xmms_ipc_transport_t *transport;
 	xmms_ipc_client_t *client;
+	GThread * client_thread;
 
 	if (!(cond & G_IO_IN)) {
 		xmms_log_error ("IPC listener got error/hup");
@@ -509,7 +651,9 @@ xmms_ipc_source_accept (GIOChannel *chan, GIOCondition cond, gpointer data)
 	/* Now that the client has been registered in the ipc->clients list
 	 * we may safely start its thread.
 	 */
-	g_thread_new ("x2 client", xmms_ipc_client_thread, client);
+	client_thread = g_thread_new ("x2 client", xmms_ipc_client_thread, client);
+	/* let the thread free it's resources once it is finished */
+	g_thread_unref (client_thread);
 
 	return TRUE;
 }
@@ -629,6 +773,15 @@ xmms_ipc_broadcast_cb (xmms_object_t *object, xmmsv_t *arg, gpointer userdata)
 }
 
 /**
+ * Get the ipc_manager object.
+ */
+xmms_ipc_manager_t *
+xmms_ipc_manager_get ()
+{
+	return ipc_manager;
+}
+
+/**
  * Register a broadcast signal.
  */
 void
@@ -723,6 +876,10 @@ xmms_ipc_init (void)
 	g_mutex_init (&ipc_servers_lock);
 	g_mutex_init (&ipc_object_pool_lock);
 	ipc_object_pool = g_new0 (xmms_ipc_object_pool_t, 1);
+
+	ipc_manager = xmms_object_new (xmms_ipc_manager_t, NULL);
+	xmms_ipc_manager_register_ipc_commands (XMMS_OBJECT (ipc_manager));
+
 	return NULL;
 }
 
@@ -761,6 +918,9 @@ xmms_ipc_shutdown_server (xmms_ipc_t *ipc)
 void
 xmms_ipc_shutdown (void)
 {
+	xmms_ipc_manager_unregister_ipc_commands ();
+	xmms_object_unref (ipc_manager);
+
 	xmms_ipc_close ();
 	g_mutex_clear (&ipc_servers_lock);
 	g_mutex_clear (&ipc_object_pool_lock);

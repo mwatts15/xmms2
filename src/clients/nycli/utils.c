@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -40,54 +40,54 @@
 void
 xmmsv_print_value (const gchar *source, const gchar *key, xmmsv_t *val)
 {
+	if (source) {
+		g_printf ("[%s] ", source);
+	}
+	if (key) {
+		g_printf ("%s = ", key);
+	}
 	switch (xmmsv_get_type (val)) {
 		case XMMSV_TYPE_INT32: {
 			gint value;
 			xmmsv_get_int (val, &value);
-			g_printf (_("[%s] %s = %u\n"), source, key, value);
+			g_printf ("%d\n", value);
 			break;
 		}
 		case XMMSV_TYPE_FLOAT: {
 			float value;
 			xmmsv_get_float (val, &value);
-			g_printf (_("[%s] %s = %f\n"), source, key, value);
+			g_printf ("%f\n", value);
 			break;
 		}
 		case XMMSV_TYPE_STRING: {
 			const gchar *value;
 			xmmsv_get_string (val, &value);
-			if (g_strcmp0 ("url", key) == 0) {
-				gchar *url = decode_url (value);
-				g_printf (_("[%s] %s = %s\n"), source, key, url);
-				g_free (url);
-			} else {
-				/* FIXME: special handling for url, guess charset, see common.c:print_entry */
-				g_printf (_("[%s] %s = %s\n"), source, key, value);
-			}
+			g_printf ("%s\n", value);
 			break;
 		}
 		case XMMSV_TYPE_LIST:
-			g_printf (_("[%s] %s = <list>\n"), source, key);
+			g_printf (_("<list>\n"));
 			break;
 		case XMMSV_TYPE_DICT:
-			g_printf (_("[%s] %s = <dict>\n"), source, key);
+			g_printf (_("<dict>\n"));
 			break;
 		case XMMSV_TYPE_COLL:
-			g_printf (_("[%s] %s = <coll>\n"), source, key);
+			g_printf (_("<coll>\n"));
 			break;
 		case XMMSV_TYPE_BIN:
-			g_printf (_("[%s] %s = <bin>\n"), source, key);
+			g_printf (_("<bin>\n"));
 			break;
 		case XMMSV_TYPE_END:
-			g_printf (_("[%s] %s = <end>\n"), source, key);
+			g_printf (_("<end>\n"));
 			break;
 		case XMMSV_TYPE_NONE:
-			g_printf (_("[%s] %s = <none>\n"), source, key);
+			g_printf (_("<none>\n"));
 			break;
 		case XMMSV_TYPE_ERROR:
-			g_printf (_("[%s] %s = <error>\n"), source, key);
+			g_printf (_("<error>\n"));
 			break;
 		default:
+			g_printf (_("<unhandled type!>\n"));
 			break;
 	}
 }
@@ -277,6 +277,30 @@ xmmsv_coll_apply_default_order (xmmsv_t *query)
 	return concatenated;
 }
 
+/** Try to retrieve and parse a collection pattern from stdin and return
+ *  the collection after parsing.
+ *
+ *  @return The parsed collection from stdin or NULL if an error occured.
+ */
+xmmsv_t *
+xmmsv_coll_from_stdin ()
+{
+	gchar *pattern = NULL;
+	GError *error = NULL;
+	xmmsv_t *ret = NULL;
+	if (!g_file_get_contents("/dev/stdin", &pattern, NULL, &error)) {
+		g_fprintf (stderr, "Error: Can't read pattern from stdin. ('%s')\n",
+		           error->message);
+		g_error_free (error);
+	} else if (!xmmsv_coll_parse (pattern, &ret)) {
+		g_printf (_("Error: failed to parse the pattern!\n"));
+	}
+
+	g_free (pattern);
+
+	return ret;
+}
+
 gchar *
 decode_url (const gchar *string)
 {
@@ -387,4 +411,19 @@ format_url (const gchar *path, GFileTest test)
 	}
 
 	return x_path2url (url);
+}
+
+#define MSEC_PER_SEC  (1000L)
+#define MSEC_PER_MIN  (MSEC_PER_SEC * 60L)
+#define MSEC_PER_HOUR (MSEC_PER_MIN * 60L)
+#define MSEC_PER_DAY  (MSEC_PER_HOUR * 24L)
+
+void
+breakdown_timespan (int64_t span, gint *days, gint *hours,
+                    gint *minutes, gint *seconds)
+{
+	*days = span / MSEC_PER_DAY;
+	*hours = (span % MSEC_PER_DAY) / MSEC_PER_HOUR;
+	*minutes = ((span % MSEC_PER_DAY) % MSEC_PER_HOUR) / MSEC_PER_MIN;
+	*seconds = (((span % MSEC_PER_DAY) % MSEC_PER_HOUR) % MSEC_PER_MIN) / MSEC_PER_SEC;
 }

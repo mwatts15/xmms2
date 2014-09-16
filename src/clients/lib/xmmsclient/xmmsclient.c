@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -117,6 +117,8 @@ xmmsc_init (const char *clientname)
 
 	c->visc = 0;
 	c->visv = NULL;
+
+	c->sc_root = NULL;
 	return xmmsc_ref (c);
 }
 
@@ -185,6 +187,8 @@ xmmsc_connect (xmmsc_connection_t *c, const char *ipcpath)
 		c->error = strdup (buf);
 		xmmsc_result_unref (result);
 		return false;
+	} else {
+		xmmsv_get_int64 (value, &c->id);
 	}
 	xmmsc_result_unref (result);
 	return true;
@@ -262,6 +266,10 @@ static void
 xmmsc_deinit (xmmsc_connection_t *c)
 {
 	xmmsc_ipc_destroy (c->ipc);
+
+	if (c->sc_root) {
+		xmmsc_sc_interface_entity_destroy (c->sc_root);
+	}
 
 	free (c->error);
 	free (c->clientname);
@@ -446,6 +454,27 @@ xmmsc_send_cmd (xmmsc_connection_t *c, int obj, int cmd, ...)
 	xmmsv_unref (args);
 
 	return xmmsc_send_msg (c, msg);
+}
+
+uint32_t
+xmmsc_send_cmd_cookie (xmmsc_connection_t *c, int obj, int cmd, ...)
+{
+	xmmsv_t *first_arg;
+	xmms_ipc_msg_t *msg;
+	xmmsv_t *args;
+	va_list ap;
+
+	msg = xmms_ipc_msg_new (obj, cmd);
+
+	va_start (ap, cmd);
+	first_arg = va_arg (ap, xmmsv_t *);
+	args = xmmsv_build_list_va (first_arg, ap);
+	va_end (ap);
+
+	xmms_ipc_msg_put_value (msg, args);
+	xmmsv_unref (args);
+
+	return xmmsc_write_msg_to_ipc (c, msg);
 }
 
 /**

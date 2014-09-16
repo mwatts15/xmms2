@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -26,6 +26,8 @@
 #include <glib.h>
 #include <xmmspriv/xmms_log.h>
 #include <xmmspriv/xmms_localtime.h>
+#include <xmmsc/xmmsc_log.h>
+#include <xmmsc/xmmsc-glib.h>
 
 static gchar *logts_format = NULL;
 static void xmms_log_handler (const gchar *log_domain, GLogLevelFlags log_level, const gchar *message, gpointer user_data);
@@ -43,9 +45,8 @@ xmms_log_set_format (const gchar *format)
 void
 xmms_log_init (gint verbosity)
 {
-	g_log_set_handler (NULL, G_LOG_LEVEL_MASK | G_LOG_FLAG_FATAL, xmms_log_handler,
-	                   GINT_TO_POINTER (verbosity));
-
+	xmmsc_log_handler_set (xmmsc_log_glib_handler, NULL);
+	g_log_set_default_handler (xmms_log_handler, GINT_TO_POINTER (verbosity));
 	xmms_log_info ("Initialized logging system :)");
 }
 
@@ -91,7 +92,11 @@ xmms_log_handler (const gchar *log_domain, GLogLevelFlags log_level, const gchar
 		logts_buf[0] = '\0';
 	}
 
-	printf ("%s%s: %s\n", logts_buf, level, message);
+	if (log_domain && log_domain[0]) {
+		printf ("%s%s in %s: %s\n", logts_buf, level, log_domain, message);
+	} else {
+		printf ("%s%s: %s\n", logts_buf, level, message);
+	}
 
 	fflush (stdout);
 

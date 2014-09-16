@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -56,7 +56,7 @@ static gboolean xmms_pulse_volume_get (xmms_output_t *output,
 /*
  * Plugin header
  */
-XMMS_OUTPUT_PLUGIN ("pulse", "PulseAudio Output", XMMS_VERSION,
+XMMS_OUTPUT_PLUGIN_DEFINE ("pulse", "PulseAudio Output", XMMS_VERSION,
                     "Output to a PulseAudio server",
                     xmms_pulse_plugin_setup);
 

@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -30,6 +30,7 @@
 #include <xmmsc/xmmsc_util.h>
 #include <xmmspriv/xmms_plugin.h>
 #include <xmmspriv/xmms_config.h>
+#include <xmmspriv/xmms_courier.h>
 #include <xmmspriv/xmms_playlist.h>
 #include <xmmspriv/xmms_playlist_updater.h>
 #include <xmmspriv/xmms_collsync.h>
@@ -43,7 +44,7 @@
 #include <xmmspriv/xmms_output.h>
 #include <xmmspriv/xmms_ipc.h>
 #include <xmmspriv/xmms_log.h>
-#include <xmmspriv/xmms_xform.h>
+#include <xmmspriv/xmms_xform_object.h>
 #include <xmmspriv/xmms_bindata.h>
 #include <xmmspriv/xmms_utils.h>
 #include <xmmspriv/xmms_visualization.h>
@@ -62,7 +63,7 @@
 static void xmms_main_client_quit (xmms_object_t *object, xmms_error_t *error);
 static xmmsv_t *xmms_main_client_stats (xmms_object_t *object, xmms_error_t *error);
 static xmmsv_t *xmms_main_client_list_plugins (xmms_object_t *main, gint32 type, xmms_error_t *err);
-static void xmms_main_client_hello (xmms_object_t *object, gint protocolver, const gchar *client, xmms_error_t *error);
+static gint64 xmms_main_client_hello (xmms_object_t *object, gint protocolver, const gchar *client, gint64 id, xmms_error_t *error);
 static void install_scripts (const gchar *into_dir);
 static void spawn_script_setup (gpointer data);
 
@@ -97,6 +98,7 @@ struct xmms_main_St {
 	xmms_xform_object_t *xform_object;
 	xmms_mediainfo_reader_t *mediainfo_object;
 	xmms_visualization_t *visualization_object;
+	xmms_courier_t *courier_object;
 	time_t starttime;
 };
 
@@ -108,6 +110,104 @@ static GMainLoop *mainloop;
 /** The path of the configfile */
 static gchar *conffile = NULL;
 
+static void
+query_total_size_duration (xmms_main_t *mainobj, xmms_error_t *error,
+                                      int64_t *size, int64_t *duration)
+{
+	xmmsv_t *coll, *universe, *spec, *ret;
+	xmms_medialib_session_t *session;
+
+	/* Fetch the size in bytes and duration in milliseconds for the whole media library */
+	universe = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
+
+	coll = xmmsv_new_coll (XMMS_COLLECTION_TYPE_MATCH);
+	xmmsv_coll_attribute_set_string (coll, "field", "status");
+	xmmsv_coll_attribute_set_string (coll, "value", "1");
+	xmmsv_coll_add_operand (coll, universe);
+	xmmsv_unref (universe);
+
+	spec = xmmsv_build_dict (
+		XMMSV_DICT_ENTRY_STR ("type", "metadata"),
+		XMMSV_DICT_ENTRY ("fields", xmmsv_build_list (
+			XMMSV_LIST_ENTRY_STR ("duration"),
+			XMMSV_LIST_ENTRY_STR ("size"),
+			XMMSV_LIST_END)),
+		XMMSV_DICT_ENTRY ("get", xmmsv_build_list (
+			XMMSV_LIST_ENTRY_STR ("field"),
+			XMMSV_LIST_ENTRY_STR ("value"),
+			XMMSV_LIST_END)),
+		XMMSV_DICT_ENTRY_STR ("aggregate", "sum"),
+		XMMSV_DICT_END);
+
+	do {
+		session = xmms_medialib_session_begin_ro (mainobj->medialib_object);
+		ret = xmms_medialib_query (session, coll, spec, error);
+	} while (!xmms_medialib_session_commit (session));
+
+	xmmsv_dict_entry_get_int64 (ret, "size", size);
+	xmmsv_dict_entry_get_int64 (ret, "duration", duration);
+
+	xmmsv_unref (spec);
+	xmmsv_unref (ret);
+}
+
+static void
+query_total_playtime (xmms_main_t *mainobj, xmms_error_t *error,
+                                 int64_t *playtime)
+{
+	xmmsv_t *coll, *universe, *spec, *ret, *value;
+	xmms_medialib_session_t *session;
+	xmmsv_dict_iter_t *iter;
+	const gchar *key;
+
+	/* Fetch the sum of duration clustered by timesplayed, for timesplayed > 0 */
+	universe = xmmsv_new_coll (XMMS_COLLECTION_TYPE_UNIVERSE);
+
+	coll = xmmsv_new_coll (XMMS_COLLECTION_TYPE_GREATER);
+	xmmsv_coll_attribute_set_string (coll, "field", "timesplayed");
+	xmmsv_coll_attribute_set_string (coll, "value", "0");
+	xmmsv_coll_add_operand (coll, universe);
+	xmmsv_unref (universe);
+
+	spec = xmmsv_build_dict (
+		XMMSV_DICT_ENTRY_STR ("type", "cluster-dict"),
+		XMMSV_DICT_ENTRY_STR ("cluster-by", "value"),
+		XMMSV_DICT_ENTRY_STR ("cluster-field", "timesplayed"),
+		XMMSV_DICT_ENTRY ("data", xmmsv_build_dict (
+			XMMSV_DICT_ENTRY_STR ("type", "metadata"),
+			XMMSV_DICT_ENTRY ("fields", xmmsv_build_list (
+				XMMSV_LIST_ENTRY_STR ("duration"),
+				XMMSV_LIST_END)),
+			XMMSV_DICT_ENTRY ("get", xmmsv_build_list (
+				XMMSV_LIST_ENTRY_STR ("value"),
+				XMMSV_LIST_END)),
+			XMMSV_DICT_ENTRY_STR ("aggregate", "sum"),
+			XMMSV_DICT_END)),
+		XMMSV_DICT_END);
+
+	do {
+		session = xmms_medialib_session_begin_ro (mainobj->medialib_object);
+		ret = xmms_medialib_query (session, coll, spec, error);
+	} while (!xmms_medialib_session_commit (session));
+
+	xmmsv_get_dict_iter (ret, &iter);
+	while (xmmsv_dict_iter_pair (iter, &key, &value)) {
+		int64_t sum, timesplayed;
+		gchar *endptr = NULL;
+
+		if (xmmsv_get_int64 (value, &sum)) {
+			timesplayed = strtol (key, &endptr, 10);
+			if (*endptr == '\0')
+				*playtime += timesplayed * sum;
+		}
+
+		xmmsv_dict_iter_next (iter);
+	}
+
+	xmmsv_unref (spec);
+	xmmsv_unref (ret);
+}
+
 /**
  * This returns the main stats for the server
  */
@@ -116,9 +216,18 @@ xmms_main_client_stats (xmms_object_t *object, xmms_error_t *error)
 {
 	xmms_main_t *mainobj = (xmms_main_t *) object;
 	gint uptime = time (NULL) - mainobj->starttime;
+	int64_t size, duration, playtime;
+
+	size = duration = playtime = 0;
+
+	query_total_playtime (mainobj, error, &playtime);
+	query_total_size_duration (mainobj, error, &size, &duration);
 
 	return xmmsv_build_dict (XMMSV_DICT_ENTRY_STR ("version", XMMS_VERSION),
 	                         XMMSV_DICT_ENTRY_INT ("uptime", uptime),
+	                         XMMSV_DICT_ENTRY_INT ("size", size),
+	                         XMMSV_DICT_ENTRY_INT ("duration", duration),
+	                         XMMSV_DICT_ENTRY_INT ("playtime", playtime),
 	                         XMMSV_DICT_END);
 }
 
@@ -285,6 +394,7 @@ xmms_main_destroy (xmms_object_t *object)
 	xmms_object_unref (mainobj->mediainfo_object);
 	xmms_object_unref (mainobj->plsupdater_object);
 	xmms_object_unref (mainobj->collsync_object);
+	xmms_object_unref (mainobj->courier_object);
 
 	xmms_config_save ();
 
@@ -302,15 +412,17 @@ xmms_main_destroy (xmms_object_t *object)
 /**
  * @internal Function to respond to the 'hello' sent from clients on connect
  */
-static void
-xmms_main_client_hello (xmms_object_t *object, gint protocolver, const gchar *client, xmms_error_t *error)
+static gint64
+xmms_main_client_hello (xmms_object_t *object, gint protocolver, const gchar *client, gint64 id, xmms_error_t *error)
 {
 	if (protocolver != XMMS_IPC_PROTOCOL_VERSION) {
 		xmms_log_info ("Client '%s' with bad protocol version (%d, not %d) connected", client, protocolver, XMMS_IPC_PROTOCOL_VERSION);
 		xmms_error_set (error, XMMS_ERROR_INVAL, "Bad protocol version");
-		return;
+	} else {
+		XMMS_DBG ("Client '%s' connected", client);
 	}
-	XMMS_DBG ("Client '%s' connected", client);
+
+	return id;
 }
 
 static gboolean
@@ -387,7 +499,7 @@ static void
 print_version (void)
 {
 	printf ("XMMS2 version " XMMS_VERSION "\n");
-	printf ("Copyright (C) 2003-2013 XMMS2 Team\n");
+	printf ("Copyright (C) 2003-2014 XMMS2 Team\n");
 	printf ("This is free software; see the source for copying conditions.\n");
 	printf ("There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A\n");
 	printf ("PARTICULAR PURPOSE.\n");
@@ -538,7 +650,6 @@ main (int argc, char **argv)
 		exit (EXIT_FAILURE);
 	}
 
-
 	mainobj = xmms_object_new (xmms_main_t, xmms_main_destroy);
 
 	mainobj->medialib_object = xmms_medialib_init ();
@@ -556,6 +667,7 @@ main (int argc, char **argv)
 
 	mainobj->xform_object = xmms_xform_object_init ();
 	mainobj->bindata_object = xmms_bindata_init ();
+	mainobj->courier_object = xmms_courier_init();
 
 	/* find output plugin. */
 	cv = xmms_config_property_register ("output.plugin",

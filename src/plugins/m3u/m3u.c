@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -44,11 +44,11 @@ static void xmms_m3u_destroy (xmms_xform_t *xform);
 /*
  * Plugin header
  */
-XMMS_XFORM_PLUGIN ("m3u",
-                   "M3U reader",
-                   XMMS_VERSION,
-                   "Playlist parser for m3u's",
-                   xmms_m3u_plugin_setup);
+XMMS_XFORM_PLUGIN_DEFINE ("m3u",
+                          "M3U reader",
+                          XMMS_VERSION,
+                          "Playlist parser for m3u's",
+                          xmms_m3u_plugin_setup);
 
 /* xform methods */
 
@@ -159,4 +159,3 @@ static void
 xmms_m3u_destroy (xmms_xform_t *xform)
 {
 }
-

@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -55,11 +55,11 @@ static gint64 xmms_mid1_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_se
 /*
  * Plugin header
  */
-XMMS_XFORM_PLUGIN ("mid1",
-                   "MIDI file format-1 demuxer",
-                   XMMS_VERSION,
-                   "MIDI file format-1 demuxer",
-                   xmms_mid1_plugin_setup);
+XMMS_XFORM_PLUGIN_DEFINE ("mid1",
+                          "MIDI file format-1 demuxer",
+                          XMMS_VERSION,
+                          "MIDI file format-1 demuxer",
+                          xmms_mid1_plugin_setup);
 
 static gboolean
 xmms_mid1_plugin_setup (xmms_xform_plugin_t *xform_plugin)
@@ -169,6 +169,11 @@ xmms_mid1_init (xmms_xform_t *xform)
 	xmms_xform_private_data_set (xform, data);
 
 	ret = xmms_xform_read (xform, buf, 4, &error);
+	if (ret != 4) {
+		xmms_log_error ("Could read MIDI file type");
+		goto cleanup;
+	}
+
 	if (strncmp ((char *)buf, "RIFF", 4) == 0) {
 		/* This is an .rmi file, find the data chunk */
 		gboolean is_rmid = FALSE;
@@ -187,6 +192,10 @@ xmms_mid1_init (xmms_xform_t *xform)
 				 * check the RIFF header above.) */
 				is_rmid = TRUE;
 				ret = xmms_xform_read (xform, buf, 4, &error);
+				if (ret != 4) {
+					xmms_log_error ("Could not read MThd signature");
+					goto cleanup;
+				}
 				break;
 			}
 
@@ -207,6 +216,11 @@ xmms_mid1_init (xmms_xform_t *xform)
 
 	/* Once we get here we're just after the MThd signature */
 	ret = xmms_xform_read (xform, buf, 10, &error);
+	if (ret != 10) {
+		xmms_log_error ("Could not read MThd header");
+		goto cleanup;
+	}
+
 	gint header_len = (buf[0] << 24) | (buf[1] << 16) | (buf[2] << 8) | buf[3];
 	if (header_len != 6) {
 		xmms_log_error ("Unexpected MThd header length");

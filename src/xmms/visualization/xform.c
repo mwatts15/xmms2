@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -112,10 +112,10 @@ xmms_vis_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t whence
 }
 
 
-XMMS_XFORM_BUILTIN (visualization,
-                    "visualization hook",
-                    XMMS_VERSION,
-                    "visualization hook",
-                    xmms_vis_plugin_setup);
+XMMS_XFORM_BUILTIN_DEFINE (visualization,
+                           "visualization hook",
+                           XMMS_VERSION,
+                           "visualization hook",
+                           xmms_vis_plugin_setup);
 
 /** @} */

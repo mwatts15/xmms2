@@ -1,7 +1,7 @@
 # encoding: utf-8
 #
 # WAF build scripts for XMMS2
-# Copyright (C) 2006-2013 XMMS2 Team
+# Copyright (C) 2006-2014 XMMS2 Team
 #
 
 def build(bld):
@@ -10,11 +10,13 @@ def build(bld):
     value_serialize.c
     xmmsv_bitbuffer.c
     xmmsv_build.c
+    xmmsv_c2c.c
     xmmsv_coll.c
     xmmsv_copy.c
     xmmsv_dict.c
     xmmsv_general.c
     xmmsv_list.c
+    xmmsv_service.c
     xmmsv_util.c
     """.split()
 
@@ -24,7 +26,8 @@ def build(bld):
         target = 'xmmstypes',
         source = source,
         includes = '. ../../.. ../../include ../../includepriv',
-        install_path = None
+        install_path = None,
+        defines= 'XMMSC_LOG_DOMAIN="xmmsc/xmmstypes"'
         )
 
 

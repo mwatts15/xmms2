@@ -1,7 +1,7 @@
 /** @file mp4.c
  *  Decoder plugin for MP4 audio format
  *
- *  Copyright (C) 2005-2013 XMMS2 Team
+ *  Copyright (C) 2005-2014 XMMS2 Team
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -52,6 +52,12 @@ static gint xmms_mp4_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xm
 static gint64 xmms_mp4_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence, xmms_error_t *err);
 static void xmms_mp4_get_mediainfo (xmms_xform_t *xform);
 static gboolean xmms_mp4_mediainfo_set_coverart (xmms_xform_t *xform, const gchar *key, const gchar *value, gsize length);
+
+static gboolean xmms_mp4_gapless_set (xmms_xform_t *xform, guint64 startsamples, guint64 stopsamples);
+static gboolean xmms_mp4_gapless_itunsmpb_parse (const gchar *value, gsize length, guint64 duration, guint64 *startsamples, guint64 *stopsamples);
+static gboolean xmms_mp4_gapless_try_itunsmpb (xmms_xform_t *xform);
+static gboolean xmms_mp4_gapless_try_legacy (xmms_xform_t *xform);
+static gboolean xmms_mp4_gapless_try (xmms_xform_t *xform);
 
 static uint32_t xmms_mp4_read_callback (void *user_data, void *buffer, uint32_t length);
 static uint32_t xmms_mp4_seek_callback (void *user_data, uint64_t position);
@@ -105,10 +111,10 @@ static const xmms_xform_metadata_mapping_t mappings[] = {
  * Plugin header
  */
 
-XMMS_XFORM_PLUGIN ("mp4",
-                   "MP4 Demuxer", XMMS_VERSION,
-                   "MPEG-4 Part 14 file format demuxer",
-                   xmms_mp4_plugin_setup);
+XMMS_XFORM_PLUGIN_DEFINE ("mp4",
+                          "MP4 Demuxer", XMMS_VERSION,
+                          "MPEG-4 Part 14 file format demuxer",
+                          xmms_mp4_plugin_setup);
 
 static gboolean
 xmms_mp4_plugin_setup (xmms_xform_plugin_t *xform_plugin)
@@ -190,7 +196,7 @@ xmms_mp4_init (xmms_xform_t *xform)
 
 	xmms_xform_private_data_set (xform, data);
 
-	data->sampleid = 1;
+	data->sampleid = 0;
 	data->numsamples = 0;
 
 	bytes_read = xmms_xform_read (xform,
@@ -239,6 +245,8 @@ xmms_mp4_init (xmms_xform_t *xform)
 
 	xmms_mp4_get_mediainfo (xform);
 
+	xmms_mp4_gapless_try (xform);
+
 	XMMS_DBG ("MP4 demuxer inited successfully!");
 
 	return TRUE;
@@ -264,7 +272,7 @@ xmms_mp4_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *
 	while (size == 0) {
 		guchar *tmpbuf;
 		guint tmpbuflen;
-		gint duration, offset;
+		gint duration;
 
 		if (data->sampleid >= data->numsamples) {
 			XMMS_DBG ("MP4 EOF");
@@ -274,13 +282,10 @@ xmms_mp4_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *
 		bytes_read = mp4ff_read_sample (data->mp4ff, data->track,
 		                                data->sampleid, &tmpbuf,
 		                                &tmpbuflen);
-		offset = mp4ff_get_sample_offset (data->mp4ff, data->track,
-		                                  data->sampleid);
 		duration = mp4ff_get_sample_duration (data->mp4ff, data->track,
 		                                      data->sampleid);
 		data->sampleid++;
 
-		xmms_xform_auxdata_set_int (xform, "frame_offset", offset);
 		xmms_xform_auxdata_set_int (xform, "frame_duration", duration);
 
 		if (bytes_read > 0) {
@@ -308,8 +313,7 @@ xmms_mp4_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whenc
 	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, FALSE);
 
-	sampleid_candidate = mp4ff_find_sample_use_offsets (data->mp4ff, data->track,
-	                                                    samples, &toskip);
+	sampleid_candidate = mp4ff_find_sample(data->mp4ff, data->track, samples, &toskip);
 
 	if (sampleid_candidate < 0) {
 		return -1;
@@ -359,8 +363,7 @@ xmms_mp4_get_mediainfo (xmms_xform_t *xform)
 	if ((temp = mp4ff_get_sample_rate (data->mp4ff, data->track)) > 0) {
 		glong srate = temp;
 
-		if ((temp = mp4ff_get_track_duration_use_offsets (data->mp4ff,
-		                                                  data->track)) >= 0) {
+		if ((temp = mp4ff_get_track_duration (data->mp4ff, data->track)) >= 0) {
 			glong msec = ((gint64) temp) * 1000 / srate;
 
 			metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
@@ -374,7 +377,6 @@ xmms_mp4_get_mediainfo (xmms_xform_t *xform)
 	}
 
 	num_items = mp4ff_meta_get_num_items (data->mp4ff);
-
 	for (i = 0; i < num_items; i++) {
 		gchar *key, *value;
 		guint length;
@@ -382,12 +384,131 @@ xmms_mp4_get_mediainfo (xmms_xform_t *xform)
 		length = mp4ff_meta_get_by_index (data->mp4ff, i, &key, &value);
 		if (length > 0) {
 			if (!xmms_xform_metadata_mapper_match (xform, key, value, length)) {
-				XMMS_DBG ("Unhandled tag '%s' = '%s'", key, value);
+				/* iTunSMPB should be handled in xmms_mp4_gapless_try */
+				if (0 != g_ascii_strcasecmp (key, "iTunSMPB")) {
+					XMMS_DBG ("Unhandled tag '%s' = '%s'", key, value);
+				}
 			}
 			g_free (key);
 			g_free (value);
 		}
 	}
+}
+
+static gboolean
+xmms_mp4_gapless_set (xmms_xform_t *xform, guint64 startsamples, guint64 stopsamples)
+{
+	g_return_val_if_fail ((gint64)startsamples >= 0, FALSE);
+	g_return_val_if_fail ((gint64)stopsamples >= 0, FALSE);
+	g_return_val_if_fail (startsamples <= stopsamples, FALSE);
+
+	xmms_xform_auxdata_set_int (xform, "startsamples", startsamples);
+	xmms_xform_auxdata_set_int (xform, "stopsamples", stopsamples);
+
+	return TRUE;
+}
+
+static gboolean
+xmms_mp4_gapless_itunsmpb_parse (const gchar *value, gsize length,
+                                 guint64 duration,
+                                 guint64 *startsamples, guint64 *stopsamples)
+{
+	gint i;
+	gchar *begin, *end, *cpy;
+	guint64 tagdata[12];
+	guint64 enc_delay, padding, orig_count;
+
+	/* parse the hexadecimal data */
+	cpy = strndup(value, length);
+	begin = NULL;
+	end = cpy;
+	for(i = 0; i < 12 && begin != end; i++) {
+		begin = end;
+		tagdata[i] = g_ascii_strtoull (begin, &end, 16);
+	}
+	if (begin == end || i < 12 || *end != '\0') {
+		XMMS_DBG ("Could not parse iTunSMPB data!");
+		g_free (cpy);
+		return FALSE;
+	} else {
+		g_free (cpy);
+	}
+
+	/* extract interesting values */
+	enc_delay = tagdata[1];
+	padding = tagdata[2];
+	orig_count = tagdata[3];
+	if (duration > 0 && enc_delay + orig_count + padding != duration) {
+		XMMS_DBG ("Data from iTunSMPB disagrees with provided duration!");
+		return FALSE;
+	}
+
+	*startsamples = enc_delay;
+	*stopsamples = enc_delay + orig_count;
+	return TRUE;
+}
+
+static gboolean
+xmms_mp4_gapless_try_itunsmpb (xmms_xform_t *xform)
+{
+	xmms_mp4_data_t *data;
+	char *val;
+	gint len;
+	guint64 duration, startsamples, stopsamples;
+
+	g_return_val_if_fail (xform, FALSE);
+	data = xmms_xform_private_data_get (xform);
+	g_return_val_if_fail (data, FALSE);
+
+	len = mp4ff_meta_find_by_name(data->mp4ff, "iTunSMPB", &val);
+	if (!len) {
+		return FALSE;
+	}
+
+	duration = mp4ff_get_track_duration (data->mp4ff, data->track);
+	if (!xmms_mp4_gapless_itunsmpb_parse (val, len, duration,
+	                                      &startsamples, &stopsamples)) {
+		return FALSE;
+	}
+
+	return xmms_mp4_gapless_set (xform, startsamples, stopsamples);
+}
+
+static gboolean
+xmms_mp4_gapless_try_legacy (xmms_xform_t *xform)
+{
+	xmms_mp4_data_t *data;
+	guint64 startsamples, stopsamples;
+
+	g_return_val_if_fail (xform, FALSE);
+	data = xmms_xform_private_data_get (xform);
+	g_return_val_if_fail (data, FALSE);
+
+	startsamples = mp4ff_get_sample_offset (data->mp4ff, data->track, 0);
+	stopsamples = mp4ff_get_track_duration (data->mp4ff, data->track);
+
+	return xmms_mp4_gapless_set (xform, startsamples, stopsamples);
+}
+
+static gboolean
+xmms_mp4_gapless_try (xmms_xform_t *xform) {
+	g_return_val_if_fail (xform, FALSE);
+
+	/* TODO: Using Edit List box */
+
+	/* Using iTunSMPB */
+	if (xmms_mp4_gapless_try_itunsmpb (xform)) {
+		XMMS_DBG ("Got startms and stopms from iTunSMPB.");
+		return TRUE;
+	}
+
+	/* Using ctts and stts (legacy) */
+	if (xmms_mp4_gapless_try_legacy (xform)) {
+		XMMS_DBG ("Got startms and stopms from ctts and stts (legacy).");
+		return TRUE;
+	}
+
+	return FALSE;
 }
 
 static uint32_t

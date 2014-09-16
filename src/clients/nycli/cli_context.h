@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -17,16 +17,17 @@
 #ifndef __CLI_INFOS_H__
 #define __CLI_INFOS_H__
 
-typedef struct cli_context_St cli_context_t;
 
 #include <glib.h>
 #include <xmmsclient/xmmsclient.h>
 
-#include "status.h"
 #include "command_trie.h"
 #include "configuration.h"
+#include "status.h"
 
 #define CLI_CLIENTNAME "xmms2-cli"
+
+typedef struct cli_context_St cli_context_t;
 
 typedef enum {
 	CLI_EXECUTION_MODE_INLINE,

@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -163,7 +163,7 @@ alias_free (alias_define_t *alias)
 void
 alias_setup (command_action_t *action, alias_define_t *alias)
 {
-	command_action_fill (action, alias->name, &alias_action,
+	command_action_fill (action, alias->name, (command_exec_func) &alias_action,
 	                     COMMAND_REQ_NONE, NULL,
 	                     NULL,
 	                     alias->define);

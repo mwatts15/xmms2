@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -30,10 +30,6 @@
 #include <xmms/xmms_ipc.h>
 #include <xmms/xmms_log.h>
 #include <xmms/xmms_object.h>
-
-struct xmms_xform_object_St {
-	xmms_object_t obj;
-};
 
 struct xmms_xform_St {
 	xmms_object_t obj;
@@ -98,11 +94,6 @@ static xmms_xform_t *xmms_xform_new_effect (xmms_xform_t* last,
                                             GList *goal_formats,
                                             const gchar *name);
 static void xmms_xform_destroy (xmms_object_t *object);
-static void effect_callbacks_init (void);
-
-static xmmsv_t *xmms_xform_client_browse (xmms_xform_object_t *obj, const gchar *url, xmms_error_t *error);
-
-#include "xform_ipc.c"
 
 void
 xmms_xform_browse_add_entry_property_str (xmms_xform_t *xform,
@@ -314,34 +305,6 @@ xmms_xform_browse (const gchar *url, xmms_error_t *error)
 	g_free (durl);
 
 	return list;
-}
-
-static xmmsv_t *
-xmms_xform_client_browse (xmms_xform_object_t *obj, const gchar *url,
-                          xmms_error_t *error)
-{
-	return xmms_xform_browse (url, error);
-}
-
-static void
-xmms_xform_object_destroy (xmms_object_t *obj)
-{
-	XMMS_DBG ("Deactivating xform object");
-	xmms_xform_unregister_ipc_commands ();
-}
-
-xmms_xform_object_t *
-xmms_xform_object_init ()
-{
-	xmms_xform_object_t *obj;
-
-	obj = xmms_object_new (xmms_xform_object_t, xmms_xform_object_destroy);
-
-	xmms_xform_register_ipc_commands (XMMS_OBJECT (obj));
-
-	effect_callbacks_init ();
-
-	return obj;
 }
 
 static void
@@ -766,7 +729,7 @@ xmms_xform_auxdata_barrier (xmms_xform_t *xform)
 }
 
 void
-xmms_xform_auxdata_set_int (xmms_xform_t *xform, const char *key, int intval)
+xmms_xform_auxdata_set_int (xmms_xform_t *xform, const char *key, gint64 intval)
 {
 	xmmsv_t *val = xmmsv_new_int (intval);
 	xmms_xform_auxdata_set_val (xform, g_strdup (key), val);
@@ -831,34 +794,20 @@ xmms_xform_auxdata_has_val (xmms_xform_t *xform, const gchar *key)
 	return !!xmms_xform_auxdata_get_val (xform, key);
 }
 
-gboolean
-xmms_xform_auxdata_get_int (xmms_xform_t *xform, const gchar *key, gint32 *val)
-{
-	const xmmsv_t *obj;
-
-	obj = xmms_xform_auxdata_get_val (xform, key);
-	if (obj && xmmsv_get_type (obj) == XMMSV_TYPE_INT32) {
-		xmmsv_get_int (obj, val);
-		return TRUE;
+/* macro-magically define auxdata extractors */
+#define GEN_AUXDATA_EXTRACTOR_FUNC(typename, xmmsvtypename, type) \
+	gboolean \
+	xmms_xform_auxdata_get_##typename (xmms_xform_t *xform, const gchar *key, \
+	                                   type *val) \
+	{ \
+		const xmmsv_t *obj; \
+		obj = xmms_xform_auxdata_get_val (xform, key); \
+		return obj && xmmsv_get_##xmmsvtypename (obj, val); \
 	}
 
-	return FALSE;
-}
-
-gboolean
-xmms_xform_auxdata_get_str (xmms_xform_t *xform, const gchar *key,
-                            const gchar **val)
-{
-	const xmmsv_t *obj;
-
-	obj = xmms_xform_auxdata_get_val (xform, key);
-	if (obj && xmmsv_get_type (obj) == XMMSV_TYPE_STRING) {
-		xmmsv_get_string (obj, val);
-		return TRUE;
-	}
-
-	return FALSE;
-}
+GEN_AUXDATA_EXTRACTOR_FUNC (int32, int32, gint32);
+GEN_AUXDATA_EXTRACTOR_FUNC (int64, int64, gint64);
+GEN_AUXDATA_EXTRACTOR_FUNC (str, string, const gchar *);
 
 gboolean
 xmms_xform_auxdata_get_bin (xmms_xform_t *xform, const gchar *key,
@@ -1577,87 +1526,4 @@ xmms_xform_new_effect (xmms_xform_t *last, xmms_medialib_entry_t entry,
 	                                            NULL, NULL);
 	xmms_object_unref (plugin);
 	return last;
-}
-
-static void
-update_effect_properties (xmms_object_t *object, xmmsv_t *data,
-                          gpointer userdata)
-{
-	gint effect_no = GPOINTER_TO_INT (userdata);
-	const gchar *name;
-
-	xmms_config_property_t *cfg;
-	xmms_xform_plugin_t *xform_plugin;
-	xmms_plugin_t *plugin;
-	gchar key[64];
-
-	name = xmms_config_property_get_string ((xmms_config_property_t *) object);
-
-	if (name[0]) {
-		plugin = xmms_plugin_find (XMMS_PLUGIN_TYPE_XFORM, name);
-		if (!plugin) {
-			xmms_log_error ("Couldn't find any effect named '%s'", name);
-		} else {
-			xform_plugin = (xmms_xform_plugin_t *) plugin;
-			xmms_xform_plugin_config_property_register (xform_plugin, "enabled",
-			                                            "1", NULL, NULL);
-			xmms_object_unref (plugin);
-		}
-
-		/* setup new effect.order.n */
-		g_snprintf (key, sizeof (key), "effect.order.%i", effect_no + 1);
-
-		cfg = xmms_config_lookup (key);
-		if (!cfg) {
-			xmms_config_property_register (key, "", update_effect_properties,
-			                               GINT_TO_POINTER (effect_no + 1));
-		}
-	}
-}
-
-static void
-effect_callbacks_init (void)
-{
-	gint effect_no;
-
-	xmms_config_property_t *cfg;
-	xmms_xform_plugin_t *xform_plugin;
-	xmms_plugin_t *plugin;
-	gchar key[64];
-	const gchar *name;
-
-	for (effect_no = 0; ; effect_no++) {
-		g_snprintf (key, sizeof (key), "effect.order.%i", effect_no);
-
-		cfg = xmms_config_lookup (key);
-		if (!cfg) {
-			break;
-		}
-		xmms_config_property_callback_set (cfg, update_effect_properties,
-		                                   GINT_TO_POINTER (effect_no));
-
-		name = xmms_config_property_get_string (cfg);
-		if (!name[0]) {
-			continue;
-		}
-
-		plugin = xmms_plugin_find (XMMS_PLUGIN_TYPE_XFORM, name);
-		if (!plugin) {
-			xmms_log_error ("Couldn't find any effect named '%s'", name);
-			continue;
-		}
-
-		xform_plugin = (xmms_xform_plugin_t *) plugin;
-		xmms_xform_plugin_config_property_register (xform_plugin, "enabled",
-		                                            "1", NULL, NULL);
-
-		xmms_object_unref (plugin);
-	}
-
-	/* the name stored in the last present property was not "" or there was no
-	   last present property */
-	if ((!effect_no) || name[0]) {
-			xmms_config_property_register (key, "", update_effect_properties,
-			                               GINT_TO_POINTER (effect_no));
-	}
 }

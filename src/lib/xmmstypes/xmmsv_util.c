@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -15,6 +15,7 @@
  */
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <inttypes.h>
 
@@ -81,14 +82,11 @@ xmmsv_propdict_to_dict (xmmsv_t *propdict, const char **src_prefs)
 	local_prefs = src_prefs ? src_prefs : xmmsv_default_source_pref;
 
 	xmmsv_get_dict_iter (propdict, &key_it);
-	while (xmmsv_dict_iter_valid (key_it)) {
-		xmmsv_dict_iter_pair (key_it, &key, &source_dict);
-
+	while (xmmsv_dict_iter_pair (key_it, &key, &source_dict)) {
 		best_value = NULL;
 		best_index = -1;
 		xmmsv_get_dict_iter (source_dict, &source_it);
-		while (xmmsv_dict_iter_valid (source_it)) {
-			xmmsv_dict_iter_pair (source_it, &source, &value);
+		while (xmmsv_dict_iter_pair (source_it, &source, &value)) {
 			match_index = find_match_index (source, local_prefs);
 			/* keep first match or better match */
 			if (match_index >= 0 && (best_index < 0 ||
@@ -108,6 +106,119 @@ xmmsv_propdict_to_dict (xmmsv_t *propdict, const char **src_prefs)
 	}
 
 	return dict;
+}
+
+
+#define GOODCHAR(a) ((((a) >= 'a') && ((a) <= 'z')) || \
+                     (((a) >= 'A') && ((a) <= 'Z')) || \
+                     (((a) >= '0') && ((a) <= '9')) || \
+                     ((a) == ':') || \
+                     ((a) == '/') || \
+                     ((a) == '-') || \
+                     ((a) == '.') || \
+                     ((a) == '_'))
+
+static void
+_sum_len_string_dict (const char *key, xmmsv_t *val, void *userdata)
+{
+	const char *arg;
+	int *extra = (int *) userdata;
+
+	if (xmmsv_is_type (val, XMMSV_TYPE_NONE)) {
+		*extra += strlen (key) + 1; /* Leave room for the ampersand. */
+	} else if (xmmsv_get_string (val, &arg)) {
+		/* Leave room for the equals sign and ampersand. */
+		*extra += strlen (key) + strlen (arg) + 2;
+	} else {
+		x_api_warning ("with non-string argument");
+	}
+}
+
+/**
+ * Encodes an url with arguments stored in dict args.
+ *
+ * The encoded url is allocated using malloc and has to be freed by the user.
+ *
+ * @param url The url to encode.
+ * @param args The dict with arguments, or NULL.
+ * @return The encoded url
+ */
+char *
+xmmsv_encode_url_full (const char *url, xmmsv_t *args)
+{
+	static const char hex[16] = "0123456789abcdef";
+	int i = 0, j = 0, extra = 0, l;
+	char *res;
+
+	x_api_error_if (!url, "with a NULL url", NULL);
+
+	if (args) {
+		if (!xmmsv_dict_foreach (args, _sum_len_string_dict, (void *) &extra)) {
+			return NULL;
+		}
+	}
+
+	/* Provide enough room for the worst-case scenario (all characters of the
+	   URL must be encoded), the args, and a \0. */
+	res = malloc (strlen (url) * 3 + 1 + extra);
+	if (!res) {
+		return NULL;
+	}
+
+	for (i = 0; url[i]; i++) {
+		unsigned char chr = url[i];
+		if (GOODCHAR (chr)) {
+			res[j++] = chr;
+		} else if (chr == ' ') {
+			res[j++] = '+';
+		} else {
+			res[j++] = '%';
+			res[j++] = hex[((chr & 0xf0) >> 4)];
+			res[j++] = hex[(chr & 0x0f)];
+		}
+	}
+
+	if (args) {
+		xmmsv_dict_iter_t *it;
+		const char *arg, *key;
+		xmmsv_t *val;
+
+		for (xmmsv_get_dict_iter (args, &it), i = 0;
+		     xmmsv_dict_iter_pair (it, &key, &val);
+		     xmmsv_dict_iter_next (it), i++) {
+
+			l = strlen (key);
+			res[j] = (i == 0) ? '?' : '&';
+			j++;
+			memcpy (&res[j], key, l);
+			j += l;
+			if (xmmsv_get_string (val, &arg)) {
+				l = strlen (arg);
+				res[j] = '=';
+				j++;
+				memcpy (&res[j], arg, l);
+				j += l;
+			}
+		}
+	}
+
+	res[j] = '\0';
+
+	return res;
+}
+
+/**
+ * Encodes an url.
+ *
+ * The encoded url is allocated using malloc and has to be freed by the user.
+ *
+ * @param url The url to encode.
+ * @return The encoded url
+ */
+char *
+xmmsv_encode_url (const char *url)
+{
+	return xmmsv_encode_url_full (url, NULL);
 }
 
 /**

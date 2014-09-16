@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -94,10 +94,10 @@ static xmms_wave_format_t read_wave_header (xmms_wave_data_t *data,
  * Plugin header
  */
 
-XMMS_XFORM_PLUGIN ("wave",
-                   "Wave Decoder", XMMS_VERSION,
-                   "Wave decoder",
-                   xmms_wave_plugin_setup);
+XMMS_XFORM_PLUGIN_DEFINE ("wave",
+                          "Wave Decoder", XMMS_VERSION,
+                          "Wave decoder",
+                          xmms_wave_plugin_setup);
 
 static gboolean
 xmms_wave_plugin_setup (xmms_xform_plugin_t *xform_plugin)

@@ -36,7 +36,7 @@
 
 /* Gain for each band
  * values should be between -0.2 and 1.0 */
-union f4vector gain[MAX_SSE_VECTORS][EQ_CHANNELS];
+static union f4vector gain[MAX_SSE_VECTORS][EQ_CHANNELS];
 static sSupport support;
 static sHistory history[EQ_CHANNELS];
 static sPtrs ptrs;
@@ -100,7 +100,7 @@ static void setup_gain(int count_start)
       gain[count_start/4][j].f[count_start%4] = 0.;
 }
 
-__inline__ int iir(void *d, int length, int nch, int extra_filtering)
+int iir(void *d, int length, int nch, int extra_filtering)
 {
   /* Turn ON Flush-to-zero mode to avoid exceptions on underflow */
   FTZ_ON;

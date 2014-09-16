@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -719,6 +719,7 @@ xmms_collection_query_infos_spec (xmmsv_t *fields, xmmsv_t *grouping)
 		}
 
 		spec = xmmsv_build_cluster_list (cluster_by, cluster_field, spec);
+		xmmsv_dict_set_string (spec, "cluster-fallback", "");
 
 		xmmsv_list_iter_prev (it);
 	}

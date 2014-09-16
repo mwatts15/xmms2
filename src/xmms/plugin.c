@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -39,6 +39,7 @@
 #define get_module_ext(dir) g_module_build_path (dir, "*")
 #endif
 
+extern xmms_plugin_desc_t *xmms_builtin_plugins[];
 
 /*
  * Global variables
@@ -195,17 +196,25 @@ xmms_plugin_description_get (const xmms_plugin_t *plugin)
 static void
 xmms_plugin_add_builtin_plugins (void)
 {
+	gint i;
+
 	extern const xmms_plugin_desc_t xmms_builtin_magic;
 	extern const xmms_plugin_desc_t xmms_builtin_converter;
 	extern const xmms_plugin_desc_t xmms_builtin_segment;
+	extern const xmms_plugin_desc_t xmms_builtin_nibbler;
 	extern const xmms_plugin_desc_t xmms_builtin_visualization;
 	extern const xmms_plugin_desc_t xmms_builtin_ringbuf;
 
 	xmms_plugin_load (&xmms_builtin_magic, NULL);
 	xmms_plugin_load (&xmms_builtin_converter, NULL);
 	xmms_plugin_load (&xmms_builtin_segment, NULL);
+	xmms_plugin_load (&xmms_builtin_nibbler, NULL);
 	xmms_plugin_load (&xmms_builtin_visualization, NULL);
 	xmms_plugin_load (&xmms_builtin_ringbuf, NULL);
+
+	/* load static plugins */
+	for (i = 0; xmms_builtin_plugins[i]; i++)
+		xmms_plugin_load (xmms_builtin_plugins[i], NULL);
 }
 
 

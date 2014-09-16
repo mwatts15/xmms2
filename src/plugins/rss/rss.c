@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -30,11 +30,11 @@ static gboolean xmms_rss_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 static gboolean xmms_rss_init (xmms_xform_t *xform);
 static gboolean xmms_rss_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error);
 
-XMMS_XFORM_PLUGIN ("rss",
-                   "reader for rss podcasts",
-                   XMMS_VERSION,
-                   "reader for rss podcasts",
-                   xmms_rss_plugin_setup);
+XMMS_XFORM_PLUGIN_DEFINE ("rss",
+                          "reader for rss podcasts",
+                          XMMS_VERSION,
+                          "reader for rss podcasts",
+                          xmms_rss_plugin_setup);
 
 static gboolean
 xmms_rss_plugin_setup (xmms_xform_plugin_t *xform_plugin)

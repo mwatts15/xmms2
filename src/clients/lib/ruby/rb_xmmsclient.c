@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -548,7 +548,13 @@ c_broadcast_config_value_changed (VALUE self)
 static VALUE
 c_playback_seek_ms (VALUE self, VALUE ms)
 {
-	METHOD_ADD_HANDLER_INT_INT (playback_seek_ms, ms, XMMS_PLAYBACK_SEEK_SET);
+	METHOD_HANDLER_HEADER
+
+	res = xmmsc_playback_seek_ms (xmms->real,
+	                              check_int32 (ms),
+	                              XMMS_PLAYBACK_SEEK_SET);
+
+	METHOD_HANDLER_FOOTER
 }
 
 /*
@@ -560,7 +566,13 @@ c_playback_seek_ms (VALUE self, VALUE ms)
 static VALUE
 c_playback_seek_ms_rel (VALUE self, VALUE ms)
 {
-	METHOD_ADD_HANDLER_INT_INT (playback_seek_ms, ms, XMMS_PLAYBACK_SEEK_CUR);
+	METHOD_HANDLER_HEADER
+
+	res = xmmsc_playback_seek_ms (xmms->real,
+	                              check_int32 (ms),
+	                              XMMS_PLAYBACK_SEEK_CUR);
+
+	METHOD_HANDLER_FOOTER
 }
 
 /*
@@ -572,7 +584,13 @@ c_playback_seek_ms_rel (VALUE self, VALUE ms)
 static VALUE
 c_playback_seek_samples (VALUE self, VALUE samples)
 {
-	METHOD_ADD_HANDLER_INT_INT (playback_seek_samples, samples, XMMS_PLAYBACK_SEEK_SET);
+	METHOD_HANDLER_HEADER
+
+	res = xmmsc_playback_seek_samples (xmms->real,
+	                                   check_int32 (samples),
+	                                   XMMS_PLAYBACK_SEEK_SET);
+
+	METHOD_HANDLER_FOOTER
 }
 
  /*
@@ -584,7 +602,13 @@ c_playback_seek_samples (VALUE self, VALUE samples)
 static VALUE
 c_playback_seek_samples_rel (VALUE self, VALUE samples)
 {
-	METHOD_ADD_HANDLER_INT_INT (playback_seek_samples, samples, XMMS_PLAYBACK_SEEK_CUR);
+	METHOD_HANDLER_HEADER
+
+	res = xmmsc_playback_seek_samples (xmms->real,
+	                                   check_int32 (samples),
+	                                   XMMS_PLAYBACK_SEEK_CUR);
+
+	METHOD_HANDLER_FOOTER
 }
 
 /*
@@ -1502,8 +1526,8 @@ c_broadcast_coll_changed (VALUE self)
 VALUE
 check_int32 (VALUE arg)
 {
-	VALUE int32_max = INT2NUM (2147483647);
-	VALUE int32_min = INT2NUM (-2147483647);
+	VALUE int32_max = INT2NUM (INT_MAX);
+	VALUE int32_min = INT2NUM (INT_MIN);
 
 	if (!rb_obj_is_kind_of (arg, rb_cInteger))
 		rb_raise (rb_eTypeError,

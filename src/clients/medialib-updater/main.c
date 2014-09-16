@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -464,7 +464,7 @@ updater_remove_directory (updater_t *updater, GFile *file)
 	gchar *path, *pattern, *encoded;
 
 	path = g_file_get_path (file);
-	encoded = xmmsc_medialib_encode_url (path);
+	encoded = xmmsv_encode_url (path);
 	g_free (path);
 
 	pattern = g_strdup_printf ("file://%s/*", encoded);

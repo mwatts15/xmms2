@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -73,9 +73,9 @@ static gboolean xmms_jack_connect (xmms_output_t *output);
  * Plugin header
  */
 
-XMMS_OUTPUT_PLUGIN ("jack", "Jack Output", XMMS_VERSION,
-                    "Jack audio server output plugin",
-                    xmms_jack_plugin_setup);
+XMMS_OUTPUT_PLUGIN_DEFINE ("jack", "Jack Output", XMMS_VERSION,
+                           "Jack audio server output plugin",
+                           xmms_jack_plugin_setup);
 
 static gboolean
 xmms_jack_plugin_setup (xmms_output_plugin_t *plugin)

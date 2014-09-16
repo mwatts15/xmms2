@@ -6,8 +6,9 @@ def build(bld):
         includes = '../../../.. ../../../include',
         source = 'xmmsclient-glib.c',
         uselib = 'glib2',
-        use = 'xmmsclient',
-        vnum = '1.0.0'
+        use = 'xmmsclient xmmsc-glib',
+        vnum = '1.0.0',
+        defines = 'G_LOG_DOMAIN="xmmsclient-glib"'
         )
 
     tool.add_install_flag(bld, obj)

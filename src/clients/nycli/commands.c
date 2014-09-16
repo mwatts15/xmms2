@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -33,7 +33,7 @@
 #define CLI_SIMPLE_SETUP(name, cmd, req, usage, desc) \
 	void \
 	cmd##_setup (command_action_t *action) \
-	{ command_action_fill (action, name, cmd, req, NULL, usage, desc); }
+	{ command_action_fill (action, name, (command_exec_func) cmd, req, NULL, usage, desc); }
 
 CLI_SIMPLE_SETUP("play", cli_play,
                  COMMAND_REQ_CONNECTION,
@@ -174,7 +174,7 @@ cli_help_setup (command_action_t *action)
 		{ "alias", 'a', 0, G_OPTION_ARG_NONE, NULL, _("List aliases, or alias definition."), NULL },
 		{ NULL }
 	};
-	command_action_fill (action, "help", &cli_help, COMMAND_REQ_NONE, flags,
+	command_action_fill (action, "help", (command_exec_func) &cli_help, COMMAND_REQ_NONE, flags,
 	                     _("[-a] [command]"),
 	                     _("List all commands, or help on one command."));
 }
@@ -186,7 +186,7 @@ cli_jump_setup (command_action_t *action)
 		{ "backward", 'b', 0, G_OPTION_ARG_NONE, NULL, _("Jump backward to the first media matching the pattern"), NULL },
 		{ NULL }
 	};
-	command_action_fill (action, "jump", &cli_jump, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
+	command_action_fill (action, "jump", (command_exec_func) &cli_jump, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
 	                     _("[-b] <pattern|positions>"),
 	                     _("Jump to the first media matching the pattern."));
 }
@@ -197,10 +197,11 @@ cli_search_setup (command_action_t *action)
 	const GOptionEntry flags[] = {
 		{ "order",   'o', 0, G_OPTION_ARG_STRING, NULL, _("List of properties to order by (prefix by '-' for reverse ordering)."), "prop[,...]" },
 		{ "columns", 'l', 0, G_OPTION_ARG_STRING, NULL, _("List of properties to use as columns."), "prop[,...]" },
+		{ "stdin", 'i', 0, G_OPTION_ARG_NONE, NULL, _("Read pattern from stdin (inline mode only)"), NULL },
 		{ NULL }
 	};
-	command_action_fill (action, "search", &cli_search, COMMAND_REQ_CONNECTION, flags,
-	                     _("[-o <prop[,...]>] [-l <prop[,...]>] <pattern>"),
+	command_action_fill (action, "search", (command_exec_func) &cli_search, COMMAND_REQ_CONNECTION, flags,
+	                     _("[-i] [-o <prop[,...]>] [-l <prop[,...]>] <pattern>"),
 	                     _("Search and print all media matching the pattern."));
 }
 
@@ -211,7 +212,7 @@ cli_list_setup (command_action_t *action)
 		{ "playlist",   'p', 0, G_OPTION_ARG_STRING, NULL, _("List the given playlist."), "name" },
 		{ NULL }
 	};
-	command_action_fill (action, "list", &cli_list, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
+	command_action_fill (action, "list", (command_exec_func) &cli_list, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
 	                     _("[-p <name>] <pattern|position>"),
 	                     _("List the contents of a playlist (the active playlist by default). If a\n"
 	                       "pattern is provided, contents are further filtered and only the matching\n"
@@ -233,10 +234,11 @@ cli_add_setup (command_action_t *action)
 		{ "attribute", 'A', 0, G_OPTION_ARG_STRING_ARRAY, NULL, _("Add media with given key=value attribute(s)."), NULL },
 		{ "order", 'o', 0, G_OPTION_ARG_STRING, NULL, _("Order media by specified properties."), NULL },
 		{ "jump", 'j', 0, G_OPTION_ARG_NONE, NULL, _("Jump to and start playing the newly-added media."), NULL },
+		{ "stdin", 'i', 0, G_OPTION_ARG_NONE, NULL, _("Read pattern from stdin. (inline mode only, implies --pattern)"), NULL },
 		{ NULL }
 	};
-	command_action_fill (action, "add", &cli_add, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
-	                     _("[-t | -f [-N] [-P] [-A key=value]... ] [-p <playlist>] [-n | -a <pos|offset>] [-j] [pattern | paths] -o prop[,...]"),
+	command_action_fill (action, "add", (command_exec_func) &cli_add, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
+	                     _("[-t | -i | -f [-N] [-P] [-A key=value]... ] [-p <playlist>] [-n | -a <pos|offset>] [-j] [pattern | paths] -o prop[,...]"),
 	                     _("Add the matching media or files to a playlist."));
 }
 
@@ -248,7 +250,7 @@ cli_remove_setup (command_action_t *action)
 		{ "playlist", 'p', 0, G_OPTION_ARG_STRING, NULL, _("Remove from the given playlist, instead of the active playlist."), "name" },
 		{ NULL }
 	};
-	command_action_fill (action, "remove", &cli_remove, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
+	command_action_fill (action, "remove", (command_exec_func) &cli_remove, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
 	                     _("[-p <playlist>] <pattern|positions>"),
 	                     _("Remove the matching media from a playlist."));
 }
@@ -262,7 +264,7 @@ cli_move_setup (command_action_t *action)
 		{ "at", 'a', 0, G_OPTION_ARG_INT, NULL, _("Move the matching tracks by an offset or to a position."), "pos|offset"},
 		{ NULL }
 	};
-	command_action_fill (action, "move", &cli_move, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
+	command_action_fill (action, "move", (command_exec_func) &cli_move, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
 	                     _("[-p <playlist>] [-n | -a <pos|offset>] <pattern|positions>"),
 	                     _("Move entries inside a playlist."));
 }
@@ -275,7 +277,7 @@ cli_current_setup (command_action_t *action)
 		{ "format",  'f', 0, G_OPTION_ARG_STRING, NULL, _("Format string used to display status."), "format" },
 		{ NULL }
 	};
-	command_action_fill (action, "current", &cli_current, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
+	command_action_fill (action, "current", (command_exec_func) &cli_current, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
 	                     _("[-r <time>] [-f <format>]"),
 	                     _("Display current playback status, either continuously or once."));
 }
@@ -288,7 +290,7 @@ cli_pl_create_setup (command_action_t *action)
 		{ "playlist", 'p', 0, G_OPTION_ARG_STRING, NULL, _("Copy the content of the playlist into the new playlist."), "name" },
 		{ NULL }
 	};
-	command_action_fill (action, "playlist create", &cli_pl_create, COMMAND_REQ_CONNECTION, flags,
+	command_action_fill (action, "playlist create", (command_exec_func) &cli_pl_create, COMMAND_REQ_CONNECTION, flags,
 	                     _("[-s] [-p <playlist>] <name>"),
 	                     _("Create a new playlist."));
 }
@@ -301,7 +303,7 @@ cli_pl_rename_setup (command_action_t *action)
 		{ "playlist", 'p', 0, G_OPTION_ARG_STRING, NULL, _("Rename the given playlist."), "name" },
 		{ NULL }
 	};
-	command_action_fill (action, "playlist rename", &cli_pl_rename, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
+	command_action_fill (action, "playlist rename", (command_exec_func) &cli_pl_rename, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
 	                     _("[-f] [-p <playlist>] <newname>"),
 	                     _("Rename a playlist.  By default, rename the active playlist."));
 }
@@ -313,7 +315,7 @@ cli_pl_sort_setup (command_action_t *action)
 		{ "playlist", 'p', 0, G_OPTION_ARG_STRING, NULL, _("Rename the given playlist."), "name" },
 		{ NULL }
 	};
-	command_action_fill (action, "playlist sort", &cli_pl_sort, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
+	command_action_fill (action, "playlist sort", (command_exec_func) &cli_pl_sort, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
 	                     _("[-p <playlist>] [prop] ..."),
 	                     _("Sort a playlist by a list of properties.  By default, sort the active playlist.\n"
 	                        "To sort by a property in reverse, prefix its name by a '-'."));
@@ -326,10 +328,11 @@ cli_coll_create_setup (command_action_t *action)
 		{ "force", 'f', 0, G_OPTION_ARG_NONE, NULL, _("Force creating of the collection, overwrite an existing collection if needed."), NULL},
 		{ "collection", 'c', 0, G_OPTION_ARG_STRING, NULL, _("Copy an existing collection to the new one."), "name"},
 		{ "empty", 'e', 0, G_OPTION_ARG_NONE, NULL, _("Initialize an empty collection."), NULL},
+		{ "stdin", 'i', 0, G_OPTION_ARG_NONE, NULL, _("Read the pattern from stdin (inline mode only)."), NULL},
 		{ NULL }
 	};
-	command_action_fill (action, "collection create", &cli_coll_create, COMMAND_REQ_CONNECTION, flags,
-	                     _("[-f] [-e] [-c <collection>] <name> [pattern]"),
+	command_action_fill (action, "collection create", (command_exec_func) &cli_coll_create, COMMAND_REQ_CONNECTION, flags,
+	                     _("[-f] [-e] [-i] [-c <collection>] <name> [pattern]"),
 	                     _("Create a new collection.\nIf pattern is provided, it is used to define the collection."
 	                       "\nOtherwise, the new collection contains the whole media library."));
 }
@@ -341,7 +344,7 @@ cli_coll_rename_setup (command_action_t *action)
 		{ "force", 'f', 0, G_OPTION_ARG_NONE, NULL, _("Force renaming of the collection, overwrite an existing collection if needed."), NULL},
 		{ NULL }
 	};
-	command_action_fill (action, "collection rename", &cli_coll_rename, COMMAND_REQ_CONNECTION, flags,
+	command_action_fill (action, "collection rename", (command_exec_func) &cli_coll_rename, COMMAND_REQ_CONNECTION, flags,
 	                     _("[-f] <oldname> <newname>"),
 	                     _("Rename a collection."));
 }
@@ -357,7 +360,7 @@ cli_pl_config_setup (command_action_t *action)
 		{ "jumplist",'j', 0, G_OPTION_ARG_STRING, NULL, _("Jump to another playlist when the end of the playlist is reached."), "playlist"},
 		{ NULL }
 	};
-	command_action_fill (action, "playlist config", &cli_pl_config, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
+	command_action_fill (action, "playlist config", (command_exec_func) &cli_pl_config, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
 	                     _("[-t <type>] [-s <history>] [-u <upcoming>] [-i <coll>] [-j <playlist>] [playlist]"),
 	                     _("Configure a playlist by changing its type, attributes, etc.\nBy default, configure the active playlist."));
 }
@@ -369,7 +372,7 @@ cli_pl_list_setup (command_action_t *action)
 		{ "all",  'a', 0, G_OPTION_ARG_NONE, NULL, _("Include hidden playlists."), NULL },
 		{ NULL }
 	};
-	command_action_fill (action, "playlist list", &cli_pl_list, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
+	command_action_fill (action, "playlist list", (command_exec_func) &cli_pl_list, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
 	                     _("[-a]"),
 	                     _("List all playlists."));
 }
@@ -381,7 +384,7 @@ cli_server_import_setup (command_action_t *action)
 		{ "non-recursive", 'N',  0, G_OPTION_ARG_NONE, NULL, _("Do not import directories recursively."), NULL },
 		{ NULL }
 	};
-	command_action_fill (action, "server import", &cli_server_import, COMMAND_REQ_CONNECTION, flags,
+	command_action_fill (action, "server import", (command_exec_func) &cli_server_import, COMMAND_REQ_CONNECTION, flags,
 	                     _("[-N] <path>"),
 	                     _("Import new files into the media library.\n"
 	                     "By default, directories are imported recursively."));
@@ -391,22 +394,31 @@ void
 cli_server_property_setup (command_action_t *action)
 {
 	const GOptionEntry flags[] = {
-		{ "int",    'i',  0, G_OPTION_ARG_NONE, NULL, _("Force the value to be treated as integer."), NULL },
-		{ "string", 's',  0, G_OPTION_ARG_NONE, NULL, _("Force the value to be treated as a string."), NULL },
-		{ "delete", 'D',  0, G_OPTION_ARG_NONE, NULL, _("Delete the selected property."), NULL },
-		{ "source", 'S',  0, G_OPTION_ARG_STRING, NULL, _("Property source."), NULL },
+		{ "int",        'i',  0, G_OPTION_ARG_NONE, NULL, _("Force the value to be treated as an integer."), NULL },
+		{ "string",     's',  0, G_OPTION_ARG_NONE, NULL, _("Force the value to be treated as a string."), NULL },
+		{ "delete",     'D',  0, G_OPTION_ARG_NONE, NULL, _("Delete the selected property."), NULL },
+		{ "long",       'l',  0, G_OPTION_ARG_NONE, NULL, _("Source to use when setting or deleting. Source preference when showing."), NULL },
+		{ "all",        'a',  0, G_OPTION_ARG_NONE, NULL, _("Show values from all sources."), NULL },
+		{ "all-tied",   't',  0, G_OPTION_ARG_NONE, NULL, _("Show values from all tied preferred sources."), NULL },
+		{ "source",     'S',  0, G_OPTION_ARG_STRING_ARRAY, NULL, _("Property source."), NULL },
 		{ NULL }
 	};
-	command_action_fill (action, "server property", &cli_server_property, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
-	                     _("[-i | -s | -D] [-S] <mid> [name [value]]"),
-	                     _("Get or set properties for a given media.\n"
-	                     "If no name or value is provided, list all properties.\n"
-	                     "If only a name is provided, display the value of the property.\n"
+	command_action_fill (action, "server property", (command_exec_func) &cli_server_property, COMMAND_REQ_CONNECTION | COMMAND_REQ_CACHE, flags,
+	                     _("[-i | -s | -D | [-l] [-a | -t] ] [-S ...] <id> [name [value]]"),
+	                     _("Show, set or delete properties for a given media id.\n\n"
+	                     "If no name or value is provided, show properties.\n"
+	                     "If only a name is provided, show the named property.\n"
 	                     "If both a name and a value are provided, set the new value of the property.\n\n"
-	                     "By default, set operations use source \"client/" CLI_CLIENTNAME "\", while list and display operations use source-preference.\n"
-	                     "Use the --source option to override this behaviour.\n\n"
-	                     "By default, the value will be used to determine whether it should be saved as a string or an integer.\n"
-	                     "Use the --int or --string flag to override this behaviour."));
+	                     "When showing properties, several --source options may be passed, which will specify the source preference.\n"
+	                     "In this case the final character of a --source option may be the wildcard '*'.\n"
+	                     "If no --source flags are passed, the default source preference is used.\n"
+	                     "For every property at most one value is shown, as determined by source preference.\n"
+	                     "In case of source ties, the value from an arbitrary preferred source is shown.\n"
+	                     "Use --all or --all-tied to override this behavior.\n\n"
+	                     "When setting of deleting, the --source option specifies the source of the property that is to be set or deleted.\n"
+	                     "The default is \"client/" CLI_CLIENTNAME "\".\n\n"
+	                     "When setting, the value will be used to determine whether the value should be saved as a string or an integer.\n"
+	                     "Use the --int or --string flag to override this behavior."));
 }
 
 void
@@ -416,7 +428,7 @@ cli_server_volume_setup (command_action_t *action)
 		{ "channel", 'c',  0, G_OPTION_ARG_STRING, NULL, _("Get or set the volume only for one channel."), "name" },
 		{ NULL }
 	};
-	command_action_fill (action, "server volume", &cli_server_volume, COMMAND_REQ_CONNECTION, flags,
+	command_action_fill (action, "server volume", (command_exec_func) &cli_server_volume, COMMAND_REQ_CONNECTION, flags,
 	                     _("[-c <name>] [value]"),
 	                     _("Get or set the audio volume (in a range of 0-100).\n"
 	                     "If a value is provided, set the new value of the volume. Otherwise, display the current volume.\n"

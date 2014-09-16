@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -22,9 +22,7 @@
 #include <xmmspriv/xmms_streamtype.h>
 #include <xmmspriv/xmms_plugin.h>
 
-typedef struct xmms_xform_object_St xmms_xform_object_t;
-
-xmms_xform_object_t *xmms_xform_object_init (void);
+#define xmms_xform_find_plugin(name) (xmms_xform_plugin_t *) xmms_plugin_find (XMMS_PLUGIN_TYPE_XFORM, name)
 
 xmms_xform_t *xmms_xform_new (xmms_xform_plugin_t *plugin, xmms_xform_t *prev, xmms_medialib_t *medialib, xmms_medialib_entry_t entry, GList *goal_hints);
 const gchar *xmms_xform_outtype_get_str (xmms_xform_t *xform, xmms_stream_type_key_t key);
@@ -52,6 +50,6 @@ xmmsv_t *xmms_xform_browse_method (xmms_xform_t *xform, const gchar *url, xmms_e
 
 const char *xmms_xform_indata_find_str (xmms_xform_t *xform, xmms_stream_type_key_t key);
 
-#define XMMS_XFORM_BUILTIN(shname, name, ver, desc, setupfunc) XMMS_BUILTIN(XMMS_PLUGIN_TYPE_XFORM, XMMS_XFORM_API_VERSION, shname, name, ver, desc, (gboolean (*)(gpointer))setupfunc)
+#define XMMS_XFORM_BUILTIN_DEFINE(shname, name, ver, desc, setupfunc) XMMS_BUILTIN_DEFINE(XMMS_PLUGIN_TYPE_XFORM, XMMS_XFORM_API_VERSION, shname, name, ver, desc, (gboolean (*)(gpointer))setupfunc)
 
 #endif

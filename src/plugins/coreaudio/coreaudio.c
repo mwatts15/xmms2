@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -68,9 +68,9 @@ static gboolean xmms_ca_format_set (xmms_output_t *output,
  */
 
 
-XMMS_OUTPUT_PLUGIN ("coreaudio", "CoreAudio Output", XMMS_VERSION,
-                    "MacOSX CoreAudio output plugin",
-                    xmms_ca_plugin_setup);
+XMMS_OUTPUT_PLUGIN_DEFINE ("coreaudio", "CoreAudio Output", XMMS_VERSION,
+                           "MacOSX CoreAudio output plugin",
+                           xmms_ca_plugin_setup);
 
 
 static gboolean
@@ -275,7 +275,7 @@ xmms_ca_new (xmms_output_t *output)
 
 	data = g_new0 (xmms_ca_data_t, 1);
 
-	res = OpenAComponent (comp, &data->au);
+	OpenAComponent (comp, &data->au);
 	if (comp == NULL) {
 		xmms_log_error ("Opening component failed!");
 		g_free (data);

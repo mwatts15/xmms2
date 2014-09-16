@@ -1,5 +1,5 @@
 from waflib import Task, Logs, Errors, Options, Utils
-from TaskGen import feature, before_method
+from waflib.TaskGen import feature, before_method
 import os
 import re
 
@@ -47,9 +47,9 @@ def scrape_test_cases(node):
 def generate_runner(self):
     self.source = self.to_nodes(self.source)
     try:
-        self.add_objects = self.to_list(self.add_objects)
+        self.use = self.to_list(self.use)
     except (AttributeError):
-        self.add_objects = []
+        self.use = []
 
     suites = []
     for node in self.source:
@@ -69,7 +69,8 @@ def generate_runner(self):
         self.source += [target]
 
         # link valgrind_object in
-        self.add_objects += ["memorystatus"]
+        self.use += ["memorystatus"]
+
 
 def monkey_patch_test_runner():
     original = Task.classes["utest"].run
@@ -85,7 +86,7 @@ def monkey_patch_test_runner():
             os.environ["G_DEBUG"] = "gc-friendly"
 
             suppression = os.path.join(os.getcwd(), "utils", "valgrind-suppressions")
-            self.ut_exec = [
+            self.generator.ut_exec = [
                 "valgrind",
                 "--log-file=%s.log" % self.inputs[0].abspath(),
                 "--leak-check=full",

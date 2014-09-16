@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -117,7 +117,7 @@ xmmsc_visualization_init_handle (xmmsc_result_t *res)
 xmmsc_result_t *
 xmmsc_visualization_start (xmmsc_connection_t *c, int vv)
 {
-	xmmsc_result_t *res;
+	xmmsc_result_t *res = NULL;
 	xmmsc_visualization_t *v;
 
 	x_check_conn (c, 0);
@@ -355,4 +355,3 @@ xmmsc_visualization_chunk_get (xmmsc_connection_t *c, int vv, short *buffer, int
 }
 
 /** @} */
-

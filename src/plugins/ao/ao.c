@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -66,11 +66,11 @@ static gboolean xmms_ao_try_format (gint driver_id, ao_option *options, xmms_sam
 /*
  * Plugin header
  */
-XMMS_OUTPUT_PLUGIN ("ao",
-                    "libao output",
-                    XMMS_VERSION,
-                    "libao output plugin",
-                    xmms_ao_plugin_setup);
+XMMS_OUTPUT_PLUGIN_DEFINE ("ao",
+                           "libao output",
+                           XMMS_VERSION,
+                           "libao output plugin",
+                           xmms_ao_plugin_setup);
 
 static gboolean
 xmms_ao_plugin_setup (xmms_output_plugin_t *plugin)
@@ -357,4 +357,3 @@ xmms_ao_try_format (gint driver_id, ao_option *options, xmms_sample_format_t for
 
 	return TRUE;
 }
-

@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -16,6 +16,21 @@
 
 #ifndef __RB_COLLECTION_H
 #define __RB_COLLECTION_H
+
+/* FIXME: This is not nice but there's no very clean way around the ugly
+ * warnings, glibc does about the same but on compile time (this could be moved
+ * to waf?) */
+#if defined(__x86_64__)
+#  define XPOINTER_TO_INT(p)      ((int)  (long)  (p))
+#  define XPOINTER_TO_UINT(p)     ((unsigned int)  (unsigned long)  (p))
+#  define XINT_TO_POINTER(i)      ((void *)  (long)  (i))
+#  define XUINT_TO_POINTER(u)     ((void *)  (unsigned long)  (u))
+#else
+#  define XPOINTER_TO_INT(p)      ((int)  (p))
+#  define XPOINTER_TO_UINT(p)     ((unsigned int)  (p))
+#  define XINT_TO_POINTER(i)      ((void *)  (i))
+#  define XUINT_TO_POINTER(u)     ((void *)  (u))
+#endif
 
 void Init_Collection (VALUE mXmms);
 

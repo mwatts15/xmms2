@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -30,8 +30,9 @@ const char *xmmsv_default_source_pref[] = {
 	"server",
 	"client/*",
 	"plugin/playlist",
-	"plugin/id3v2",
 	"plugin/segment",
+	"plugin/nibbler",
+	"plugin/id3v2",
 	"plugin/*",
 	"*",
 	NULL

@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2013 XMMS2 Team
+ *  Copyright (C) 2003-2014 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -223,7 +223,7 @@ typedef struct xmms_output_methods_St {
  * @param desc a description of the plugin
  * @param setupfunc the function that sets up the plugin functions
  */
-#define XMMS_OUTPUT_PLUGIN(shname, name, ver, desc, setupfunc) XMMS_PLUGIN(XMMS_PLUGIN_TYPE_OUTPUT, XMMS_OUTPUT_API_VERSION, shname, name, ver, desc, (gboolean (*)(gpointer))setupfunc)
+#define XMMS_OUTPUT_PLUGIN_DEFINE(shname, name, ver, desc, setupfunc) XMMS_PLUGIN_DEFINE(XMMS_PLUGIN_TYPE_OUTPUT, XMMS_OUTPUT_API_VERSION, shname, name, ver, desc, (gboolean (*)(gpointer))setupfunc)
 
 /**
  * Initialize the #xmms_output_methods_t struct.
