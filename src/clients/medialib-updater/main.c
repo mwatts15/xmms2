@@ -39,6 +39,13 @@ static void on_directory_event (GFileMonitor *monitor, GFile *dir,
                                 GFile *other, GFileMonitorEvent event,
                                 gpointer udata);
 
+static gchar *allowed_suffixes = {
+    "mp3",
+    "flac",
+    "ogg",
+    "m4a",
+};
+
 static void
 unregister_monitor (gpointer ptr)
 {
@@ -207,6 +214,19 @@ updater_add_watcher (updater_t *updater, GFile *file)
 }
 
 static gboolean
+file_name_has_allowed_suffix (const gchar *path)
+{
+    for (int i = 0; i < 4; i++)
+    {
+        if (g_str_has_suffix(path, suffix))
+        {
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+static gboolean
 updater_add_watcher_and_import (updater_t *updater, GFile *file)
 {
 	xmmsc_result_t *res;
@@ -220,16 +240,22 @@ updater_add_watcher_and_import (updater_t *updater, GFile *file)
 	}
 
 	path = g_file_get_path (file);
-	url = g_strdup_printf ("file://%s", path);
-	g_free (path);
+    if (!file_name_has_allowed_suffix(path))
+    {
+        goto ADD_WATCHER_END;
+    }
 
+	url = g_strdup_printf ("file://%s", path);
 	res = xmmsc_medialib_import_path (updater->conn, url);
 	xmmsc_result_unref (res);
 
+    ADD_WATCHER_END:
+	g_free (path);
 	g_free (url);
 
 	return TRUE;
 }
+
 
 static gboolean
 updater_remove_watcher (updater_t *updater, GFile *file)
