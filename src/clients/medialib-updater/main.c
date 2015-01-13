@@ -39,7 +39,7 @@ static void on_directory_event (GFileMonitor *monitor, GFile *dir,
                                 GFile *other, GFileMonitorEvent event,
                                 gpointer udata);
 
-static gchar *allowed_suffixes = {
+static gchar *allowed_suffixes[] = {
     "mp3",
     "flac",
     "ogg",
@@ -216,8 +216,10 @@ updater_add_watcher (updater_t *updater, GFile *file)
 static gboolean
 file_name_has_allowed_suffix (const gchar *path)
 {
-    for (int i = 0; i < 4; i++)
+    int i;
+    for (i = 0; i < 4; i++)
     {
+        const gchar *suffix = allowed_suffixes[i];
         if (g_str_has_suffix(path, suffix))
         {
             return TRUE;
