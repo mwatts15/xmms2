@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2015 XMMS2 Team
+ *  Copyright (C) 2003-2016 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -18,9 +18,14 @@
 #include <xmms/xmms_log.h>
 #include <xmms/xmms_util.h>
 
-#include <cdio/cdda.h>
 #include <cdio/cdio.h>
 #include <cdio/logging.h>
+#if CDIO_API_VERSION >= 6
+#include <cdio/paranoia/cdda.h>
+#else
+#include <cdio/cdda.h>
+#endif
+
 #include <discid/discid.h>
 #include <glib.h>
 #include <stdlib.h>

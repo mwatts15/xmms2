@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2015 XMMS2 Team
+ *  Copyright (C) 2003-2016 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -294,7 +294,7 @@ static void
 xmms_medialib_entry_send_update (xmms_medialib_t *medialib, xmms_medialib_entry_t entry)
 {
 	xmms_object_emit (XMMS_OBJECT (medialib),
-	                  XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_UPDATE,
+	                  XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_CHANGED,
 	                  xmmsv_new_int (entry));
 }
 

@@ -1,5 +1,5 @@
 /*  XMMS2 plugin for decoding MPEG audio using libmpg123
- *  Copyright (C) 2007-2015 XMMS2 Team
+ *  Copyright (C) 2007-2016 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -113,7 +113,7 @@ xmms_mpg123_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	                              "audio/mpeg",
 	                              XMMS_STREAM_TYPE_PRIORITY,
 	                              40,
-	                              NULL);
+	                              XMMS_STREAM_TYPE_END);
 
 	/* Well, I usually only see mp3 and mp2 ... layer 1 files
 	 * are quite rare.

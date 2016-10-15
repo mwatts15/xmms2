@@ -1,7 +1,7 @@
 /** @file faad.c
  *  Decoder plugin for AAC and MP4 audio formats
  *
- *  Copyright (C) 2005-2015 XMMS2 Team
+ *  Copyright (C) 2005-2016 XMMS2 Team
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -89,7 +89,7 @@ xmms_faad_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "audio/aac",
-	                              NULL);
+	                              XMMS_STREAM_TYPE_END);
 
 	xmms_magic_add ("mpeg aac header", "audio/aac",
 	                "0 beshort&0xfff6 0xfff0", NULL);

@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2015 XMMS2 Team
+ *  Copyright (C) 2003-2016 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -28,7 +28,7 @@
  */
 xmmsc_result_t *
 xmmsc_c2c_send (xmmsc_connection_t *c, int dest,
-                xmmsc_c2c_reply_policy_t reply_policy, xmmsv_t *payload)
+                xmms_c2c_reply_policy_t reply_policy, xmmsv_t *payload)
 {
 	uint32_t cookie;
 	xmmsc_result_t *res;
@@ -38,7 +38,7 @@ xmmsc_c2c_send (xmmsc_connection_t *c, int dest,
 	x_api_error_if (!payload, "with NULL payload.", NULL);
 
 	cookie = xmmsc_send_cmd_cookie (c, XMMS_IPC_OBJECT_COURIER,
-	                                XMMS_IPC_CMD_SEND_MESSAGE,
+	                                XMMS_IPC_COMMAND_COURIER_SEND_MESSAGE,
 	                                XMMSV_LIST_ENTRY_INT (dest),
 	                                XMMSV_LIST_ENTRY_INT (reply_policy),
 	                                XMMSV_LIST_ENTRY (xmmsv_ref (payload)),
@@ -72,7 +72,7 @@ xmmsc_c2c_send (xmmsc_connection_t *c, int dest,
  */
 xmmsc_result_t *
 xmmsc_c2c_reply (xmmsc_connection_t *c, int msgid,
-                 xmmsc_c2c_reply_policy_t reply_policy, xmmsv_t *payload)
+                 xmms_c2c_reply_policy_t reply_policy, xmmsv_t *payload)
 {
 	uint32_t cookie;
 	xmmsc_result_t *res;
@@ -82,7 +82,7 @@ xmmsc_c2c_reply (xmmsc_connection_t *c, int msgid,
 	x_api_error_if (!payload, "with NULL payload.", NULL);
 
 	cookie = xmmsc_send_cmd_cookie (c, XMMS_IPC_OBJECT_COURIER,
-	                                XMMS_IPC_CMD_REPLY_MESSAGE,
+	                                XMMS_IPC_COMMAND_COURIER_REPLY,
 	                                XMMSV_LIST_ENTRY_INT (msgid),
 	                                XMMSV_LIST_ENTRY_INT (reply_policy),
 	                                XMMSV_LIST_ENTRY (xmmsv_ref (payload)),
@@ -123,7 +123,32 @@ xmmsc_c2c_get_connected_clients (xmmsc_connection_t *c)
 	x_check_conn (c, NULL);
 
 	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_COURIER,
-	                              XMMS_IPC_CMD_GET_CONNECTED_CLIENTS);
+	                              XMMS_IPC_COMMAND_COURIER_GET_CONNECTED_CLIENTS);
+}
+
+/**
+ * Notify the client's api is ready for query
+ */
+xmmsc_result_t *
+xmmsc_c2c_ready (xmmsc_connection_t *c)
+{
+	x_check_conn (c, NULL);
+
+	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_COURIER,
+	                              XMMS_IPC_COMMAND_COURIER_READY);
+}
+
+/**
+ * Request a list of clients ready for c2c communication.
+ * @param c The connection to the server.
+ */
+xmmsc_result_t *
+xmmsc_c2c_get_ready_clients (xmmsc_connection_t *c)
+{
+	x_check_conn (c, NULL);
+
+	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_COURIER,
+	                              XMMS_IPC_COMMAND_COURIER_GET_READY_CLIENTS);
 }
 
 /**
@@ -143,6 +168,24 @@ xmmsc_broadcast_c2c_message (xmmsc_connection_t *c)
 	if (res) {
 		xmmsc_result_c2c_set (res);
 	}
+
+	return res;
+}
+
+/**
+ * Request the client service ready broadcast.
+ * This broadcast gets triggered when a client notify the server its api is
+ * ready.
+ * @param c The connection to the server.
+ */
+xmmsc_result_t *
+xmmsc_broadcast_c2c_ready (xmmsc_connection_t *c)
+{
+	xmmsc_result_t *res;
+
+	x_check_conn (c, NULL);
+
+	res = xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_COURIER_READY);
 
 	return res;
 }

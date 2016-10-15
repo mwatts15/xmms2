@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2015 XMMS2 Team
+ *  Copyright (C) 2003-2016 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -657,8 +657,6 @@ main (int argc, char **argv)
 {
 	updater_t *updater;
 	GMainLoop *ml;
-
-	g_type_init ();
 
 	ml = g_main_loop_new (NULL, FALSE);
 

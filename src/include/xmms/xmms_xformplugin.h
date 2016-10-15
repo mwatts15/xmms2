@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2015 XMMS2 Team
+ *  Copyright (C) 2003-2016 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -223,6 +223,26 @@ void xmms_xform_plugin_metadata_mapper_init (xmms_xform_plugin_t *xform_plugin,
 void xmms_xform_plugin_indata_add (xmms_xform_plugin_t *plugin, ...) XMMS_PUBLIC;
 
 /**
+ * Set a static output type to the plugin.
+ *
+ * The output stream type is used as a default if the plugin doesn't
+ * override this at runtime.
+ *
+ * Should be called from the plugin's setupfunc.
+ *
+ * @param plugin the plugin
+ * @param ... variable length arguments, terminated with XMMS_STREAM_TYPE_END
+ *
+ * example:
+ * xmms_xform_plugin_set_out_stream_type (plugin,
+ *                                        XMMS_STREAM_TYPE_MIMETYPE,
+ *                                        "application/x-xmms2-playlist-entries",
+ *                                        XMMS_STREAM_TYPE_END);
+ */
+
+void xmms_xform_plugin_set_out_stream_type (xmms_xform_plugin_t *plugin, ...) XMMS_PUBLIC;
+
+/**
  * Get private data for this xform.
  *
  * @param xform current xform
@@ -394,8 +414,6 @@ gint xmms_xform_read (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t 
  */
 gint64 xmms_xform_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t whence, xmms_error_t *err) XMMS_PUBLIC;
 gboolean xmms_xform_iseos (xmms_xform_t *xform) XMMS_PUBLIC;
-
-const xmms_stream_type_t *xmms_xform_get_out_stream_type (xmms_xform_t *xform) XMMS_PUBLIC;
 
 gboolean xmms_magic_add (const gchar *desc, const gchar *mime, ...) XMMS_PUBLIC;
 gboolean xmms_magic_extension_add (const gchar *mime, const gchar *ext) XMMS_PUBLIC;

@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2015 XMMS2 Team
+ *  Copyright (C) 2003-2016 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -325,7 +325,9 @@ xmmsc_sc_namespace_lookup (xmmsc_connection_t *c, xmmsv_t *nms)
 	                "with invalid type in path (string expected).", NULL);
 
 	ifent = xmmsc_sc_locate_interface_entity (c, nms);
-	x_return_null_if_fail (ifent);
+	if (!ifent) {
+		return NULL;
+	}
 
 	return xmmsc_sc_interface_entity_get_namespace (ifent);
 }
@@ -381,7 +383,9 @@ xmmsc_sc_namespace_get (xmmsc_sc_namespace_t *parent, const char *name)
 	relpath = xmmsv_build_list (XMMSV_LIST_ENTRY_STR (name), XMMSV_LIST_END);
 	ifent = xmmsc_sc_namespace_resolve_path (parent, relpath, NULL);
 	xmmsv_unref (relpath);
-	x_return_null_if_fail (ifent);
+	if (!ifent) {
+		return NULL;
+	}
 
 	return xmmsc_sc_interface_entity_get_namespace (ifent);
 }
@@ -529,7 +533,7 @@ introspect_internal (xmmsc_connection_t *c, int dest, xmmsv_t *entity,
 	                        XMMSV_DICT_ENTRY (XMMSC_SC_ARGS_KEY, args),
 	                        XMMSV_DICT_END);
 
-	res = xmmsc_c2c_send (c, dest, XMMS_C2C_REPLY_POLICY_MULTI_REPLY, msg);
+	res = xmmsc_c2c_send (c, dest, XMMS_C2C_REPLY_POLICY_SINGLE_REPLY, msg);
 	xmmsv_unref (msg);
 
 	return res;

@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2015 XMMS2 Team
+ *  Copyright (C) 2003-2016 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -315,7 +315,7 @@ song_changed (void *data)
 		xmms_output_flush (arg->output);
 
 	xmms_object_emit (XMMS_OBJECT (arg->output),
-	                  XMMS_IPC_SIGNAL_PLAYBACK_CURRENTID,
+	                  XMMS_IPC_SIGNAL_PLAYBACK_CURRENT_ID,
 	                  xmmsv_new_int (entry));
 
 	return TRUE;

@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2015 XMMS2 Team
+ *  Copyright (C) 2003-2016 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -212,11 +212,11 @@ xmms_config_property_set_data (xmms_config_property_t *prop, const gchar *data)
 	prop->value = g_strdup (data);
 
 	xmms_object_emit (XMMS_OBJECT (prop),
-	                  XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED,
+	                  XMMS_IPC_SIGNAL_CONFIG_VALUE_CHANGED,
 	                  xmmsv_new_string (data));
 
 	xmms_object_emit (XMMS_OBJECT (global_config),
-	                  XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED,
+	                  XMMS_IPC_SIGNAL_CONFIG_VALUE_CHANGED,
 	                  xmmsv_build_dict (XMMSV_DICT_ENTRY_STR (prop->name, prop->value),
 	                                    XMMSV_DICT_END));
 
@@ -286,7 +286,7 @@ xmms_config_property_callback_set (xmms_config_property_t *prop,
 		return;
 
 	xmms_object_connect (XMMS_OBJECT (prop),
-	                     XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED,
+	                     XMMS_IPC_SIGNAL_CONFIG_VALUE_CHANGED,
 	                     (xmms_object_handler_t) cb, userdata);
 }
 
@@ -306,7 +306,7 @@ xmms_config_property_callback_remove (xmms_config_property_t *prop,
 		return;
 
 	xmms_object_disconnect (XMMS_OBJECT (prop),
-	                        XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED, cb, userdata);
+	                        XMMS_IPC_SIGNAL_CONFIG_VALUE_CHANGED, cb, userdata);
 }
 
 /**
@@ -656,7 +656,7 @@ static GTree *
 create_tree (void)
 {
 	return g_tree_new_full (compare_key, NULL, g_free,
-	                        (GDestroyNotify) __int_xmms_object_unref);
+	                        xmms_object_unref);
 }
 
 /**

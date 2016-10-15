@@ -1,6 +1,6 @@
 /*  XMMS2 - X Music Multiplexer System
  *
- *  Copyright (C) 2003-2015 XMMS2 Team
+ *  Copyright (C) 2003-2016 XMMS2 Team
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -114,7 +114,7 @@ xmms_mad_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "audio/mpeg",
-	                              NULL);
+	                              XMMS_STREAM_TYPE_END);
 
 	xmms_magic_add ("mpeg header", "audio/mpeg",
 	                "0 beshort&0xfff6 0xfff6",

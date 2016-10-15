@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2015 XMMS2 Team
+ *  Copyright (C) 2003-2016 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -69,8 +69,6 @@ xmms_gvfs_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	const gchar * const *schemes, * const *i;
 	gint j;
 	xmms_xform_methods_t methods;
-
-	g_type_init ();
 
 	vfs = g_vfs_get_default ();
 	if (!g_vfs_is_active (vfs)) {

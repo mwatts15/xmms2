@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2015 XMMS2 Team and Ma Xuan
+ *  Copyright (C) 2003-2016 XMMS2 Team and Ma Xuan
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -104,7 +104,7 @@ xmms_mac_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	                              "audio/x-ape",
 	                              XMMS_STREAM_TYPE_PRIORITY,
 	                              60,
-	                              NULL);
+	                              XMMS_STREAM_TYPE_END);
 
 	xmms_magic_add ("Monkey's Audio Magic", "audio/x-ape",
 	                "0 string MAC ", NULL);

@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2015 XMMS2 Team
+ *  Copyright (C) 2003-2016 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -24,6 +24,7 @@ struct xmms_xform_plugin_St {
 	xmms_xform_methods_t methods;
 	GHashTable *metadata_mapper;
 	GList *in_types;
+	xmms_stream_type_t *default_out_type;
 };
 
 static void
@@ -31,12 +32,8 @@ destroy (xmms_object_t *obj)
 {
 	xmms_xform_plugin_t *plugin = (xmms_xform_plugin_t *) obj;
 
-	while (plugin->in_types) {
-		xmms_object_unref (plugin->in_types->data);
-
-		plugin->in_types = g_list_delete_link (plugin->in_types,
-		                                       plugin->in_types);
-	}
+	g_list_free_full (plugin->in_types, xmms_object_unref);
+	xmms_object_unref (plugin->default_out_type);
 
 	if (plugin->metadata_mapper != NULL) {
 		g_hash_table_unref (plugin->metadata_mapper);
@@ -105,8 +102,25 @@ xmms_xform_plugin_indata_add (xmms_xform_plugin_t *plugin, ...)
 	plugin->in_types = g_list_prepend (plugin->in_types, t);
 }
 
+void
+xmms_xform_plugin_set_out_stream_type (xmms_xform_plugin_t *plugin, ...)
+{
+	va_list ap;
+
+	va_start (ap, plugin);
+	plugin->default_out_type = xmms_stream_type_parse (ap);
+	va_end (ap);
+}
+
+
+xmms_stream_type_t *
+xmms_xform_plugin_get_out_stream_type (xmms_xform_plugin_t *plugin)
+{
+	return plugin->default_out_type;
+}
+
 gboolean
-xmms_xform_plugin_supports (const xmms_xform_plugin_t *plugin, xmms_stream_type_t *st,
+xmms_xform_plugin_supports (const xmms_xform_plugin_t *plugin, const xmms_stream_type_t *st,
                             gint *priority)
 {
 	GList *t;
@@ -232,7 +246,9 @@ xmms_xform_plugin_can_destroy (const xmms_xform_plugin_t *plugin)
 gboolean
 xmms_xform_plugin_init (const xmms_xform_plugin_t *plugin, xmms_xform_t *xform)
 {
-	return plugin->methods.init (xform);
+	if (plugin->methods.init)
+		return plugin->methods.init (xform);
+	return TRUE;
 }
 
 gint

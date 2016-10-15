@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2006-2015 XMMS2 Team
+ *  Copyright (C) 2006-2016 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -154,7 +154,7 @@ xmms_wavpack_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "audio/x-wavpack",
-	                              NULL);
+	                              XMMS_STREAM_TYPE_END);
 
 	xmms_magic_add ("wavpack header v4", "audio/x-wavpack",
 	                "0 string wvpk", NULL);

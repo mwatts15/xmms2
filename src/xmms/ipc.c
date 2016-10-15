@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2015 XMMS2 Team
+ *  Copyright (C) 2003-2016 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -175,7 +175,7 @@ xmms_ipc_register_broadcast (xmms_ipc_client_t *client,
 	g_mutex_lock (&client->lock);
 	client->broadcasts[broadcastid] =
 		g_list_append (client->broadcasts[broadcastid],
-				GUINT_TO_POINTER (xmms_ipc_msg_get_cookie (msg)));
+		               GUINT_TO_POINTER (xmms_ipc_msg_get_cookie (msg)));
 
 	g_mutex_unlock (&client->lock);
 }
@@ -202,9 +202,9 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
 	}
 
 	if (objid == XMMS_IPC_OBJECT_SIGNAL) {
-	    if (cmdid == XMMS_IPC_CMD_SIGNAL) {
+		if (cmdid == XMMS_IPC_COMMAND_SIGNAL) {
 			xmms_ipc_register_signal (client, msg, arguments);
-		} else if (cmdid == XMMS_IPC_CMD_BROADCAST) {
+		} else if (cmdid == XMMS_IPC_COMMAND_BROADCAST) {
 			xmms_ipc_register_broadcast (client, msg, arguments);
 		} else {
 			xmms_log_error ("Bad command id (%d) for signal object", cmdid);
@@ -243,23 +243,18 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
 			goto out;
 		}
 
-		retmsg = xmms_ipc_msg_new (objid, XMMS_IPC_CMD_REPLY);
+		retmsg = xmms_ipc_msg_new (objid, XMMS_IPC_COMMAND_REPLY);
 		xmms_ipc_handle_cmd_value (retmsg, arg.retval);
 	} else {
 		/* FIXME: or we could omit setting the command to _CMD_ERROR
 		 * and let the client check whether the value it got is an
 		 * error xmmsv_t. If so, don't forget to
 		 * update the client-side of IPC too. */
-		retmsg = xmms_ipc_msg_new (objid, XMMS_IPC_CMD_ERROR);
+		retmsg = xmms_ipc_msg_new (objid, XMMS_IPC_COMMAND_ERROR);
 
 		error = xmmsv_new_error (xmms_error_message_get (&arg.error));
 		xmms_ipc_msg_put_value (retmsg, error);
 		xmmsv_unref (error);
-
-/*
-		retmsg = xmms_ipc_msg_new (objid, XMMS_IPC_CMD_REPLY);
-		xmms_ipc_handle_cmd_value (retmsg, arg.retval);
-*/
 	}
 
 	if (arg.retval)
@@ -378,7 +373,15 @@ xmms_ipc_client_thread (gpointer data)
 	g_source_attach (source, g_main_loop_get_context (client->ml));
 	g_source_unref (source);
 
+	xmms_object_emit (XMMS_OBJECT (ipc_manager),
+	                  XMMS_IPC_SIGNAL_IPC_MANAGER_CLIENT_CONNECTED,
+	                  xmmsv_new_int(client->id));
+
 	g_main_loop_run (client->ml);
+
+	xmms_object_emit (XMMS_OBJECT (ipc_manager),
+	                  XMMS_IPC_SIGNAL_IPC_MANAGER_CLIENT_DISCONNECTED,
+	                  xmmsv_new_int(client->id));
 
 	xmms_ipc_client_destroy (client);
 
@@ -416,10 +419,6 @@ xmms_ipc_client_new (xmms_ipc_t *ipc, xmms_ipc_transport_t *transport)
 	g_mutex_init (&client->lock);
 	client->id = next_client_id++;
 
-	xmms_object_emit (XMMS_OBJECT (ipc_manager),
-	                  XMMS_IPC_SIGNAL_IPC_MANAGER_CLIENT_CONNECTED,
-	                  xmmsv_new_int(client->id));
-
 	return client;
 }
 
@@ -452,10 +451,6 @@ xmms_ipc_client_destroy (xmms_ipc_client_t *client)
 	for (i = 0; i < XMMS_IPC_SIGNAL_END; i++) {
 		g_list_free (client->broadcasts[i]);
 	}
-
-	xmms_object_emit (XMMS_OBJECT (ipc_manager),
-	                  XMMS_IPC_SIGNAL_IPC_MANAGER_CLIENT_DISCONNECTED,
-	                  xmmsv_new_int(client->id));
 
 	g_mutex_unlock (&client->lock);
 	g_mutex_clear (&client->lock);
@@ -606,7 +601,7 @@ xmms_ipc_client_broadcast_write (guint broadcastid, xmms_ipc_client_t *cli,
 	xmms_ipc_msg_t *msg;
 
 	for (l = cli->broadcasts[broadcastid]; l; l = g_list_next (l)) {
-		msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_BROADCAST);
+		msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_COMMAND_BROADCAST);
 		xmms_ipc_msg_set_cookie (msg, GPOINTER_TO_UINT (l->data));
 		xmms_ipc_handle_cmd_value (msg, arg);
 		if (!xmms_ipc_client_msg_write (cli, msg)) {
@@ -726,7 +721,7 @@ xmms_ipc_signal_cb (xmms_object_t *object, xmmsv_t *arg, gpointer userdata)
 			xmms_ipc_client_t *cli = c->data;
 			g_mutex_lock (&cli->lock);
 			if (cli->pendingsignals[signalid]) {
-				msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_SIGNAL);
+				msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_COMMAND_SIGNAL);
 				xmms_ipc_msg_set_cookie (msg, cli->pendingsignals[signalid]);
 				xmms_ipc_handle_cmd_value (msg, arg);
 				xmms_ipc_client_msg_write (cli, msg);
@@ -760,7 +755,7 @@ xmms_ipc_broadcast_cb (xmms_object_t *object, xmmsv_t *arg, gpointer userdata)
 
 			g_mutex_lock (&cli->lock);
 			for (l = cli->broadcasts[broadcastid]; l; l = g_list_next (l)) {
-				msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_BROADCAST);
+				msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_COMMAND_BROADCAST);
 				xmms_ipc_msg_set_cookie (msg, GPOINTER_TO_UINT (l->data));
 				xmms_ipc_handle_cmd_value (msg, arg);
 				xmms_ipc_client_msg_write (cli, msg);
@@ -785,7 +780,7 @@ xmms_ipc_manager_get ()
  * Register a broadcast signal.
  */
 void
-xmms_ipc_broadcast_register (xmms_object_t *object, xmms_ipc_signals_t signalid)
+xmms_ipc_broadcast_register (xmms_object_t *object, xmms_ipc_signal_t signalid)
 {
 	g_return_if_fail (object);
 	g_mutex_lock (&ipc_object_pool_lock);
@@ -800,7 +795,7 @@ xmms_ipc_broadcast_register (xmms_object_t *object, xmms_ipc_signals_t signalid)
  * Unregister a broadcast signal.
  */
 void
-xmms_ipc_broadcast_unregister (xmms_ipc_signals_t signalid)
+xmms_ipc_broadcast_unregister (xmms_ipc_signal_t signalid)
 {
 	xmms_object_t *obj;
 
@@ -817,7 +812,7 @@ xmms_ipc_broadcast_unregister (xmms_ipc_signals_t signalid)
  * Register a signal
  */
 void
-xmms_ipc_signal_register (xmms_object_t *object, xmms_ipc_signals_t signalid)
+xmms_ipc_signal_register (xmms_object_t *object, xmms_ipc_signal_t signalid)
 {
 	g_return_if_fail (object);
 
@@ -831,7 +826,7 @@ xmms_ipc_signal_register (xmms_object_t *object, xmms_ipc_signals_t signalid)
  * Unregister a signal
  */
 void
-xmms_ipc_signal_unregister (xmms_ipc_signals_t signalid)
+xmms_ipc_signal_unregister (xmms_ipc_signal_t signalid)
 {
 	xmms_object_t *obj;
 
@@ -849,7 +844,7 @@ xmms_ipc_signal_unregister (xmms_ipc_signals_t signalid)
  * want to send commands to that object from the client.
  */
 void
-xmms_ipc_object_register (xmms_ipc_objects_t objectid, xmms_object_t *object)
+xmms_ipc_object_register (xmms_ipc_object_t objectid, xmms_object_t *object)
 {
 	g_mutex_lock (&ipc_object_pool_lock);
 	ipc_object_pool->objects[objectid] = object;
@@ -860,7 +855,7 @@ xmms_ipc_object_register (xmms_ipc_objects_t objectid, xmms_object_t *object)
  * Remove a object from the IPC core.
  */
 void
-xmms_ipc_object_unregister (xmms_ipc_objects_t objectid)
+xmms_ipc_object_unregister (xmms_ipc_object_t objectid)
 {
 	g_mutex_lock (&ipc_object_pool_lock);
 	ipc_object_pool->objects[objectid] = NULL;

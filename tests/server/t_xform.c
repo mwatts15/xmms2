@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2015 XMMS2 Team
+ *  Copyright (C) 2003-2016 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -266,14 +266,14 @@ CASE(test_browse)
 {
 	xmmsv_t *result;
 
-	result = XMMS_IPC_CALL (xform_object, XMMS_IPC_CMD_BROWSE,
+	result = XMMS_IPC_CALL (xform_object, XMMS_IPC_COMMAND_XFORM_BROWSE,
 	                        xmmsv_new_string ("file:///"));
 	CU_ASSERT_TRUE (xmmsv_is_type (result, XMMSV_TYPE_ERROR));
 	xmmsv_unref (result);
 
 	xmms_plugin_load (&xmms_builtin_browse_test_xform, NULL);
 
-	result = XMMS_IPC_CALL (xform_object, XMMS_IPC_CMD_BROWSE,
+	result = XMMS_IPC_CALL (xform_object, XMMS_IPC_COMMAND_XFORM_BROWSE,
 	                        xmmsv_new_string ("file:///"));
 	CU_ASSERT_TRUE (xmmsv_is_type (result, XMMSV_TYPE_LIST));
 	CU_ASSERT_TRUE (xmmsv_list_restrict_type (result, XMMSV_TYPE_DICT));

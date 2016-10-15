@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2015 XMMS2 Team
+ *  Copyright (C) 2003-2016 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -431,7 +431,7 @@ kill_server (gpointer object) {
 	gint uptime = time (NULL) - mainobj->starttime;
 
 	xmms_object_emit (XMMS_OBJECT (object),
-	                  XMMS_IPC_SIGNAL_QUIT,
+	                  XMMS_IPC_SIGNAL_MAIN_QUIT,
 	                  xmmsv_new_int (uptime));
 
 	xmms_object_unref (object);
@@ -499,7 +499,7 @@ static void
 print_version (void)
 {
 	printf ("XMMS2 version " XMMS_VERSION "\n");
-	printf ("Copyright (C) 2003-2015 XMMS2 Team\n");
+	printf ("Copyright (C) 2003-2016 XMMS2 Team\n");
 	printf ("This is free software; see the source for copying conditions.\n");
 	printf ("There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A\n");
 	printf ("PARTICULAR PURPOSE.\n");

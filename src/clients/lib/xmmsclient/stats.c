@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2015 XMMS2 Team
+ *  Copyright (C) 2003-2016 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -40,7 +40,7 @@ xmmsc_main_list_plugins (xmmsc_connection_t *c, xmms_plugin_type_t type)
 {
 	x_check_conn (c, NULL);
 
-	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_MAIN, XMMS_IPC_CMD_PLUGIN_LIST,
+	return xmmsc_send_cmd (c, XMMS_IPC_OBJECT_MAIN, XMMS_IPC_COMMAND_MAIN_LIST_PLUGINS,
 	                       XMMSV_LIST_ENTRY_INT (type), XMMSV_LIST_END);
 }
 
@@ -52,7 +52,7 @@ xmmsc_main_stats (xmmsc_connection_t *c)
 {
 	x_check_conn (c, NULL);
 
-	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_MAIN, XMMS_IPC_CMD_STATS);
+	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_MAIN, XMMS_IPC_COMMAND_MAIN_STATS);
 }
 
 /**

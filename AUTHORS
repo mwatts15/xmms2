@@ -63,6 +63,10 @@ N: Nicolas Botti
 E: r2d@musepack.net
 D: Updates to the musepack plugin to support new APIs.
 
+N: Carlo Bramini
+E: carlo.bramix@libero.it
+D: Minor Windows fixes.
+
 N: Kyle Brantley
 E: scytheblade1@brantleyonline.com
 D: smb fixes
@@ -261,7 +265,8 @@ D: Wavpack plugin fixes/tagging
 
 N: Erik Massop
 E: e.massop@hccnet.nl
-D: "jumplist", cli coll queryadd, bugfixes
+E: emassop@google.com
+D: "jumplist", collections/medialib-related things, various fixes and features
 
 N: Łukasz Michalik
 E: lmi@ift.uni.wroc.pl
@@ -459,6 +464,7 @@ E: bryan.a.taylor@gmail.com
 D: Various fixes
 
 N: Sergei Trofimovich
+E: siarheit@google.com
 E: slyich@gmail.com
 E: slyfox@gentoo.org
 E: slyfox@inbox.ru

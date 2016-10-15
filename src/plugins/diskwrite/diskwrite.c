@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2015 XMMS2 Team
+ *  Copyright (C) 2003-2016 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -139,7 +139,7 @@ xmms_diskwrite_new (xmms_output_t *output)
 	}
 
 	xmms_object_connect (XMMS_OBJECT (output),
-	                     XMMS_IPC_SIGNAL_PLAYBACK_CURRENTID,
+	                     XMMS_IPC_SIGNAL_PLAYBACK_CURRENT_ID,
 	                     on_playlist_entry_changed,
 	                     data);
 
@@ -160,7 +160,7 @@ xmms_diskwrite_destroy (xmms_output_t *output)
 	xmms_config_property_callback_remove (val, on_dest_directory_changed, data);
 
 	xmms_object_disconnect (XMMS_OBJECT (output),
-	                        XMMS_IPC_SIGNAL_PLAYBACK_CURRENTID,
+	                        XMMS_IPC_SIGNAL_PLAYBACK_CURRENT_ID,
 	                        on_playlist_entry_changed,
 	                        data);
 

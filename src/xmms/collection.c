@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2015 XMMS2 Team
+ *  Copyright (C) 2003-2016 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -123,7 +123,7 @@ static xmmsv_t *xmms_collection_client_idlist_from_playlist (xmms_coll_dag_t *da
 #include "collection_ipc.c"
 
 xmmsv_t *
-xmms_collection_changed_msg_new (xmms_collection_changed_actions_t type,
+xmms_collection_changed_msg_new (xmms_collection_changed_action_t type,
                                  const gchar *plname, const gchar *namespace)
 {
 	return xmmsv_build_dict (XMMSV_DICT_ENTRY_INT ("type", type),
@@ -276,6 +276,8 @@ xmms_collection_client_idlist_from_playlist (xmms_coll_dag_t *dag,
 		}
 
 		xmmsv_get_string (value, &realpath);
+		xmmsv_ref (value);
+
 		xmmsv_dict_remove (dict, "realpath");
 		xmmsv_dict_remove (dict, "path");
 
@@ -297,6 +299,8 @@ xmms_collection_client_idlist_from_playlist (xmms_coll_dag_t *dag,
 				xmms_log_error ("couldn't add %s to collection!", realpath);
 			}
 		} while (!xmms_medialib_session_commit (session));
+
+		xmmsv_unref (value);
 	}
 
 	xmmsv_unref (list);

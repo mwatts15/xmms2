@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2015 XMMS2 Team
+ *  Copyright (C) 2003-2016 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -62,7 +62,7 @@ sigwaiter (gpointer data)
 				memset (&arg, 0, sizeof (arg));
 				arg.args = xmmsv_new_list ();
 				xmms_error_reset (&arg.error);
-				xmms_object_cmd_call (obj, XMMS_IPC_CMD_QUIT, &arg);
+				xmms_object_cmd_call (obj, XMMS_IPC_COMMAND_MAIN_QUIT, &arg);
 				xmmsv_unref (arg.args);
 				break;
 		}

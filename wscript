@@ -1,7 +1,7 @@
 # encoding: utf-8
 #
 # WAF build scripts for XMMS2
-# Copyright (C) 2006-2015 XMMS2 Team
+# Copyright (C) 2006-2016 XMMS2 Team
 #
 
 import sys
@@ -26,7 +26,7 @@ APPNAME='xmms2'
 top = '.'
 out = '_build_'
 
-_waf_hexversion = 0x1070f00
+_waf_hexversion = 0x1080b00
 _waf_mismatch_msg = """
 You are building xmms2 with a waf version that is different from the one
 distributed with xmms2. This is not supported by the XMMS2 Team. Before
@@ -176,7 +176,7 @@ def _configure_optionals(conf):
         try:
             conf.recurse(o)
             conf.env.append_value('XMMS_OPTIONAL_BUILD', o)
-            succeeded_optionals.add(o)
+            succeeded_optionals.add(os.path.basename(o))
         except Errors.ConfigurationError:
             if optionals_must_work:
                 # This raises a new exception:
@@ -349,11 +349,11 @@ def configure(conf):
 
     conf.load('gnu_dirs')
     conf.load('man', tooldir='waftools')
-    conf.load('misc')
-    conf.load('gcc')
-    conf.load('g++')
+    conf.load('compiler_c')
+    conf.load('compiler_cxx')
 
     conf.load('visibility', tooldir='waftools')
+    conf.load('localdeps', tooldir='waftools')
 
     if conf.options.target_platform:
         Options.platform = conf.options.target_platform
@@ -361,7 +361,7 @@ def configure(conf):
     nam,changed = gittools.get_info()
     conf.msg("git commit id", nam)
     if conf.options.customversion:
-        conf.env.VERSION = "%s (%s + %s)" % (BASEVERSION, nam, conf.options.customversion)
+        conf.env.VERSION = "%s (%s)" % (BASEVERSION, conf.options.customversion)
     else:
         dirty = changed and "-dirty" or ""
         conf.msg("uncommited changed", changed and "yes" or "no")
@@ -455,7 +455,7 @@ def configure(conf):
             major, minor = [int(x) for x in Options.options.winver.split('.')]
         else:
             try:
-                majot, minor = sys.getwindowsversion()[:2]
+                major, minor = sys.getwindowsversion()[:2]
             except AttributeError:
                 Logs.warn("No Windows version found and no version set. "
                           "Defaulting to 5.1 (XP). You will not be able to use "
@@ -538,6 +538,8 @@ int main() { return 0; }
             enabled_optionals, disabled_optionals,
             output_plugins, warning_cache)
 
+    conf.env.DEFINES += ["XMMS_DISABLE_DEPRECATION_WARNINGS"]
+
     return True
 
 ####
@@ -567,7 +569,8 @@ def _list_cb(option, opt, value, parser):
 
 def options(opt):
     opt.load('gnu_dirs')
-    opt.load('gcc')
+    opt.load('compiler_c')
+    opt.load('compiler_cxx')
 
     opt.add_option('--with-custom-version', type='string',
                    dest='customversion', help="Override git commit hash version")
