@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2016 XMMS2 Team
+ *  Copyright (C) 2003-2017 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -37,6 +37,9 @@ int xmmsv_dict_remove (xmmsv_t *dictv, const char *key) XMMS_PUBLIC;
 int xmmsv_dict_clear (xmmsv_t *dictv) XMMS_PUBLIC;
 int xmmsv_dict_get_size (xmmsv_t *dictv) XMMS_PUBLIC;
 int xmmsv_dict_has_key (xmmsv_t *dictv, const char *key) XMMS_PUBLIC;
+
+int xmmsv_dict_keys (xmmsv_t *dictv, xmmsv_t **keys) XMMS_PUBLIC;
+int xmmsv_dict_values (xmmsv_t *dictv, xmmsv_t **values) XMMS_PUBLIC;
 
 int xmmsv_dict_entry_get_string (xmmsv_t *val, const char *key, const char **r) XMMS_PUBLIC;
 int xmmsv_dict_entry_get_int32 (xmmsv_t *val, const char *key, int32_t *r) XMMS_PUBLIC;

@@ -1,7 +1,7 @@
 # encoding: utf-8
 #
 # WAF build scripts for XMMS2
-# Copyright (C) 2006-2016 XMMS2 Team
+# Copyright (C) 2006-2017 XMMS2 Team
 #
 
 import sys
@@ -26,7 +26,7 @@ APPNAME='xmms2'
 top = '.'
 out = '_build_'
 
-_waf_hexversion = 0x1080b00
+_waf_hexversion = 0x1090900
 _waf_mismatch_msg = """
 You are building xmms2 with a waf version that is different from the one
 distributed with xmms2. This is not supported by the XMMS2 Team. Before
@@ -354,18 +354,19 @@ def configure(conf):
 
     conf.load('visibility', tooldir='waftools')
     conf.load('localdeps', tooldir='waftools')
+    conf.load('python-generator', tooldir='waftools')
 
     if conf.options.target_platform:
-        Options.platform = conf.options.target_platform
+        Utils.unversioned_sys_platform = lambda : conf.options.target_platform
 
-    nam,changed = gittools.get_info()
+    nam, changed = gittools.get_info()
     conf.msg("git commit id", nam)
-    if conf.options.customversion:
-        conf.env.VERSION = "%s (%s)" % (BASEVERSION, conf.options.customversion)
-    else:
-        dirty = changed and "-dirty" or ""
-        conf.msg("uncommited changed", changed and "yes" or "no")
-        conf.env.VERSION = "%s (git commit: %s%s)" % (BASEVERSION, nam, dirty)
+    conf.msg("uncommited changed", changed and "yes" or "no")
+
+    conf.env.VERSION = conf.options.customversion % {
+        "commit": nam + (changed and "-dirty" or ""),
+        "version": BASEVERSION
+    }
 
     for env in ('CFLAGS', 'CXXFLAGS'):
         # Makes sure the env variable exists and is a list
@@ -420,7 +421,7 @@ def configure(conf):
             conf.env.prepend_value('LIBPATH', os.path.join(d, 'lib'))
             conf.env.prepend_value('INCLUDES', os.path.join(d, 'include'))
 
-    if Options.platform != 'win32':
+    if Utils.unversioned_sys_platform() != 'win32':
         conf.env.CFLAGS_cshlib = ['-fPIC', '-DPIC']
         conf.env.CFLAGS_cstlib = ['-fPIC', '-DPIC']
         conf.env.CPPFLAGS_cxxshlib = ['-fPIC', '-DPIC']
@@ -438,19 +439,19 @@ def configure(conf):
         conf.env.cshlib_PATTERN = 'lib%s.dll'
         conf.env.cprogram_PATTERN = '%s.exe'
 
-    if Options.platform == 'darwin':
+    if Utils.unversioned_sys_platform() == 'darwin':
         conf.env.append_value('LINKFLAGS', '-headerpad_max_install_names')
         conf.env.explicit_install_name = True
     else:
         conf.env.explicit_install_name = False
 
-    if Options.platform == 'sunos':
+    if Utils.unversioned_sys_platform() == 'sunos':
         conf.check_cc(function_name='socket', lib='socket', header_name='sys/socket.h', uselib_store='socket')
         conf.env.append_unique('CFLAGS', '-D_POSIX_PTHREAD_SEMANTICS')
         conf.env.append_unique('CFLAGS', '-D_REENTRANT')
         conf.env.append_unique('CFLAGS', '-std=gnu99')
         conf.env.socket_impl = 'socket'
-    elif Options.platform == 'win32':
+    elif Utils.unversioned_sys_platform() == 'win32':
         if conf.options.winver:
             major, minor = [int(x) for x in Options.options.winver.split('.')]
         else:
@@ -492,7 +493,7 @@ int main() { return 0; }
         conf.env.socket_impl = 'posix'
 
     conf.env.xmms_icon = False
-    if Options.platform == 'win32':
+    if Utils.unversioned_sys_platform() == 'win32':
         try:
             conf.load('winres')
         except Errors.ConfigurationError:
@@ -504,7 +505,7 @@ int main() { return 0; }
     # TaskGen.mac_bundle option seems to be no longer silently ignored
     # if gcc -bundle option is not available.
     # TODO: Add --no-mac-bundle in options ?
-    conf.env.mac_bundle_enabled = Options.platform == 'darwin'
+    conf.env.mac_bundle_enabled = Utils.unversioned_sys_platform() == 'darwin'
 
     conf.check_cfg(package='glib-2.0', atleast_version='2.32.0',
                    uselib_store='glib2', args='--cflags --libs')
@@ -573,7 +574,8 @@ def options(opt):
     opt.load('compiler_cxx')
 
     opt.add_option('--with-custom-version', type='string',
-                   dest='customversion', help="Override git commit hash version")
+                   dest='customversion', default="%(version)s (git commit: %(commit)s)",
+                   help="Override git commit hash version, may use %(version)s, %(commit)s")
     opt.add_option('--with-plugins', action="callback", callback=_list_cb,
                    type="string", dest="enable_plugins", default=None,
                    help="Comma separated list of plugins to build")

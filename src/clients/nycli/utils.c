@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2016 XMMS2 Team
+ *  Copyright (C) 2003-2017 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -25,6 +25,51 @@
 #include "compat.h"
 #include "utils.h"
 #include "xmmscall.h"
+
+gint
+xmmsv_strcmp (xmmsv_t **a, xmmsv_t **b)
+{
+	const gchar *as, *bs;
+
+	as = bs = NULL;
+
+	xmmsv_get_string (*a, &as);
+	xmmsv_get_string (*b, &bs);
+
+	return g_strcmp0 (as, bs);
+}
+
+gboolean
+xmmsv_propdict_lengths (xmmsv_t *properties, gint *proplen, gint *srclen)
+{
+	const gchar *source, *property;
+	xmmsv_dict_iter_t *pit, *sit;
+	xmmsv_t *sources;
+	gint outer, inner;
+
+	outer = inner = 0;
+
+	xmmsv_get_dict_iter (properties, &pit);
+	while (xmmsv_dict_iter_pair (pit, &property, &sources)) {
+		outer = MAX (outer, strlen (property));
+		xmmsv_get_dict_iter (sources, &sit);
+		while (xmmsv_dict_iter_pair (sit, &source, NULL)) {
+			inner = MAX (inner, strlen (source));
+			xmmsv_dict_iter_next (sit);
+		}
+		xmmsv_dict_iter_next (pit);
+	}
+
+	if (proplen != NULL) {
+		*proplen = outer;
+	}
+
+	if (srclen != NULL) {
+		*srclen = inner;
+	}
+
+	return (proplen != NULL && *proplen > 0) || (srclen != NULL && *srclen > 0);
+}
 
 #define GOODCHAR(a) ((((a) >= 'a') && ((a) <= 'z')) ||	\
                      (((a) >= 'A') && ((a) <= 'Z')) ||	\

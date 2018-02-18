@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -xe
+set -e
 
 trap exit ERR
 
@@ -53,14 +53,14 @@ MACPORTS_PKGS=(
     "wavpack"
 )
 
-function upload_coverage {
+function retry {
     success=0
     for backoff in 0 5 25 30 60 120 180; do
         if (( $backoff > 0 )); then
-            echo "Upload of coverage metrics failed, retry in $backoff seconds..."
+            echo "$2 failed, retry in $backoff seconds..."
             sleep $backoff
         fi
-        if coveralls -x .c -b build-coverage -i src/xmms -i src/lib -e src/lib/s4/src/tools -E '.*test.*' --gcov-options '\-lp'; then
+        if eval $1; then
             success=1
             break
         fi
@@ -77,19 +77,124 @@ function linux_install {
 }
 
 function linux_build_regular {
+    export PATH=/usr/bin:$PATH
+
     ./waf configure -o build-regular-$CC --prefix=/usr
     ./waf build
-    ./waf install --destdir=destdir-regular-$CC
+    ./waf install --destdir=build-regular-$CC/tmp
 }
 
 function linux_build_coverage {
+    export PATH=/usr/bin:$PATH
+
     ./waf configure -o build-coverage  --prefix=/usr --without-optionals=s4 --enable-gcov --generate-coverage
     ./waf build --generate-coverage --alltests
-    upload_coverage
+
+    function upload_coverage {
+        coveralls -x .c \
+                  -b build-coverage \
+                  -i src/xmms \
+                  -i src/lib \
+                  -e src/lib/s4/src/tools \
+                  -E '.*test.*' \
+                  --gcov-options '\-lp'
+    }
+
+    retry "upload_coverage" "Upload of coverage metrics"
+}
+
+function linux_build_analysis {
+    export PATH=/usr/bin:$PATH
+    config="-analyzer-config stable-report-filename=true"
+
+    clang_version="4.0"
+    scan_build="scan-build-$clang_version"
+
+    # TODO: Should really be in install, needs to be made conditional, and really
+    #       via addons: as it is for precise, see apt-source-whitelist #199.
+    echo "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-$clang_version main" | sudo tee -a /etc/apt/sources.list
+    sudo apt-get update -q
+    sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install clang-$clang_version
+
+    $scan_build $config -o build-analysis/clang \
+                   ./waf configure -o build-analysis --without-optionals=python --with-custom-version=clang-analysis
+
+    # wipe the report from the configure phase, just need to set the tool paths.
+    rm -rf build-analysis/clang
+
+    $scan_build $config -o build-analysis/clang \
+                   ./waf build --notests
+
+    # remove dynamic parts of the report
+    sed -i -r 's/(<tr><th>(User|Date):<\/th><td>)([^<]+)(<\/td><\/tr>)/\1\4/g' build-analysis/clang/*/index.html
+
+    # Generate core / clientlib documentation, strip timestamps
+    echo "</body></html>" > /tmp/footer.html
+    (cat Doxyfile && echo "HTML_FOOTER=/tmp/footer.html") | doxygen -
+    (cd src/clients/lib/xmmsclient && (cat Doxyfile && echo "HTML_FOOTER=/tmp/footer.html") | doxygen -)
+
+    # Generate ruby bindings docs, strip timestamps
+    REALLY_GEM_UPDATE_SYSTEM=1 sudo -E gem update --system
+    gem install rdoc
+    rdoc src/clients/lib/ruby/*.{c,rb} -o doc/ruby
+    find doc/ruby \( -name 'created.rid' -or -name '*.gz' \) -delete
+
+    # Generate perl bindings docs, strip timestamps
+    mkdir doc/perl
+    perl -MPod::Simple::HTMLBatch -e Pod::Simple::HTMLBatch::go build-analysis/src/clients/lib/perl doc/perl
+    sed -i 's/<br >[^<]*//g' doc/perl/index.html
+
+    # Generate python bindings
+    ./waf configure -o build-python --without-xmms2d --with-optionals=python
+    ./waf build
+    ./waf install --destdir=build-python/tmp
+    pip install --user sphinx
+    pip install --user sphinx_py3doc_enhanced_theme
+    (export LD_LIBRARY_PATH=build-python/tmp/usr/local/lib
+     export PYTHONPATH=build-python/tmp/usr/local/lib/python2.7/dist-packages
+     python src/clients/lib/python/sphinx-generator.py doc/python 0.8DrO_o+WiP
+     ~/.local/bin/sphinx-build doc/python doc/python/html
+     rm -rf \
+        doc/python/html/.buildinfo \
+        doc/python/html/.doctrees \
+        doc/python/html/_sources \
+        doc/python/html/objects.inv)
+
+    # Remove all HTML comments, saves some space and removes some dynamic content.
+    find doc -name '*.html' -exec sed -i -e :a -re 's/<!--.*?-->//g;/<!--/N;//ba' {} \;
+
+    if [[ $UPLOAD_DOCS = 1 ]]; then
+        function github_docs_clone {
+            git clone https://$CI_USER_TOKEN@github.com/xmms2/docs.git github-docs &> /dev/null
+        }
+
+        retry "github_docs_clone" "Fetching xmms2/docs.git repo"
+
+        rm -rf github-docs/clang github-docs/api
+
+        mv build-analysis/clang/* github-docs/clang
+
+        mkdir github-docs/api
+        mv doc/xmms2/html github-docs/api/xmms2
+        mv doc/xmmsclient/html github-docs/api/xmmsclient
+        mv doc/ruby github-docs/api/ruby
+        mv doc/perl github-docs/api/perl
+        mv doc/python/html github-docs/api/python
+
+        cd github-docs
+        git add clang api
+        git commit -a -m "Automatic update of API docs / Clang Static Analysis" || true
+
+        function github_docs_push {
+            git push &> /dev/null
+        }
+
+        retry "github_docs_push" "Pushing to xmms2/docs.git repo"
+    fi
 }
 
 function darwin_install {
-    filename=MacPorts-2.3.4-10.11-ElCapitan.pkg
+    filename=MacPorts-2.4.1-10.11-ElCapitan.pkg
     curl -O "https://distfiles.macports.org/MacPorts/$filename"
     sudo installer -pkg $filename -target /
 
@@ -99,7 +204,7 @@ function darwin_install {
     sudo port selfupdate
     for pkg in "${MACPORTS_PKGS[@]}"
     do
-        sudo port install --no-rev-upgrade $pkg
+        sudo port -N install --no-rev-upgrade $pkg
     done
 
     sudo port select --set python python27
@@ -111,7 +216,7 @@ function darwin_build_regular {
 
     ./waf configure --conf-prefix=/opt/local -o build-regular-$CC --prefix=/usr
     ./waf build
-    ./waf install --destdir=destdir-regular-$CC
+    ./waf install --destdir=build-regular-$CC/tmp
 }
 
 case "$1" in
@@ -139,6 +244,8 @@ case "$1" in
                 esac ;;
             "coverage")
                 linux_build_coverage ;;
+            "analysis")
+                linux_build_analysis ;;
             *)
                 echo "ERROR: No build:coverage target for '$TARGET_OS_NAME'"
                 exit 1 ;;

@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2016 XMMS2 Team
+ *  Copyright (C) 2003-2017 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -21,6 +21,8 @@
 
 #include <glib.h>
 
+gint xmmsv_strcmp (xmmsv_t **a, xmmsv_t **b);
+gboolean xmmsv_propdict_lengths (xmmsv_t *properties, gint *proplen, gint *srclen);
 xmmsv_t *xmmsv_coll_intersect_with_playlist (xmmsv_t *coll, const gchar *playlist);
 xmmsv_t *xmmsv_coll_apply_default_order (xmmsv_t *query);
 xmmsv_t *xmmsv_coll_from_stdin (void);

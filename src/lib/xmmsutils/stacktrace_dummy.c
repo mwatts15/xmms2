@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2016 XMMS2 Team
+ *  Copyright (C) 2003-2017 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -14,7 +14,7 @@
  *  Lesser General Public License for more details.
  */
 
-#include <xmmsc/xmmsc_util.h>
+#include <xmmscpriv/xmmsc_util.h>
 
 void
 xmms_dump_stack (void)
