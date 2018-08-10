@@ -1,0 +1,15 @@
+JOBS=8
+keep_goingp ()
+{
+    echo "Keep going [y/N]"
+    read answer
+    if [ x$answer != "xy" ] ; then exit ; fi
+}
+PLUGINS=flac,icymetaint,id3v2,m3u,mad,mp4,musepack,vorbis,file,normalize,wave,sndfile,equalizer,gvfs,ices,replaygain,pulse,pls
+OPTIONALS=tests,s4,sqlite2s4,launcher,medialib-updater,migrate-collections,nycli,python,vistest,ruby
+
+./waf configure --jobs=$JOBS --generate-coverage --alltests --progress --with-optionals=$OPTIONALS --with-plugins=$PLUGINS
+keep_goingp
+./waf --jobs=$JOBS build
+keep_goingp
+sudo ./waf --jobs=$JOBS install
