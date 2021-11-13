@@ -61,6 +61,7 @@ static void header_handler_contentlength (xmms_xform_t *xform, gchar *header);
 static void header_handler_icy_metaint (xmms_xform_t *xform, gchar *header);
 static void header_handler_icy_name (xmms_xform_t *xform, gchar *header);
 static void header_handler_icy_genre (xmms_xform_t *xform, gchar *header);
+static void header_handler_content_type (xmms_xform_t *xform, gchar *header);
 static handler_func_t header_handler_find (gchar *header);
 
 typedef struct {
