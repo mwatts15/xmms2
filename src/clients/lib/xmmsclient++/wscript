@@ -33,11 +33,12 @@ def build(bld):
     tool.add_install_flag(bld, obj)
 
 def configure(conf):
-    conf.load('boost')
-    conf.check_boost()
-    conf.env.XMMS_PKGCONF_FILES.append(('xmms2-client-cpp', '-lxmmsclient -lxmmsclient++'))
+    #conf.load('boost')
+    #conf.check_boost()
+    #conf.env.XMMS_PKGCONF_FILES.append(('xmms2-client-cpp', '-lxmmsclient -lxmmsclient++'))
 
     return True
 
 def options(opt):
-    opt.load('boost')
+    #opt.load('boost')
+    pass
