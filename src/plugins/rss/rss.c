@@ -49,11 +49,18 @@ xmms_rss_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	                              XMMS_STREAM_TYPE_MIMETYPE,
 	                              "application/x-xmms2-xml+rss",
 	                              XMMS_STREAM_TYPE_END);
+	xmms_xform_plugin_indata_add (xform_plugin,
+	                              XMMS_STREAM_TYPE_MIMETYPE,
+	                              "application/rss+xml",
+	                              XMMS_STREAM_TYPE_END);
 	xmms_xform_plugin_set_out_stream_type (xform_plugin,
 	                                       XMMS_STREAM_TYPE_MIMETYPE,
 	                                       "application/x-xmms2-playlist-entries",
 	                                       XMMS_STREAM_TYPE_END);
 
+	xmms_magic_add ("rss tag", "application/x-xmms2-xml+rss",
+	                "0 string/c <rss ",
+	                NULL);
 	xmms_magic_extension_add ("application/xml", "*.rss");
 
 	return TRUE;

@@ -73,6 +73,7 @@ handler_t handlers[] = {
 	{ "icy-metaint", header_handler_icy_metaint },
 	{ "icy-name", header_handler_icy_name },
 	{ "icy-genre", header_handler_icy_genre },
+    { "content-type", header_handler_content_type },
 /*	{ "\r\n", header_handler_last }, */
 	{ NULL, NULL }
 };
@@ -567,6 +568,16 @@ header_handler_icy_genre (xmms_xform_t *xform,
 {
 	const gchar *metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE;
 	xmms_xform_metadata_set_str (xform, metakey, header);
+}
+
+static void
+header_handler_content_type (xmms_xform_t *xform,
+                             gchar *header)
+{
+	xmms_xform_plugin_set_out_stream_type (xform_plugin,
+	                                       XMMS_STREAM_TYPE_MIMETYPE,
+	                                       header,
+	                                       XMMS_STREAM_TYPE_END);
 }
 
 static void
