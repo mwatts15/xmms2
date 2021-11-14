@@ -83,10 +83,10 @@ xmms_mediainfo_reader_start (xmms_medialib_t *medialib)
 	g_mutex_init (&mrt->mutex);
 	g_cond_init (&mrt->cond);
 	mrt->running = TRUE;
-	mrt->thread = g_thread_new ("x2 media info", xmms_mediainfo_reader_thread, mrt);
 
 	xmms_object_ref (medialib);
 	mrt->medialib = medialib;
+	mrt->thread = g_thread_new ("x2 media info", xmms_mediainfo_reader_thread, mrt);
 
 
 	xmms_object_connect (XMMS_OBJECT (mrt->medialib),
