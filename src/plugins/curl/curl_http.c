@@ -305,9 +305,9 @@ xmms_curl_init (xmms_xform_t *xform)
 		xmms_xform_auxdata_set_int (xform, "meta_offset", data->meta_offset);
 
 		xmms_xform_outdata_type_add (xform,
-		                             XMMS_STREAM_TYPE_MIMETYPE,
-		                             "application/x-icy-stream",
-		                             XMMS_STREAM_TYPE_END);
+				XMMS_STREAM_TYPE_MIMETYPE,
+				"application/x-icy-stream",
+				XMMS_STREAM_TYPE_END);
 	}
 
 	return TRUE;
@@ -352,6 +352,9 @@ fill_buffer (xmms_xform_t *xform, xmms_curl_data_t *data, xmms_error_t *error)
 			}
 		}
 
+        // unpause...if we're trying to fill the buffer, then we probably need
+        // more data
+        curl_easy_pause(data->curl_easy, CURLPAUSE_CONT);
 		data->curl_code = curl_multi_perform (data->curl_multi, &handles);
 
 		if (data->curl_code != CURLM_CALL_MULTI_PERFORM &&
@@ -377,7 +380,7 @@ fill_buffer (xmms_xform_t *xform, xmms_curl_data_t *data, xmms_error_t *error)
 					xmms_log_error ("Curl fill_buffer returned error: (%d) %s",
 					                curlmsg->data.result,
 					                curl_easy_strerror (curlmsg->data.result));
-				} else {
+				} else if (curlmsg->msg != CURLMSG_DONE) {
 					XMMS_DBG ("Curl fill_buffer returned unknown message (%d)", curlmsg->msg);
 				}
 			} while (messages > 0);
@@ -462,10 +465,14 @@ xmms_curl_callback_write (void *ptr, size_t size, size_t nmemb, void *stream)
 
 	len = size * nmemb;
 
-	g_return_val_if_fail ((data->bufferlen + len) <= CURL_MAX_WRITE_SIZE, 0);
-
-	memcpy (data->buffer + data->bufferlen, ptr, len);
-	data->bufferlen = data->bufferlen + len;
+    if ((data->bufferlen + len) > CURL_MAX_WRITE_SIZE) {
+        // dude, can't handle it....
+        return CURL_WRITEFUNC_PAUSE;
+    }
+    if (len) {
+        memcpy (data->buffer + data->bufferlen, ptr, len);
+        data->bufferlen = data->bufferlen + len;
+    }
 
 	return len;
 }
