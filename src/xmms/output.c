@@ -381,6 +381,7 @@ xmms_output_filler (void *arg)
 	while (output->filler_state != FILLER_QUIT) {
 		if (output->filler_state == FILLER_STOP) {
 			if (chain) {
+                XMMS_DBG("Got FILTER_STOP. Cleaning up the chain, %p", chain);
 				xmms_object_unref (chain);
 				chain = NULL;
 			}
@@ -410,6 +411,9 @@ xmms_output_filler (void *arg)
 			ret = xmms_xform_this_seek (chain, output->filler_seek, XMMS_XFORM_SEEK_SET, &err);
 			if (ret == -1) {
 				XMMS_DBG ("Seeking failed: %s", xmms_error_message_get (&err));
+				xmms_error_reset (&err);
+				output->filler_state = FILLER_STOP;
+                continue;
 			} else {
 				XMMS_DBG ("Seek ok! %d", ret);
 
@@ -484,6 +488,7 @@ xmms_output_filler (void *arg)
 		g_mutex_unlock (&output->filler_mutex);
 
 		ret = xmms_xform_this_read (chain, buf, sizeof (buf), &err);
+        XMMS_DBG("xform read result: %d", ret);
 
 		g_mutex_lock (&output->filler_mutex);
 
@@ -500,6 +505,7 @@ xmms_output_filler (void *arg)
 		} else {
 			if (ret == -1) {
 				/* print error */
+                xmms_log_error("xform read error: %s", xmms_error_message_get (&err));
 				xmms_error_reset (&err);
 			}
 			xmms_object_unref (chain);
@@ -1011,7 +1017,9 @@ xmms_output_format_set (xmms_output_t *output, xmms_stream_type_t *fmt)
 
 		ret = xmms_output_plugin_method_format_set (output->plugin, output, fmt);
 		if (ret) {
-			xmms_object_unref (output->format);
+            if (output->format) {
+                xmms_object_unref (output->format);
+            }
 			xmms_object_ref (fmt);
 			output->format = fmt;
 		}
@@ -1023,7 +1031,6 @@ xmms_output_format_set (xmms_output_t *output, xmms_stream_type_t *fmt)
 			output->format = fmt;
 		}
 		if (!output->format) {
-			xmms_object_unref (output->format);
 			xmms_object_ref (fmt);
 			output->format = fmt;
 		}

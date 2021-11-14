@@ -177,7 +177,7 @@ xmms_mediainfo_reader_thread (gpointer data)
 
 		session = xmms_medialib_session_begin (mrt->medialib);
 		entry = xmms_medialib_entry_not_resolved_get (session);
-		XMMS_DBG ("got %d as not resolved", entry);
+		XMMS_DBG ("Got unresolved entry, %d", entry);
 
 		if (!entry) {
 			xmms_medialib_session_abort (session);
@@ -212,10 +212,15 @@ xmms_mediainfo_reader_thread (gpointer data)
 		xform = xmms_xform_chain_setup_session (mrt->medialib, session, entry,
 		                                        goal_format, TRUE);
 
+        XMMS_DBG ("xform is %sset. medialib entry status = %d",
+                ((!!xform)?"":"NOT "),
+                prev_status);
 		if (!xform) {
 			if (prev_status == XMMS_MEDIALIB_ENTRY_STATUS_NEW) {
+                XMMS_DBG ("Removing entry");
 				xmms_medialib_entry_remove (session, entry);
 			} else {
+                XMMS_DBG ("Setting status as not available");
 				xmms_medialib_entry_status_set (session, entry,
 				                                XMMS_MEDIALIB_ENTRY_STATUS_NOT_AVAILABLE);
 			}

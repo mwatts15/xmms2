@@ -652,7 +652,7 @@ xmms_xform_metadata_collect (xmms_medialib_session_t *session,
 	metadata_festate_t info;
 	gint times_played;
 	gint last_started;
-	GTimeVal now;
+	gint64 now;
 
 	info.entry = start->entry;
 
@@ -683,11 +683,11 @@ xmms_xform_metadata_collect (xmms_medialib_session_t *session,
 	                                      times_played + (rehashing ? 0 : 1));
 
 	if (!rehashing || (rehashing && last_started)) {
-		g_get_current_time (&now);
+        now = g_get_real_time() / 1000000;
 
 		xmms_medialib_entry_property_set_int (session, info.entry,
 		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_LASTSTARTED,
-		                                      (rehashing ? last_started : now.tv_sec));
+		                                      (rehashing ? last_started : now));
 	}
 
 	xmms_medialib_entry_status_set (session, info.entry,
@@ -947,8 +947,9 @@ xmms_xform_this_read (xmms_xform_t *xform, gpointer buf, gint siz,
 		gint res;
 
 		res = xmms_xform_plugin_read (xform->plugin, xform, buf + read, siz - read, err);
-		if (xform->metadata_collected && xform->metadata_changed)
-			xmms_xform_metadata_update (xform);
+		if (xform->metadata_collected && xform->metadata_changed) {
+            xmms_xform_metadata_update (xform);
+        }
 
 		if (res < -1) {
 			XMMS_DBG ("Read method of %s returned bad value (%d) - BUG IN PLUGIN", xmms_xform_shortname (xform), res);
@@ -962,8 +963,9 @@ xmms_xform_this_read (xmms_xform_t *xform, gpointer buf, gint siz,
 			xform->error = TRUE;
 			return -1;
 		} else {
-			if (read == 0)
-				xmms_xform_hotspots_update (xform);
+			if (read == 0) {
+                xmms_xform_hotspots_update (xform);
+            }
 
 			if (!g_queue_is_empty (xform->hotspots)) {
 				if (xform->buffered + res > xform->buffersize) {
@@ -973,7 +975,7 @@ xmms_xform_this_read (xmms_xform_t *xform, gpointer buf, gint siz,
 					                           xform->buffersize);
 				}
 
-				g_memmove (xform->buffer + xform->buffered, buf + read, res);
+				memmove (xform->buffer + xform->buffered, buf + read, res);
 				xform->buffered += res;
 				break;
 			}
@@ -1370,8 +1372,10 @@ xmms_xform_chain_setup (xmms_medialib_t *medialib, xmms_medialib_entry_t entry,
 		if (ret != NULL)
 			xmms_object_unref (ret);
 		ret = xmms_xform_chain_setup_session (medialib, session, entry, goal_formats, rehash);
+        XMMS_DBG ("xform chain setup ret = %p", ret);
 	} while (!xmms_medialib_session_commit (session));
 
+    XMMS_DBG ("Committed xform chain setup ret = %p", ret);
 	return ret;
 }
 

@@ -16,6 +16,7 @@
 
 #include <xmmspriv/xmms_medialib.h>
 #include <xmms/xmms_object.h>
+#include <xmms/xmms_log.h>
 #include <string.h>
 
 struct xmms_medialib_session_St {
@@ -76,7 +77,8 @@ xmms_medialib_session_commit (xmms_medialib_session_t *session)
 	GHashTableIter iter;
 	gpointer key;
 
-	if (!s4_commit (session->trans)) {
+	if (s4_commit (session->trans) == 0) {
+        XMMS_DBG ("Transaction failed: %s", s4_strerror());
 		xmms_medialib_session_free_full (session);
 		return FALSE;
 	}

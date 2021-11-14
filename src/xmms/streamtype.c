@@ -199,6 +199,7 @@ match_val (xmms_stream_type_val_t *vin, xmms_stream_type_val_t *vout)
 		return FALSE;
 	switch (vin->type) {
 	case STRING:
+        XMMS_DBG ("Matching %s to %s", vin->d.string, vout->d.string);
 		return g_pattern_match_simple (vin->d.string, vout->d.string);
 	case INT:
 		return vin->d.num == vout->d.num;
