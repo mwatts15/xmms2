@@ -41,19 +41,12 @@ included as well)
 HELPING
 -------
 
-Please send patches to the mailing list or bug tracker! A good starting point
-for further info might be: http://xmms2.org/wiki/Developer_Corner
+Create a [GitHub issue](https://github.com/mwatts15/xmms2-devel/issues) and
+create a pull request. 
 
 
 CONTACT
 -------
 
-Feel free to post any questions/patches/whatever to the mailing list:
-xmms2-devel@lists.xmms2.org
-(http://lists.xmms2.org/cgi-bin/mailman/listinfo/xmms2-devel for subscription)
-
-The IRC channel is usually fairly active as well, chat away at: #xmms2 on
-freenode (irc.freenode.net)
-
-Report bugs to the bug tracker at: http://bugs.xmms2.org/ (account registration
-required - Linus, you can just post the reports to the mailing list)
+Chat on [Gitter](https://app.element.io/#/room/#mwatts15_xmms2:gitter.im) or
+[via the Matrix bridge](https://matrix.to/#/#mwatts15_xmms2:gitter.im)
