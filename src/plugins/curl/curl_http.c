@@ -88,7 +88,7 @@ static gboolean xmms_curl_init (xmms_xform_t *xform);
 static void xmms_curl_destroy (xmms_xform_t *xform);
 static gint fill_buffer (xmms_xform_t *xform, xmms_curl_data_t *data, xmms_error_t *error);
 static gint xmms_curl_read (xmms_xform_t *xform, void *buffer, gint len, xmms_error_t *error);
-static gint64 xmms_curl_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t whence, xmms_error_t *error);
+/*static gint64 xmms_curl_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t whence, xmms_error_t *error);*/
 static size_t xmms_curl_callback_write (void *ptr, size_t size, size_t nmemb, void *stream);
 static size_t xmms_curl_callback_header (void *ptr, size_t size, size_t nmemb, void *stream);
 
@@ -112,7 +112,7 @@ xmms_curl_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	methods.init = xmms_curl_init;
 	methods.destroy = xmms_curl_destroy;
 	methods.read = xmms_curl_read;
-    methods.seek = xmms_curl_seek;
+    /*methods.seek = xmms_curl_seek;*/
 
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
@@ -596,9 +596,9 @@ xmms_curl_free_data (xmms_curl_data_t *data)
 	g_free (data);
 }
 
-static gint64
-xmms_curl_seek (xmms_xform_t *xform, gint64 offset,
-                xmms_xform_seek_mode_t whence, xmms_error_t *error) {
-    xmms_error_set (error, XMMS_ERROR_INVAL, "Couldn't seek");
-    return -1;
-}
+/*static gint64*/
+/*xmms_curl_seek (xmms_xform_t *xform, gint64 offset,*/
+                /*xmms_xform_seek_mode_t whence, xmms_error_t *error) {*/
+    /*xmms_error_set (error, XMMS_ERROR_INVAL, "Couldn't seek");*/
+    /*return -1;*/
+/*}*/

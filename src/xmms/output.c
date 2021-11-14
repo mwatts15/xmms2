@@ -410,7 +410,7 @@ xmms_output_filler (void *arg)
 
 			ret = xmms_xform_this_seek (chain, output->filler_seek, XMMS_XFORM_SEEK_SET, &err);
 			if (ret == -1) {
-				XMMS_DBG ("Seeking failed: %s", xmms_error_message_get (&err));
+				xmms_log_info ("Seeking failed: %s", xmms_error_message_get (&err));
 				xmms_error_reset (&err);
 			} else {
 				XMMS_DBG ("Seek ok! %d", ret);
