@@ -412,8 +412,6 @@ xmms_output_filler (void *arg)
 			if (ret == -1) {
 				XMMS_DBG ("Seeking failed: %s", xmms_error_message_get (&err));
 				xmms_error_reset (&err);
-				output->filler_state = FILLER_STOP;
-                continue;
 			} else {
 				XMMS_DBG ("Seek ok! %d", ret);
 
@@ -488,7 +486,6 @@ xmms_output_filler (void *arg)
 		g_mutex_unlock (&output->filler_mutex);
 
 		ret = xmms_xform_this_read (chain, buf, sizeof (buf), &err);
-        XMMS_DBG("xform read result: %d", ret);
 
 		g_mutex_lock (&output->filler_mutex);
 
