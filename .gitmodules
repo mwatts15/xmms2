@@ -3,4 +3,4 @@
 	url = https://github.com/xmms2/xmms2-tutorial
 [submodule "src/lib/s4"]
 	path = src/lib/s4
-	url = https://github.com/xmms2/s4
+	url = https://github.com/mwatts15/s4
