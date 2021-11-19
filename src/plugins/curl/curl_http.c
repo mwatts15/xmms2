@@ -20,13 +20,17 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <inttypes.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
 
 #include <string.h>
 
+#include <glib.h>
 #include <curl/curl.h>
+
+#define ICY_METADATA_HEADER "Icy-MetaData: 1"
 
 /*
  * Type definitions
@@ -42,9 +46,14 @@ typedef struct {
 
 	struct curl_slist *http_200_aliases;
 	struct curl_slist *http_req_headers;
+	gboolean should_request_metadata;
 
 	gchar *buffer;
-	guint bufferpos, bufferlen;
+	guint bufferlen;
+
+	/* the position from where we started. used for seeking and
+	 * recovering after a broken pipe */
+	gint64 stream_position;
 
 	gint curl_code;
 
@@ -53,6 +62,7 @@ typedef struct {
 	xmms_error_t status;
 
 	gboolean broken_version;
+	gboolean accepts_ranges;
 } xmms_curl_data_t;
 
 typedef void (*handler_func_t) (xmms_xform_t *xform, gchar *header);
@@ -62,7 +72,10 @@ static void header_handler_icy_metaint (xmms_xform_t *xform, gchar *header);
 static void header_handler_icy_name (xmms_xform_t *xform, gchar *header);
 static void header_handler_icy_genre (xmms_xform_t *xform, gchar *header);
 static void header_handler_content_type (xmms_xform_t *xform, gchar *header);
+static void header_handler_accept_ranges (xmms_xform_t *xform, gchar *header);
+static void header_handler_content_range (xmms_xform_t *xform, gchar *header);
 static handler_func_t header_handler_find (gchar *header);
+static void generate_headers(xmms_curl_data_t *data);
 
 typedef struct {
 	const gchar *name;
@@ -74,7 +87,9 @@ handler_t handlers[] = {
 	{ "icy-metaint", header_handler_icy_metaint },
 	{ "icy-name", header_handler_icy_name },
 	{ "icy-genre", header_handler_icy_genre },
-    { "content-type", header_handler_content_type },
+	{ "content-type", header_handler_content_type },
+	{ "accept-ranges", header_handler_accept_ranges },
+	{ "content-range", header_handler_content_range },
 /*	{ "\r\n", header_handler_last }, */
 	{ NULL, NULL }
 };
@@ -88,7 +103,7 @@ static gboolean xmms_curl_init (xmms_xform_t *xform);
 static void xmms_curl_destroy (xmms_xform_t *xform);
 static gint fill_buffer (xmms_xform_t *xform, xmms_curl_data_t *data, xmms_error_t *error);
 static gint xmms_curl_read (xmms_xform_t *xform, void *buffer, gint len, xmms_error_t *error);
-/*static gint64 xmms_curl_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t whence, xmms_error_t *error);*/
+static gint64 xmms_curl_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t whence, xmms_error_t *error);
 static size_t xmms_curl_callback_write (void *ptr, size_t size, size_t nmemb, void *stream);
 static size_t xmms_curl_callback_header (void *ptr, size_t size, size_t nmemb, void *stream);
 
@@ -112,7 +127,7 @@ xmms_curl_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	methods.init = xmms_curl_init;
 	methods.destroy = xmms_curl_destroy;
 	methods.read = xmms_curl_read;
-    /*methods.seek = xmms_curl_seek;*/
+	methods.seek = xmms_curl_seek;
 
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
@@ -163,6 +178,18 @@ xmms_curl_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	return TRUE;
 }
 
+static void generate_headers(xmms_curl_data_t *data) {
+    struct curl_slist *headers = NULL;
+    curl_slist_free_all(data->http_req_headers);
+    data->http_req_headers = NULL;
+
+    if (data->should_request_metadata) {
+        headers = curl_slist_append (headers,
+                ICY_METADATA_HEADER);
+    }
+    data->http_req_headers = headers;
+}
+
 /*
  * Member functions
  */
@@ -185,7 +212,8 @@ xmms_curl_init (xmms_xform_t *xform)
 
 	data = g_new0 (xmms_curl_data_t, 1);
 	data->broken_version = FALSE;
-
+	// By default, we'll give it a go
+	data->accepts_ranges = TRUE;
 	val = xmms_xform_config_lookup (xform, "connecttimeout");
 	connecttimeout = xmms_config_property_get_int (val);
 
@@ -233,10 +261,9 @@ xmms_curl_init (xmms_xform_t *xform)
 	}
 
 	if (!data->broken_version && metaint == 1) {
-		data->http_req_headers = curl_slist_append (data->http_req_headers,
-		                                            "Icy-MetaData: 1");
+		data->should_request_metadata = TRUE;
 	}
-
+	generate_headers(data);
 	data->curl_easy = curl_easy_init ();
 
 	curl_easy_setopt (data->curl_easy, CURLOPT_URL, data->url);
@@ -423,6 +450,7 @@ xmms_curl_read (xmms_xform_t *xform, void *buffer, gint len,
 			if (data->bufferlen) {
 				memmove (data->buffer, data->buffer + len, data->bufferlen);
 			}
+			data->stream_position += len;
 			return len;
 		}
 
@@ -587,6 +615,33 @@ header_handler_content_type (xmms_xform_t *xform,
 }
 
 static void
+header_handler_accept_ranges (xmms_xform_t *xform,
+                             gchar *header)
+{
+    XMMS_DBG ("Handling accept-ranges: %s", header);
+    xmms_curl_data_t *data = xmms_xform_private_data_get (xform);
+    if (g_ascii_strncasecmp("none", header, 4) == 0) {
+        data->accepts_ranges = FALSE;
+    }
+}
+
+static void
+header_handler_content_range (xmms_xform_t *xform,
+                             gchar *header)
+{
+	XMMS_DBG ("Handling content-range: %s", header);
+	xmms_curl_data_t *data = xmms_xform_private_data_get (xform);
+    if (g_str_has_prefix(header, "bytes ")) {
+        header += 6;
+        gint64 new_stream_pos = g_ascii_strtoll(header, NULL, 10);
+        if (new_stream_pos) {
+            XMMS_DBG ("Set stream position: %"PRIi64, new_stream_pos);
+            data->stream_position = new_stream_pos;
+        }
+    }
+}
+
+static void
 xmms_curl_free_data (xmms_curl_data_t *data)
 {
 	g_return_if_fail (data);
@@ -603,9 +658,48 @@ xmms_curl_free_data (xmms_curl_data_t *data)
 	g_free (data);
 }
 
-/*static gint64*/
-/*xmms_curl_seek (xmms_xform_t *xform, gint64 offset,*/
-                /*xmms_xform_seek_mode_t whence, xmms_error_t *error) {*/
-    /*xmms_error_set (error, XMMS_ERROR_INVAL, "Couldn't seek");*/
-    /*return -1;*/
-/*}*/
+static gint64
+xmms_curl_seek (xmms_xform_t *xform, gint64 offset,
+        xmms_xform_seek_mode_t whence, xmms_error_t *error) {
+
+    xmms_curl_data_t *data;
+    data = xmms_xform_private_data_get (xform);
+
+    if (data->accepts_ranges && whence == XMMS_XFORM_SEEK_SET) {
+        gchar *range_header = NULL;
+        if (whence == XMMS_XFORM_SEEK_SET) {
+            range_header = g_strdup_printf("Range: bytes=%"PRIi64"-", offset);
+        }
+        // regen headers to make sure we aren't doubling up a range header or something
+        generate_headers(data);
+        if (range_header) {
+            data->http_req_headers = curl_slist_append (data->http_req_headers,
+                    range_header);
+            g_free(range_header);
+        } else {
+            xmms_log_error("Unable to allocate range header");
+            return -1;
+        }
+        curl_easy_setopt (data->curl_easy, CURLOPT_HTTPHEADER, data->http_req_headers);
+        curl_easy_pause (data->curl_easy, CURLPAUSE_RECV);
+
+        CURL *newhandle = curl_easy_duphandle(data->curl_easy);
+
+        curl_multi_remove_handle(data->curl_multi, data->curl_easy);
+        curl_easy_cleanup(data->curl_easy);
+
+        data->curl_easy = newhandle;
+        curl_multi_add_handle (data->curl_multi, data->curl_easy);
+
+        // "clear" the buffer
+        data->bufferlen = 0;
+        if (fill_buffer (xform, data, error) <= 0) {
+            return -1;
+        }
+        // the content-range callback should set the stream position correctly
+        return data->stream_position;
+    } else {
+        xmms_error_set (error, XMMS_ERROR_INVAL, "Couldn't seek");
+        return -1;
+    }
+}

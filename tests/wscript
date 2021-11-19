@@ -45,6 +45,10 @@ test_cli_src = """
 client/t_command_trie.c
 """
 
+test_curl_src = """
+learning_tests/t_curl.c
+"""
+
 def configure(conf):
     conf.load("unittest", tooldir="waftools")
     conf.check_cc(header_name="CUnit/CUnit.h")
@@ -159,6 +163,14 @@ def build(bld):
             uselib = 'cunit ncurses DISABLE_WRITESTRINGS',
             install_path = None
             )
+    bld(features = 'c cprogram test',
+        target = 'test_curl',
+        source = test_curl_src,
+        includes = '. .. runner ../src/include',
+        use = 'testutils',
+        uselib = 'cunit curl',
+        install_path = None
+        )
 
 def options(o):
     o.load("unittest", tooldir="waftools")
