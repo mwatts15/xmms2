@@ -84,7 +84,7 @@ static xmmsv_t *xmms_playlist_changed_msg_new (xmms_playlist_t *playlist, xmms_p
   * @brief This is the playlist control.
   *
   * A playlist is a central thing in the XMMS server, it
-  * tells us what to do after we played the following entry
+  * tells us what to do after we played the previous entry
   * @{
   */
 
