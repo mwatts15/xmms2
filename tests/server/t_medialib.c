@@ -727,8 +727,8 @@ CASE(test_client_property_set)
 CASE(test_client_property_remove)
 {
 	xmms_medialib_entry_t entry;
-	xmmsv_t *result, *tracknr, *client;
-	gint int_value;
+	xmmsv_t *result, *tracknr = NULL, *client = NULL;
+	gint int_value = -1;
 
 	entry = xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
 
