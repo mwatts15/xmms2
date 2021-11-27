@@ -928,13 +928,17 @@ xmms_medialib_tree_add_tuple (xmmsv_t *dict, const char *key,
 
 	/* Find (or insert) subtree matching the prop key */
 	if (!xmmsv_dict_get (dict, key, &entry)) {
-		entry = xmmsv_new_dict ();
+		entry = xmmsv_new_list ();
 		xmmsv_dict_set (dict, key, entry);
 		xmmsv_unref (entry);
 	}
 
-	/* Replace (or insert) value matching the prop source */
-	xmmsv_dict_set (entry, source, value);
+	xmmsv_t *source_entry = xmmsv_new_list ();
+	xmmsv_list_append_string(source_entry, source);
+	xmmsv_list_append(source_entry, value);
+	xmmsv_list_append(entry, source_entry);
+	// xmmsv_list_append refs source_entry, so we have to unref here
+	xmmsv_unref (source_entry);
 }
 
 /**

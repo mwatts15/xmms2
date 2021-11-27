@@ -568,8 +568,8 @@ CASE(test_client_get_info)
 	result = XMMS_IPC_CALL (medialib, XMMS_IPC_COMMAND_MEDIALIB_GET_INFO, xmmsv_new_int (1));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_DICT));
 	CU_ASSERT (xmmsv_dict_get (result, "title", &title));
-	CU_ASSERT (xmmsv_dict_get (title, "server", &server));
-	CU_ASSERT (xmmsv_get_string (server, &value));
+	CU_ASSERT (xmmsv_list_get (title, 0, &server));
+	CU_ASSERT (xmmsv_list_get_string (server, 1, &value));
 	CU_ASSERT_STRING_EQUAL ("Prehistoric Dog", value);
 	xmmsv_unref (result);
 }
@@ -712,13 +712,13 @@ CASE(test_client_property_set)
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_DICT));
 
 	CU_ASSERT (xmmsv_dict_get (result, "title", &title));
-	CU_ASSERT (xmmsv_dict_get (title, "client/unittest", &client));
-	CU_ASSERT (xmmsv_get_string (client, &string_value));
+	CU_ASSERT (xmmsv_list_get (title, 1, &client));
+	CU_ASSERT (xmmsv_list_get_string (client, 1, &string_value));
 	CU_ASSERT_STRING_EQUAL ("Reverse Thunder", string_value);
 
 	CU_ASSERT (xmmsv_dict_get (result, "tracknr", &tracknr));
-	CU_ASSERT (xmmsv_dict_get (tracknr, "client/unittest", &client));
-	CU_ASSERT (xmmsv_get_int (client, &int_value));
+	CU_ASSERT (xmmsv_list_get (tracknr, 1, &client));
+	CU_ASSERT (xmmsv_list_get_int (client, 1, &int_value));
 	CU_ASSERT_EQUAL (2, int_value);
 
 	xmmsv_unref (result);
@@ -727,7 +727,10 @@ CASE(test_client_property_set)
 CASE(test_client_property_remove)
 {
 	xmms_medialib_entry_t entry;
-	xmmsv_t *result, *tracknr = NULL, *client = NULL;
+	xmmsv_t *result = NULL;
+	xmmsv_t *tracknr = NULL;
+	xmmsv_t *tracknr_entry = NULL;
+	const gchar *tracknr_src = NULL;
 	gint int_value = -1;
 
 	entry = xmms_mock_entry (medialib, 1, "Red Fang", "Red Fang", "Prehistoric Dog");
@@ -759,8 +762,10 @@ CASE(test_client_property_remove)
 	result = XMMS_IPC_CALL (medialib, XMMS_IPC_COMMAND_MEDIALIB_GET_INFO, xmmsv_new_int (entry));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_DICT));
 	CU_ASSERT (xmmsv_dict_get (result, "tracknr", &tracknr));
-	CU_ASSERT (xmmsv_dict_get (tracknr, "client/unittest", &client));
-	CU_ASSERT (xmmsv_get_int (client, &int_value));
+    CU_ASSERT (xmmsv_list_get(tracknr, 1, &tracknr_entry));
+    CU_ASSERT (xmmsv_list_get_string(tracknr_entry, 0, &tracknr_src));
+	CU_ASSERT_STRING_EQUAL ("client/unittest", tracknr_src);
+    CU_ASSERT (xmmsv_list_get_int(tracknr_entry, 1, &int_value));
 	CU_ASSERT_EQUAL (2, int_value);
 	xmmsv_unref (result);
 
@@ -774,7 +779,10 @@ CASE(test_client_property_remove)
 	result = XMMS_IPC_CALL (medialib, XMMS_IPC_COMMAND_MEDIALIB_GET_INFO, xmmsv_new_int (entry));
 	CU_ASSERT (xmmsv_is_type (result, XMMSV_TYPE_DICT));
 	CU_ASSERT (xmmsv_dict_get (result, "tracknr", &tracknr));
-	CU_ASSERT_FALSE (xmmsv_dict_get (tracknr, "client/unittest", &client));
+	CU_ASSERT_EQUAL (1, xmmsv_list_get_size(tracknr));
+    CU_ASSERT (xmmsv_list_get(tracknr, 0, &tracknr_entry));
+    CU_ASSERT (xmmsv_list_get_string(tracknr_entry, 0, &tracknr_src));
+	CU_ASSERT_STRING_NOT_EQUAL ("client/unittest", tracknr_src);
 
 	xmmsv_unref (result);
 }
