@@ -827,6 +827,7 @@ c_medialib_get_id (VALUE self, VALUE url)
 /*
  * call-seq:
  *  xc.medialib_get_info(id) -> result
+ *  xmmsc_medialib_get_info
  *
  * Retrieves medialib info for _id_.
  */

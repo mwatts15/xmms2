@@ -27,6 +27,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <ctype.h>
 
 #include <glib.h>
@@ -142,6 +143,11 @@ s4_sourcepref_t *
 xmms_medialib_get_source_preferences (xmms_medialib_t *medialib)
 {
 	return s4_sourcepref_ref (medialib->default_sp);
+}
+
+void
+xmms_medialib_set_source_preferences (xmms_medialib_t *medialib, xmmsv_t *source_prefs) {
+
 }
 
 s4_t *
@@ -950,10 +956,13 @@ xmms_medialib_entry_to_tree (xmms_medialib_session_t *session,
 	s4_val_t *song_id;
 	xmmsv_t *ret, *id;
 	gint i;
+	s4_sourcepref_t *sourcepref;
 
 	song_id = s4_val_new_int (entry);
+	sourcepref = xmms_medialib_session_get_source_preferences (session);
 	set = xmms_medialib_filter (session, "song_id", song_id, S4_COND_PARENT,
-	                            NULL, NULL, S4_FETCH_PARENT | S4_FETCH_DATA);
+	                            sourcepref, NULL, S4_FETCH_PARENT | S4_FETCH_DATA);
+	s4_sourcepref_unref (sourcepref);
 	s4_val_free (song_id);
 
 	ret = xmmsv_new_dict ();

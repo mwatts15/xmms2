@@ -236,7 +236,7 @@ handle_shoutcast_metadata (xmms_xform_t *xform, gchar *metadata)
 	XMMS_DBG ("metadata: %s", metadata);
 
 	tags = g_strsplit (metadata, ";", 0);
-	while (tags[i] != NULL) {
+	while (tags[i] != NULL && tags[i][0] != '\0') {
 		if (g_ascii_strncasecmp (tags[i], "StreamTitle=", 12) == 0) {
 			const gchar *metakey;
 			gchar *raw;
@@ -246,8 +246,9 @@ handle_shoutcast_metadata (xmms_xform_t *xform, gchar *metadata)
 
 			metakey = XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE;
 			xmms_xform_metadata_set_str (xform, metakey, raw);
+		} else {
+			XMMS_DBG("Unhandled metadata tag: %s", tags[i]);
 		}
-
 		i++;
 	}
 
