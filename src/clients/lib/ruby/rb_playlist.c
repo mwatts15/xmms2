@@ -1,6 +1,6 @@
 /*  XMMS2 - X Music Multiplexer System
  *
- *  Copyright (C) 2003-2020 XMMS2 Team
+ *  Copyright (C) 2003-2023 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -409,7 +409,7 @@ Init_Playlist (VALUE mXmms)
 	rb_define_method (c, "add_collection", c_add_collection, -1);
 
 	rb_define_const (c, "ACTIVE_NAME",
-	                 INT2FIX (XMMS_ACTIVE_PLAYLIST));
+	                 rb_str_new2 (XMMS_ACTIVE_PLAYLIST));
 	rb_define_const (c, "ADD",
 	                 INT2FIX (XMMS_PLAYLIST_CHANGED_ADD));
 	rb_define_const (c, "INSERT",

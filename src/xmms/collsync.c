@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2020 XMMS2 Team
+ *  Copyright (C) 2003-2023 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -249,7 +249,7 @@ xmms_coll_sync_sorry_to_revert_your_collections (const gchar *path)
 
 cleanup:
 	if (success == FALSE) {
-		xmms_log_error ("Could not ressurect collections, sorry...");
+		xmms_log_error ("Could not resurrect collections, sorry...");
 		if (error != NULL) {
 			XMMS_DBG ("%s", error->message);
 		}

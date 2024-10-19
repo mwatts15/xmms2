@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2020 XMMS2 Team
+ *  Copyright (C) 2003-2023 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -233,7 +233,7 @@ static gint64
 xmms_gvfs_seek (xmms_xform_t *xform, gint64 offset,
                 xmms_xform_seek_mode_t whence, xmms_error_t *error)
 {
-	GSeekType type;
+	GSeekType type = G_SEEK_CUR;
 	GError *err = NULL;
 	xmms_gvfs_data_t *data = xmms_xform_private_data_get (xform);
 

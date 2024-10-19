@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2020 XMMS2 Team
+ *  Copyright (C) 2003-2023 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -16,7 +16,7 @@
 
 /**
   * @file gme decoder.
-  * @url http://xmms2.org/wiki/Notes_from_developing_an_xform_plugin
+  * @url https://github.com/xmms2/wiki/wiki/Notes-from-developing-an-xform-plugin
   */
 
 #include <glib.h>

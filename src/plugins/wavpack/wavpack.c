@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2006-2020 XMMS2 Team
+ *  Copyright (C) 2006-2023 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -291,8 +291,8 @@ xmms_wavpack_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
               xmms_error_t *error)
 {
 	xmms_wavpack_data_t *data;
-	gint mono_samples, samples;
-	xmms_samples32_t *buf32;
+	gint mono_samples = 0, samples;
+	xmms_samples32_t *buf32 = NULL;
 	gint i;
 
 	g_return_val_if_fail (xform, -1);

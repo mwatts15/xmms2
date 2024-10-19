@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2020 XMMS2 Team and Ma Xuan
+ *  Copyright (C) 2003-2023 XMMS2 Team and Ma Xuan
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -38,7 +38,13 @@ public:
 	~CSourceAdapter () {};
 
 	// open / close
-	int Open (const wchar_t * pName) { return ERROR_SUCCESS; }
+#if MAC_DLL_INTERFACE_VERSION_NUMBER >= 1000
+	int Open (const wchar_t * pName, BOOL bOpenReadOnly = FALSE)
+#else
+	int Open (const wchar_t * pName)
+#endif
+	{ return ERROR_SUCCESS; }
+
 	int Close () { return ERROR_SUCCESS; }
 
 	// read / write

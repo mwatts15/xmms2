@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2020 XMMS2 Team
+ *  Copyright (C) 2003-2023 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -961,7 +961,7 @@ collection_to_condition (xmms_medialib_session_t *session, xmmsv_t *coll,
  *
  * @param coll The collection to use when querying
  * @param fetch Information on what is being fetched
- * @return An S4 resultset correspoding to the entires in the
+ * @return An S4 resultset corresponding to the entries in the
  * medialib matching the collection.
  * Must be free with s4_resultset_free
  */

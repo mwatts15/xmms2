@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2020 XMMS2 Team
+ *  Copyright (C) 2003-2023 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -499,6 +499,11 @@ c_dict_each_value (VALUE self)
 	return self;
 }
 
+#ifdef __GNUC__
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wcomment"
+/* Avoid warnings about nested comments in usage example below. */
+#endif
 /*
  * call-seq:
  *  rawdict.to_propdict( src_prefs ) -> propdict
@@ -510,6 +515,9 @@ c_dict_each_value (VALUE self)
  * of strings, which may contain wildcards.
  * Example: rawdict.to_propdict( ['server','plugin/*'] )
  */
+#ifdef __GNUC__
+# pragma GCC diagnostic pop
+#endif
 static VALUE
 c_raw_dict_to_propdict (int argc, VALUE *argv, VALUE self)
 {
@@ -541,6 +549,12 @@ c_raw_dict_to_propdict (int argc, VALUE *argv, VALUE self)
 	return value;
 }
 
+static VALUE
+do_not_call_sm(VALUE v)
+{
+    rb_raise (rb_eNotImpError, "Unexpected call to 'do_not_call_sm'");
+}
+
 void
 Init_Result (VALUE mXmms)
 {
@@ -553,7 +567,7 @@ Init_Result (VALUE mXmms)
 	/* ugh, we have to define the "new" method,
 	 * so we can remove it again :(
 	 */
-	rb_define_singleton_method (cResult, "new", NULL, 0);
+	rb_define_singleton_method (cResult, "new", do_not_call_sm, 0);
 	rb_undef_method (rb_singleton_class (cResult), "new");
 
 	rb_define_method (cResult, "notifier", c_notifier_set, 0);

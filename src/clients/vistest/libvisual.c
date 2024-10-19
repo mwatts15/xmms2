@@ -126,8 +126,9 @@ struct {
 	int16_t     pcm_data[1024];
 } v;
 
+static void v_load_plugins (const char *);
 static void v_init (int, char**);
-static uint v_render (void);
+static void v_render (void);
 static void v_resize (int, int);
 
 static void
@@ -147,32 +148,53 @@ v_cycleActor (int prev)
 int
 main (int argc, char** argv)
 {
+	puts ("Supported options:");
+	puts ("    --libvisual-plugins=<path> - extra path to libvisual plugins.");
+	puts ("    <plugin>                   - set starting plugin to <plugin>.");
+	puts ("");
 	puts ("Controls: Arrow keys switch between plugins, TAB toggles fullscreen, ESC quits.");
 	puts ("          Each plugin can has its own mouse/key bindings, too.");
-	if (argc > 1) {
-		v.plugin = argv[1];
-	} else {
-		puts ("Note: you can give your favourite libvisual plugin as command line argument.");
+	puts ("");
+	puts ("In order to get the visualization streamed you also");
+	puts ("need to enable 'visualization' effect. For example:");
+	puts ("    xmms2 server config effect.order.0 = visualization");
+
+	// Handle commandline options
+	for (int i = 1; i < argc; i++) {
+		const char * a = argv[i];
+		const char * opt = "--libvisual-plugins=";
+		if (strncmp (a, opt, strlen (opt)) == 0) {
+			v_load_plugins (a + strlen (opt));
+			continue;
+		}
+
+		// If it's not a "--<option>" then it's a plugin name.
+		v.plugin = a;
 	}
+
 	v.pluginIsGL = 0;
 
-    //init
+	//init
 	xmms2_init ();
-    sdl_init ();
-    v_init (argc, argv);
+	sdl_init ();
+	v_init (argc, argv);
 
-    //main loop
-    uint render_time = 10;
+	//main loop
 	int samples = 0;
 
-    while (samples > -1 && sdl_event_handler()) {
-		samples = xmmsc_visualization_chunk_get (x_connection, x_vis, v.pcm_data, render_time, 250);
-		if (samples == 1024) {
-			render_time = v_render();
-		}
-    }
+	while (samples > -1 && sdl_event_handler()) {
+		samples = xmmsc_visualization_chunk_get (x_connection, x_vis, v.pcm_data, 0, 20);
 
-    return EXIT_SUCCESS;
+		if (samples != 1024) {  // e.g. when playpack is stopped
+			memset(v.pcm_data, 0, sizeof(v.pcm_data));
+		}
+
+		v_render();
+
+		SDL_Delay(1);  // to avoid 100% CPU usage
+	}
+
+	return EXIT_SUCCESS;
 }
 
 void
@@ -345,21 +367,51 @@ v_resize( int width, int height )
 	visual_bin_sync( v.bin, 0 );
 }
 
+
+void
+v_load_plugins (const char * base_path)
+{
+	char * path = malloc (strlen (base_path) + 1 + strlen ("transform") + 1);
+	if (path == NULL) {
+		return;
+	}
+
+	static const char * flavours[] = {
+		"actor",
+		"input",
+		"morph",
+		"transform",
+	};
+
+	for (int i = 0; i < sizeof (flavours) / sizeof (flavours[0]); i++) {
+		int r;
+		sprintf (path, "%s/%s", base_path, flavours[i]);
+		printf ("Loading '%s' plugin path\n", path);
+		r = visual_init_path_add (path);
+		if (r != VISUAL_OK) {
+			fprintf (stderr, "Failed to load '%s' plugin\n", path);
+		}
+	}
+
+	free (path);
+}
+
 void
 v_init (int argc, char **argv)
 {
 	VisVideoDepth depth;
 
+	// argc and argv are used only got program name
 	visual_init (&argc, &argv);
 	visual_log_set_verboseness (VISUAL_LOG_VERBOSENESS_LOW);
 
-	v.bin    = visual_bin_new ();
+	v.bin  = visual_bin_new ();
 	depth  = visual_video_depth_enum_from_value( 24 );
 
 	if (!v.plugin) {
 		puts ("Available plugins:");
-        while ((v.plugin = visual_actor_get_next_by_name (v.plugin))) {
-            printf (" * %s\n", v.plugin);
+		while ((v.plugin = visual_actor_get_next_by_name (v.plugin))) {
+			printf (" * %s\n", v.plugin);
 		}
 		v.plugin = visual_actor_get_next_by_name (0);
 	}
@@ -412,7 +464,7 @@ v_init (int argc, char **argv)
 	/*printf ("Libvisual version %s; bpp: %d %s\n", visual_get_version(), v.video->bpp, (v.pluginIsGL ? "(GL)\n" : ""));*/
 }
 
-uint
+void
 v_render(void)
 {
 	/* On depth change */
@@ -427,8 +479,6 @@ v_render(void)
 		sdl_unlock ();
 	}
 
-	long ticks = -SDL_GetTicks ();
-
 	if (v.pluginIsGL) {
 		visual_bin_run (v.bin);
 		SDL_GL_SwapBuffers ();
@@ -442,7 +492,4 @@ v_render(void)
 		sdl_set_pal ();
 		SDL_Flip (screen);
 	}
-
-	ticks += SDL_GetTicks ();
-	return ticks;
 }

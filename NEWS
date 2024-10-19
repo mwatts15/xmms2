@@ -1,0 +1,79 @@
+xmms2 news related to releases. History of user visible changes.
+
+Version 0.9.5 DrPong (TODO)
+
+Version 0.9.4 DrPong (2023-10-07)
+
+Bug fixes:
+
+* avcodec plugin can build against ffmpeg-7.
+
+Version 0.9.3 DrPong (2023-05-12)
+
+Bug fixes:
+
+* Python client can build against cython-3.
+
+Version 0.9.2 DrPong (2023-02-11)
+
+Configuration changes:
+
+* New --disable-valgrind option was added. Sometimes installed system
+  `valgrind` is not capable of tracing binaries. This option disables
+  use of `valgrind` without the need to uninstall it.
+
+* Updated waf bundle up to 20.0.25 version.
+
+Bug fixes:
+
+* The flac plugin was fixed to work with flac-1.4.0 decoder library.
+  Before the fix some FLAC files were never finished decoding.
+
+* The libvisual client render loop was extended to handle stopped
+  playback thanks to Sebastian Pipping.
+
+* The visualization client library now correctly detects shared memory
+  support on linux. In xmms2-0.9.1 client always fell back to UDP.
+
+* The visualization server side now opens both IPv4 and IPv6 UDP sockets
+  if both are available. Previous versions sometimes opened IPv4-only or
+  IPv6-only socket. Sometimes that did not match defaults from client
+  side and visualization client did not work at all.
+
+Version 0.9.1 DrPong (2022-05-02)
+
+11 years since the previous xmms2 release. The git history has
+accumulated over 600 commits.
+
+Notable changes:
+
+* Bundled waf was updated to version 2.0.22. It now requires python3.
+
+* The ffmpeg plugin was updated to support upstream API changes.
+
+* The medialib database backend switched from sqlite3 to s4, which was
+  created specifically for xmms2.
+
+  For typical xmms2 setups that run in home directories, the medialib
+  migration will happen automatically: once the new version of `xmms2d`
+  starts, it will convert the ~/.config/xmms2/medialib.db sqlite
+  database to the ~/.config/xmms2/medialib.s4 s4 database by running the
+  `sqlite2s4` tool.
+
+  In daemon logs you should be able to find messages similar to the
+  following:
+
+    20:49:30  INFO ... Attempting to migrate database to new format
+    20:46:30  INFO ... Migration successful.
+
+  Conversion takes a while. While it happens, most operations on the
+  medialib are blocked. For an example library of 30000 entries (~78MB
+  medialib.db), it took 8 minutes to migrate to s4 on SSD. The
+  conversion uses fsync() calls extensively and might take longer on
+  HDD.
+
+  Once the conversion is done, the sqlite database will move to
+  ~/.config/xmms2/medialib.db.obsolete.
+
+* The new `sqlite2s4` tool was added. `xmms2d` expects its presence in
+  `PATH` to perform automatic medialib conversion to the s4 format.

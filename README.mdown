@@ -42,7 +42,7 @@ HELPING
 -------
 
 Create a [GitHub issue](https://github.com/mwatts15/xmms2/issues) and
-create a pull request. 
+create a pull request.
 
 
 CONTACT

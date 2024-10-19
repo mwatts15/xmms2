@@ -1,7 +1,7 @@
 /** @file daap_mdns_browse.c
  *  Browser for DAAP servers shared via mDNS.
  *
- *  Copyright (C) 2006-2020 XMMS2 Team
+ *  Copyright (C) 2006-2023 XMMS2 Team
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -226,7 +226,7 @@ daap_mdns_setup ()
 	GMainLoop *ml = NULL;
 	gint errval;
 	struct timeval tv;
-	browse_callback_userdata_t *browse_userdata;
+	browse_callback_userdata_t *browse_userdata = NULL;
 
 	if (gl_poll) {
 		goto fail;

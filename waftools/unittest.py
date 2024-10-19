@@ -24,7 +24,7 @@ class create_test_runner(Task.Task):
         code = code.replace("@@REGISTER_TEST_SUITES@@", register)
         self.outputs[0].write(code)
 
-scraper = re.compile("^(CASE|SETUP)\s*\(([^)]+)\)")
+scraper = re.compile(r'^(CASE|SETUP)\s*\(([^)]+)\)')
 
 def scrape_test_cases(node):
     suite = ""
@@ -146,7 +146,8 @@ def generate_coverage(bld):
 
 def configure(conf):
     conf.load("waf_unit_test")
-    conf.find_program("valgrind", var="VALGRIND", mandatory=False)
+    if conf.options.enable_valgrind is True:
+        conf.find_program("valgrind", var="VALGRIND", mandatory=False)
     conf.find_program("lcov", var="LCOV", mandatory=False)
     conf.find_program("genhtml", var="GENHTML", mandatory=False)
 

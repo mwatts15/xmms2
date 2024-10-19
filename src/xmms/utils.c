@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2020 XMMS2 Team
+ *  Copyright (C) 2003-2023 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -157,7 +157,7 @@ xmms_natcmp (const gchar *str1, const gchar *str2)
  * Case insensitive version of g_str_equal.
  * @param v1 first string
  * @param v2 second string
- * @return TRUE if first string equals the seconds tring, otherwise FALSE
+ * @return TRUE if first string equals the second string, otherwise FALSE
  */
 gboolean
 xmms_strcase_equal (gconstpointer v1, gconstpointer v2)

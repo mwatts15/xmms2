@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2020 XMMS2 Team
+ *  Copyright (C) 2003-2023 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -131,7 +131,7 @@ xmmsc_visualization_start (xmmsc_connection_t *c, int vv)
 	case VIS_ERRORED:
 		break;
 	case VIS_NEW:
-#ifdef HAVE_SEMTIMEDOP
+#if HAVE_SEMTIMEDOP
 		/* first try unixshm */
 		v->type = VIS_UNIXSHM;
 		res = setup_shm_prepare (c, vv);

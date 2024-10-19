@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2020 XMMS2 Team
+ *  Copyright (C) 2003-2023 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -43,7 +43,7 @@ find_terminal_width_from_environment (void)
 	colstr = getenv ("COLUMNS");
 	if (colstr != NULL) {
 		columns = strtol (colstr, &endptr, 10);
-		if (endptr != '\0') {
+		if (*endptr == '\0') {
 			return columns;
 		}
 	}

@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2020 XMMS2 Team
+ *  Copyright (C) 2003-2023 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -84,7 +84,7 @@ static void spawn_script_setup (gpointer data);
 
 
 /**
- * Main object, when this is unreffed, XMMS2 is quiting.
+ * Main object, when this is unreffed, XMMS2 is quitting.
  */
 struct xmms_main_St {
 	xmms_object_t object;
@@ -499,7 +499,7 @@ static void
 print_version (void)
 {
 	printf ("XMMS2 version " XMMS_VERSION "\n");
-	printf ("Copyright (C) 2003-2020 XMMS2 Team\n");
+	printf ("Copyright (C) 2003-2023 XMMS2 Team\n");
 	printf ("This is free software; see the source for copying conditions.\n");
 	printf ("There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A\n");
 	printf ("PARTICULAR PURPOSE.\n");
@@ -635,7 +635,7 @@ main (int argc, char **argv)
 
 	if (!ipcpath) {
 		/*
-		 * if not ipcpath is specifed on the cmd line we
+		 * if not ipcpath is specified on the cmd line we
 		 * grab it from the config
 		 */
 		ipcpath = xmms_config_property_get_string (cv);

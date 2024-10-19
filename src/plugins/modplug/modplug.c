@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2020 XMMS2 Team
+ *  Copyright (C) 2003-2023 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  */
@@ -82,7 +82,7 @@ xmms_modplug_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
 	/*
-	xmms_plugin_info_add (plugin, "URL", "http://xmms2.org/");
+	xmms_plugin_info_add (plugin, "URL", "https://github.com/xmms2");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 	xmms_plugin_info_add (plugin, "License", "GPL");
 	*/

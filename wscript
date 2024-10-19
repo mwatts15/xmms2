@@ -1,7 +1,7 @@
 # encoding: utf-8
 #
 # WAF build scripts for XMMS2
-# Copyright (C) 2006-2020 XMMS2 Team
+# Copyright (C) 2006-2023 XMMS2 Team
 #
 
 import sys
@@ -20,13 +20,17 @@ from waflib import Configure, Options, Utils, Errors, Logs
 from waftools.compiler_flags import compiler_flags
 from waftools import gittools
 
-BASEVERSION="0.8 DrO_o"
+BASEVERSION="0.9.4 DrPong"
 APPNAME='xmms2'
 
 top = '.'
 out = '_build_'
 
-_waf_hexversion = 0x2001600
+# How to update waf:
+# 1. update utils/wafgen.conf
+# 2. run ./utils/wafgen
+# 3. fix version here
+_waf_hexversion = 0x2001900 # 2.0.25
 _waf_mismatch_msg = """
 You are building xmms2 with a waf version that is different from the one
 distributed with xmms2. This is not supported by the XMMS2 Team. Before
@@ -377,7 +381,7 @@ def configure(conf):
                 hasoptim=True
                 break
         if not hasoptim:
-            conf.env.append_unique(env, ['-g', '-O0'])
+            conf.env.append_unique(env, ['-g', '-O2'])
 
     if conf.options.enable_gcov:
         conf.env.enable_gcov = True
@@ -398,8 +402,11 @@ def configure(conf):
     flags.enable_c_warning('write-strings')
     flags.enable_c_warning('unused-but-set-variable')
 
+    # TODO: too many to be useful. Extract as a developer option.
     flags.disable_c_warning('format-extra-args')
     flags.disable_c_warning('format-zero-length')
+    flags.disable_c_warning('unused-result')
+    flags.disable_c_warning('deprecated-declarations')
 
     flags.enable_feature('diagnostics-show-option')
 
@@ -446,7 +453,13 @@ def configure(conf):
         conf.env.explicit_install_name = False
 
     if Utils.unversioned_sys_platform() == 'sunos':
-        conf.check_cc(function_name='socket', lib='socket', header_name='sys/socket.h', uselib_store='socket')
+        socket_fragment = """
+        #include <sys/socket.h>
+        int main(void) {
+          return socket(0,0,0);
+        }
+        """
+        conf.check_cc(fragment=socket_fragment, lib='socket', header_name='sys/socket.h', uselib_store='socket')
         conf.env.append_unique('CFLAGS', '-D_POSIX_PTHREAD_SEMANTICS')
         conf.env.append_unique('CFLAGS', '-D_REENTRANT')
         conf.env.append_unique('CFLAGS', '-std=gnu99')
@@ -613,6 +626,10 @@ def options(opt):
                    dest='ldconfig', help="Run ldconfig after install even if not root")
     opt.add_option('--without-ldconfig', action='store_false',
                    dest='ldconfig', help="Don't run ldconfig after install")
+    opt.add_option('--with-valgrind', action='store_true', default=None,
+                   dest='enable_valgrind', help="Run testsuite under valgrind (if present).")
+    opt.add_option('--without-valgrind', action='store_false', default=None,
+                   dest='enable_valgrind', help="Don't run testsuite under valgrind.")
 
     opt.recurse("src/xmms")
     for o in optional_subdirs + subdirs:

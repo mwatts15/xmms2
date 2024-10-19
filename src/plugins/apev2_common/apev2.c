@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2005-2020 XMMS2 Team
+ *  Copyright (C) 2005-2023 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -169,7 +169,7 @@ xmms_apetag_read (xmms_xform_t *xform)
 	pos = 0;
 	for (i = 0; i < items; i++) {
 		gint itemlen, flags;
-		gchar *key, *item;
+		gchar *key, *item = NULL;
 
 		itemlen = xmms_apetag_get_le32 (tagdata + pos);
 		pos += 4;

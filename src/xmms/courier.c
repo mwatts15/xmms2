@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2020 XMMS2 Team
+ *  Copyright (C) 2003-2023 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -177,7 +177,7 @@ xmms_courier_pending_pool_destroy (xmms_courier_pending_pool_t *pending)
  * @param courier the courier object
  * @param reply_policy the reply policy expected by the sender
  * @param c2c_msg a c2c-message (with at least msgid, sender, destination)
- * @param is_reply whether a reply (intead of a normal message) is to be sent
+ * @param is_reply whether a reply (instead of a normal message) is to be sent
  * @param dcookie in case is_reply is TRUE, the cookie associated with the
  *               message that is being replied to in the destination client
  * @param scookie in case is_reply is TRUE, the cookie associated with the

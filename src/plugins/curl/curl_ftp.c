@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2020 XMMS2 Team
+ *  Copyright (C) 2003-2023 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -95,7 +95,7 @@ xmms_plugin_get (void)
 		return NULL;
 	}
 
-	xmms_plugin_info_add (plugin, "URL", "http://xmms2.org/");
+	xmms_plugin_info_add (plugin, "URL", "https://github.com/xmms2");
 	xmms_plugin_info_add (plugin, "INFO", "http://curl.haxx.se/libcurl/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 

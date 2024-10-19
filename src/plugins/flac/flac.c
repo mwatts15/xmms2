@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2020 XMMS2 Team
+ *  Copyright (C) 2003-2023 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -147,8 +147,10 @@ flac_callback_read (const FLAC__StreamDecoder *flacdecoder, FLAC__byte buffer[],
 
 	ret = xmms_xform_read (xform, (gchar *)buffer, *bytes, &error);
 	if (ret == 0) {
+		*bytes = 0;
 		return FLAC__STREAM_DECODER_READ_STATUS_END_OF_STREAM;
 	} else if (ret < 0) {
+		*bytes = 0;
 		return FLAC__STREAM_DECODER_READ_STATUS_ABORT;
 	} else {
 		*bytes = ret;

@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2020 XMMS2 Team
+ *  Copyright (C) 2003-2023 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -48,7 +48,7 @@
 
 #define PUT_STR(buf, str) do { \
 	size_t len = strlen (str); \
-	strncpy ((gchar *) buf, str, len); \
+	memcpy ((gchar *) buf, str, len); \
 	buf += len; \
 } while (0)
 

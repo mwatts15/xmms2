@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2020 XMMS2 Team
+ *  Copyright (C) 2003-2023 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -216,9 +216,9 @@ read_bytes (xmms_ringbuf_t *ringbuf, guint8 *data, guint len)
  * ensure that you get as much data as you want.
  *
  * @param ringbuf Buffer to read from
- * @param data Allocated buffer where the readed data will end up
+ * @param data Allocated buffer where the read data will end up
  * @param len number of bytes to read
- * @returns number of bytes that acutally was read.
+ * @returns number of bytes that actually was read.
  */
 guint
 xmms_ringbuf_read (xmms_ringbuf_t *ringbuf, gpointer data, guint len)
