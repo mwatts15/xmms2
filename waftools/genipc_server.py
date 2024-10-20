@@ -183,7 +183,11 @@ def emit_method_define_code(object, method, c_type):
 		if get_getter(a.type[0]) is None:
 			Indenter.printline("argval%d = t;" % i)
 		else:
-			Indenter.enter("if (!%s (t, &argval%d)) {" % (get_getter(a.type[0]), i))
+
+			cast = ''
+			if a.type[0] == 'enum-value':
+				cast = '(int*)'
+			Indenter.enter("if (!%s (t, %s&argval%d)) {" % (get_getter(a.type[0]), cast, i))
 			Indenter.printline('XMMS_DBG ("Error parsing arg %d in %s");' % (i, method.name))
 			Indenter.printline('xmms_error_set (&arg->error, XMMS_ERROR_INVAL, "Error parsing arg %d in %s");' % (i, method.name))
 			Indenter.printline("return;")
